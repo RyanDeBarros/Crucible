@@ -1,4 +1,4 @@
-#include "module.hpp"
+#include <crucible/core/module.hpp>
 
 // TODO remove
 #include <iostream>

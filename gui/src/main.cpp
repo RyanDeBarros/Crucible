@@ -1,8 +1,15 @@
-#include <crucible/core/module.hpp>
+#include <crucible/gui/main_window.hpp>
 
-int main()
+#include <QtWidgets/qapplication.h>
+
+int main(int argc, char* argv[])
 {
-    crucible::core::hello_world();
+    QApplication app(argc, argv);
+    app.setApplicationName("Crucible");
+    app.setOrganizationName("Crucible");
 
-    return 0;
+    crucible::gui::MainWindow main_window;
+    main_window.show();
+
+    return app.exec();
 }
