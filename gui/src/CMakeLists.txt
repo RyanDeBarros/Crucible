@@ -2,5 +2,6 @@ target_sources(crucible_gui
     PRIVATE
         main.cpp
         main_window.cpp
-        operation_graph_model.cpp
 )
+
+add_subdirectory(op_graph)

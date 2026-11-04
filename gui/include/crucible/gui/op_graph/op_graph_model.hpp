@@ -2,13 +2,13 @@
 
 #include <QtNodes/internal/AbstractGraphModel.hpp>
 
-#include <QtCore/qpoint.h>
-#include <QtCore/qsize.h>
+#include <QPointF>
+#include <QSize>
 
 namespace crucible::gui
 {
 
-class OperationGraphModel
+class OpGraphModel
     : public QtNodes::AbstractGraphModel
 {
 public:
@@ -28,8 +28,8 @@ private:
     mutable std::unordered_map<QtNodes::NodeId, NodeGeometry> node_geometry_;
 
 public:
-    OperationGraphModel() = default;
-    ~OperationGraphModel() override = default;
+    OpGraphModel() = default;
+    ~OpGraphModel() override = default;
 
     std::unordered_set<QtNodes::NodeId> allNodeIds() const override;
     std::unordered_set<QtNodes::ConnectionId> allConnectionIds(QtNodes::NodeId node_id) const override;

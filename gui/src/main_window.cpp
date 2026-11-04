@@ -1,51 +1,55 @@
 #include <crucible/gui/main_window.hpp>
-#include <crucible/gui/operation_graph_model.hpp>
 
-#include <QtWidgets/qstatusbar.h>
+#include <crucible/gui/op_graph/op_graph_model.hpp>
+#include <crucible/gui/op_graph/op_graph_scene.hpp>
+#include <crucible/gui/op_graph/op_graph_view.hpp>
+
+#include <QScreen>
+#include <QStatusBar>
 
 namespace crucible::gui
 {
 
+using QtNodes::BasicGraphicsScene;
+using QtNodes::NodeId;
+using QtNodes::NodeRole;
+
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
-    , operation_graph_model_(std::make_unique<OperationGraphModel>())
 {
     setWindowTitle("Crucible");
     resize(1920, 1080);
+    move(screen()->geometry().center() - frameGeometry().center());
 
-    operation_graph_scene_ = std::make_unique<QtNodes::BasicGraphicsScene>(*operation_graph_model_);
-    
-    operation_graph_view_ = new QtNodes::GraphicsView(operation_graph_scene_.get());
-    operation_graph_view_->setObjectName(QStringLiteral("operation_graph_view"));
-    operation_graph_view_->setScaleRange(0.25, 2.0);
+    op_graph_model_ = std::make_unique<OpGraphModel>();
+    op_graph_scene_ = std::make_unique<OpGraphScene>(*op_graph_model_);
+    op_graph_view_ = new OpGraphView(*op_graph_scene_, *op_graph_model_);
 
-    setCentralWidget(operation_graph_view_);
+    setCentralWidget(op_graph_view_);
 
     statusBar()->showMessage(QStringLiteral("Ready"));
 
-    create_demo_graph();
+    createDemoGraph();
 
-    operation_graph_view_->zoomFitAll();
+    op_graph_view_->zoomFitAll();
 }
 
 MainWindow::~MainWindow()
 {
-    // Don't delete operation_graph_view_: it is owned by QMainWindow::setCentralWidget()
-    if (operation_graph_view_)
-        operation_graph_view_->setScene(nullptr);
+    // Don't delete op_graph_view_: it is owned by QMainWindow::setCentralWidget()
+    if (op_graph_view_)
+        op_graph_view_->setScene(nullptr);
 }
 
-void MainWindow::create_demo_graph()
+void MainWindow::createDemoGraph()
 {
-    using QtNodes::NodeRole;
+    const auto source_node = op_graph_model_->addNode(QStringLiteral("Text Source"));
+    const auto transform_node = op_graph_model_->addNode(QStringLiteral("Transform"));
 
-    const auto source_node = operation_graph_model_->addNode(QStringLiteral("Text Source"));
-    const auto transform_node = operation_graph_model_->addNode(QStringLiteral("Transform"));
+    op_graph_model_->setNodeData(source_node, NodeRole::Position, QPointF(-250.0, 0.0));
+    op_graph_model_->setNodeData(transform_node, NodeRole::Position, QPointF(100.0, 0.0));
 
-    operation_graph_model_->setNodeData(source_node, NodeRole::Position, QPointF(-250.0, 0.0));
-    operation_graph_model_->setNodeData(transform_node, NodeRole::Position, QPointF(100.0, 0.0));
-
-    operation_graph_model_->addConnection({
+    op_graph_model_->addConnection({
         .outNodeId = source_node,
         .outPortIndex = 0,
         .inNodeId = transform_node,

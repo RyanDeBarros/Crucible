@@ -54,4 +54,5 @@ target_include_directories(crucible_gui
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+add_subdirectory(include/crucible/gui)
 add_subdirectory(src)

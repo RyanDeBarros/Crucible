@@ -1,28 +1,27 @@
 #pragma once
 
-#include <QtNodes/internal/BasicGraphicsScene.hpp>
-#include <QtNodes/internal/GraphicsView.hpp>
-
-#include <QtWidgets/qmainwindow.h>
+#include <QMainWindow>
 
 namespace crucible::gui
 {
 
-class OperationGraphModel;
+class OpGraphModel;
+class OpGraphScene;
+class OpGraphView;
 
 class MainWindow
     : public QMainWindow
 {
-    std::unique_ptr<OperationGraphModel> operation_graph_model_;
-    std::unique_ptr<QtNodes::BasicGraphicsScene> operation_graph_scene_;
-    QtNodes::GraphicsView* operation_graph_view_ = nullptr;
+    std::unique_ptr<OpGraphModel> op_graph_model_;
+    std::unique_ptr<OpGraphScene> op_graph_scene_;
+    OpGraphView* op_graph_view_ = nullptr;
 
 public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow() override;
 
 private:
-    void create_demo_graph();
+    void createDemoGraph();
 };
 
 } // crucible::gui

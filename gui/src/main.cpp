@@ -1,6 +1,6 @@
 #include <crucible/gui/main_window.hpp>
 
-#include <QtWidgets/qapplication.h>
+#include <QApplication>
 
 int main(int argc, char* argv[])
 {

@@ -1,4 +1,4 @@
-#include <crucible/gui/operation_graph_model.hpp>
+#include <crucible/gui/op_graph/op_graph_model.hpp>
 
 #include <QtNodes/internal/ConnectionIdUtils.hpp>
 #include <QtNodes/internal/StyleCollection.hpp>
@@ -15,12 +15,12 @@ using QtNodes::PortRole;
 using QtNodes::PortType;
 using QtNodes::StyleCollection;
 
-std::unordered_set<NodeId> OperationGraphModel::allNodeIds() const
+std::unordered_set<NodeId> OpGraphModel::allNodeIds() const
 {
     return node_ids_;
 }
 
-std::unordered_set<ConnectionId> OperationGraphModel::allConnectionIds(NodeId node_id) const
+std::unordered_set<ConnectionId> OpGraphModel::allConnectionIds(NodeId node_id) const
 {
     std::unordered_set<ConnectionId> result;
 
@@ -35,7 +35,7 @@ std::unordered_set<ConnectionId> OperationGraphModel::allConnectionIds(NodeId no
     return result;
 }
 
-std::unordered_set<ConnectionId> OperationGraphModel::connections(
+std::unordered_set<ConnectionId> OpGraphModel::connections(
     NodeId node_id,
     PortType port_type,
     PortIndex port_index) const
@@ -54,17 +54,17 @@ std::unordered_set<ConnectionId> OperationGraphModel::connections(
     return result;
 }
 
-bool OperationGraphModel::connectionPossible(ConnectionId connection_id) const
+bool OpGraphModel::connectionPossible(ConnectionId connection_id) const
 {
     return !connection_ids_.contains(connection_id);
 }
 
-bool OperationGraphModel::nodeExists(NodeId node_id) const
+bool OpGraphModel::nodeExists(NodeId node_id) const
 {
     return node_ids_.contains(node_id);
 }
 
-NodeId OperationGraphModel::addNode(QString node_type)
+NodeId OpGraphModel::addNode(QString node_type)
 {
     const NodeId node_id = newNodeId();
     node_ids_.insert(node_id);
@@ -74,7 +74,7 @@ NodeId OperationGraphModel::addNode(QString node_type)
     return node_id;
 }
     
-bool OperationGraphModel::deleteNode(NodeId node_id)
+bool OpGraphModel::deleteNode(NodeId node_id)
 {
     if (!nodeExists(node_id))
         return false;
@@ -92,12 +92,12 @@ bool OperationGraphModel::deleteNode(NodeId node_id)
     return true;
 }
 
-NodeId OperationGraphModel::newNodeId()
+NodeId OpGraphModel::newNodeId()
 {
     return next_node_id_++;
 }
 
-QJsonObject OperationGraphModel::saveNode(NodeId node_id) const
+QJsonObject OpGraphModel::saveNode(NodeId node_id) const
 {
     QJsonObject json;
 
@@ -115,7 +115,7 @@ QJsonObject OperationGraphModel::saveNode(NodeId node_id) const
     return json;
 }
 
-void OperationGraphModel::loadNode(const QJsonObject& node_json)
+void OpGraphModel::loadNode(const QJsonObject& node_json)
 {
     const NodeId node_id = static_cast<NodeId>(node_json["id"].toInteger());
 
@@ -134,12 +134,12 @@ void OperationGraphModel::loadNode(const QJsonObject& node_json)
         QPointF(position_json["x"].toDouble(), position_json["y"].toDouble()));
 }
 
-bool OperationGraphModel::connectionExists(ConnectionId connection_id) const
+bool OpGraphModel::connectionExists(ConnectionId connection_id) const
 {
     return connection_ids_.contains(connection_id);
 }
 
-void OperationGraphModel::addConnection(ConnectionId connection_id)
+void OpGraphModel::addConnection(ConnectionId connection_id)
 {
     if (!connectionPossible(connection_id))
         return;
@@ -148,7 +148,7 @@ void OperationGraphModel::addConnection(ConnectionId connection_id)
     Q_EMIT connectionCreated(connection_id);
 }
 
-bool OperationGraphModel::deleteConnection(ConnectionId connection_id)
+bool OpGraphModel::deleteConnection(ConnectionId connection_id)
 {
     if (connection_ids_.erase(connection_id) == 0)
         return false;
@@ -157,7 +157,7 @@ bool OperationGraphModel::deleteConnection(ConnectionId connection_id)
     return true;
 }
 
-QVariant OperationGraphModel::nodeData(NodeId node_id, NodeRole role) const
+QVariant OpGraphModel::nodeData(NodeId node_id, NodeRole role) const
 {
 
     switch (role)
@@ -194,7 +194,7 @@ QVariant OperationGraphModel::nodeData(NodeId node_id, NodeRole role) const
     return {};
 }
 
-bool OperationGraphModel::setNodeData(NodeId node_id, NodeRole role, QVariant value)
+bool OpGraphModel::setNodeData(NodeId node_id, NodeRole role, QVariant value)
 {
     if (!nodeExists(node_id))
         return false;
@@ -215,7 +215,7 @@ bool OperationGraphModel::setNodeData(NodeId node_id, NodeRole role, QVariant va
     }
 }
 
-QVariant OperationGraphModel::portData(
+QVariant OpGraphModel::portData(
     NodeId node_id,
     PortType port_type,
     PortIndex port_index,
@@ -243,7 +243,7 @@ QVariant OperationGraphModel::portData(
     return {};
 }
 
-bool OperationGraphModel::setPortData(
+bool OpGraphModel::setPortData(
     NodeId node_id,
     PortType port_type,
     PortIndex port_index,
