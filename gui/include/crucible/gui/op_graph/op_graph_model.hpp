@@ -68,6 +68,9 @@ public:
         QtNodes::PortIndex port_index,
         const QVariant& value,
         QtNodes::PortRole role = QtNodes::PortRole::Data) override;
+
+public:
+    QString defaultNodeName() const;
 };
 
 } // crucible::gui

@@ -58,15 +58,15 @@ void OpGraphView::contextMenuNode(QContextMenuEvent* event, QtNodes::NodeGraphic
     QMenu menu(this);
 
     auto* copy_action = menu.addAction(
-        plural_nodes ? QStringLiteral("Copy Nodes") : QStringLiteral("Copy Node"));
+        plural_nodes ? tr("Copy Nodes") : tr("Copy Node"));
 
     auto* cut_action = menu.addAction(
-        plural_nodes ? QStringLiteral("Cut Nodes") : QStringLiteral("Cut Node"));
+        plural_nodes ? tr("Cut Nodes") : tr("Cut Node"));
 
     menu.addSeparator();
 
     auto* delete_action = menu.addAction(
-        plural_nodes ? QStringLiteral("Delete Nodes") : QStringLiteral("Delete Node"));
+        plural_nodes ? tr("Delete Nodes") : tr("Delete Node"));
 
     const auto* selected_action = menu.exec(event->globalPos());
 
@@ -87,14 +87,14 @@ void OpGraphView::contextMenuVoid(QContextMenuEvent* event)
 {
     QMenu menu(this);
 
-    auto* create_action = menu.addAction(QStringLiteral("Create Node"));
-    auto* paste_action = menu.addAction(QStringLiteral("Paste Node(s)"));
+    auto* create_action = menu.addAction(tr("Create Node"));
+    auto* paste_action = menu.addAction(tr("Paste Node(s)"));
 
     const auto* selected_action = menu.exec(event->globalPos());
 
     if (selected_action == create_action)
     {
-        const auto node_id = model_.addNode(QStringLiteral("Node"));
+        const auto node_id = model_.addNode(model_.defaultNodeName());
         model_.setNodeData(node_id, NodeRole::Position, mapToScene(event->pos()));
     }
     else if (selected_action == paste_action)

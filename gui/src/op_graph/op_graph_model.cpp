@@ -15,6 +15,8 @@ using QtNodes::PortRole;
 using QtNodes::PortType;
 using QtNodes::StyleCollection;
 
+static const char* kDefaultNodeName = "Node";
+
 std::unordered_set<NodeId> OpGraphModel::allNodeIds() const
 {
     return node_ids_;
@@ -68,7 +70,7 @@ NodeId OpGraphModel::addNode(QString node_type)
 {
     const NodeId node_id = newNodeId();
     node_ids_.insert(node_id);
-    node_captions_[node_id] = node_type.isEmpty() ? QStringLiteral("Node") : node_type;
+    node_captions_[node_id] = node_type.isEmpty() ? defaultNodeName() : node_type;
 
     Q_EMIT nodeCreated(node_id);
     return node_id;
@@ -122,7 +124,7 @@ void OpGraphModel::loadNode(const QJsonObject& node_json)
     next_node_id_ = std::max(next_node_id_, node_id + 1);
 
     node_ids_.insert(node_id);
-    node_captions_[node_id] = node_json["caption"].toString(QStringLiteral("Node"));
+    node_captions_[node_id] = node_json["caption"].toString(defaultNodeName());
 
     Q_EMIT nodeCreated(node_id);
 
@@ -175,7 +177,7 @@ QVariant OpGraphModel::nodeData(NodeId node_id, NodeRole role) const
         return true;
 
     case NodeRole::Caption:
-        return node_captions_.contains(node_id) ? node_captions_.at(node_id) : QStringLiteral("Node");
+        return node_captions_.contains(node_id) ? node_captions_.at(node_id) : defaultNodeName();
 
     case NodeRole::Style:
         return StyleCollection::nodeStyle().toJson().toVariantMap();
@@ -237,7 +239,7 @@ QVariant OpGraphModel::portData(
         return true;
 
     case PortRole::Caption:
-        return port_type == PortType::In ? QStringLiteral("Input") : QStringLiteral("Output");
+        return port_type == PortType::In ? tr("Input") : tr("Output");
     }
 
     return {};
@@ -257,6 +259,11 @@ bool OpGraphModel::setPortData(
     Q_UNUSED(role);
 
     return false;
+}
+
+QString OpGraphModel::defaultNodeName() const
+{
+    return tr(kDefaultNodeName);
 }
 
 } // crucible::gui
