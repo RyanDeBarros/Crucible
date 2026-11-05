@@ -100,6 +100,11 @@ private:
     std::unique_lock<std::mutex> acquire_lock() const;
 };
 
-extern Logger LOG;
-
 } // crucible::core
+
+namespace crucible
+{
+
+extern core::Logger LOG;
+
+} // crucible

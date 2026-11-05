@@ -1,9 +1,14 @@
 #include <crucible/core/logger.hpp>
 
-namespace crucible::core
+namespace crucible
 {
 
-extern Logger LOG;
+extern core::Logger LOG;
+
+} // crucible
+
+namespace crucible::core
+{
 
 LogLine::LogLine(Logger& logger, LogLevel level)
     : logger_(logger)
