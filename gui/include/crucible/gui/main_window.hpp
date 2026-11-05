@@ -22,8 +22,6 @@ private:
     void createPanels();
     void createMenuBar();
 
-    void createDemoGraph(); // TODO remove
-
     QDockWidget* createPanelDock(
         const QString& title,
         const QString& object_name,

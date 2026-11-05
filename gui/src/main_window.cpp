@@ -27,8 +27,6 @@ MainWindow::MainWindow(QWidget* parent)
     createMenuBar();
 
     statusBar()->showMessage(tr("Ready"));
-
-    createDemoGraph();
 }
 
 void MainWindow::createPanels()
@@ -90,23 +88,6 @@ void MainWindow::createMenuBar()
 
     for (auto* dock : panel_docks_)
         window_menu->addAction(dock->toggleViewAction());
-}
-
-void MainWindow::createDemoGraph()
-{
-    const auto source_node = op_graph_panel_->model().addNode(tr("Text Source"));
-    const auto transform_node = op_graph_panel_->model().addNode(tr("Transform"));
-
-    op_graph_panel_->model().setNodeData(source_node, NodeRole::Position, QPointF(-250.0, 0.0));
-    op_graph_panel_->model().setNodeData(transform_node, NodeRole::Position, QPointF(100.0, 0.0));
-
-    op_graph_panel_->model().addConnection({
-        .outNodeId = source_node,
-        .outPortIndex = 0,
-        .inNodeId = transform_node,
-        .inPortIndex = 0 });
-
-    op_graph_panel_->view().zoomFitAll();
 }
 
 QDockWidget* MainWindow::createPanelDock(
