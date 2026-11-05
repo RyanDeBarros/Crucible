@@ -1,7 +1,7 @@
 #include <crucible/gui/main_window.hpp>
 
 #include <crucible/gui/op_graph/op_graph_model.hpp>
-#include <crucible/gui/op_graph/op_graph_scene.hpp>
+#include <crucible/gui/op_graph/op_graph_panel.hpp>
 #include <crucible/gui/op_graph/op_graph_view.hpp>
 
 #include <QMenuBar>
@@ -11,8 +11,6 @@
 namespace crucible::gui
 {
 
-using QtNodes::BasicGraphicsScene;
-using QtNodes::NodeId;
 using QtNodes::NodeRole;
 
 MainWindow::MainWindow(QWidget* parent)
@@ -25,23 +23,12 @@ MainWindow::MainWindow(QWidget* parent)
     setDockNestingEnabled(true);
     setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
 
-    op_graph_model_ = std::make_unique<OpGraphModel>();
-    op_graph_scene_ = std::make_unique<OpGraphScene>(*op_graph_model_);
-    op_graph_view_ = new OpGraphView(*op_graph_scene_, *op_graph_model_);
-
     createPanels();
     createMenuBar();
 
     statusBar()->showMessage(tr("Ready"));
 
     createDemoGraph();
-}
-
-MainWindow::~MainWindow()
-{
-    // Don't delete op_graph_view_: it is owned by QMainWindow::setCentralWidget()
-    if (op_graph_view_)
-        op_graph_view_->setScene(nullptr);
 }
 
 void MainWindow::createPanels()
@@ -77,10 +64,11 @@ void MainWindow::createPanels()
 
     ram_dock->raise();
 
+    op_graph_panel_ = new OpGraphPanel();
     auto* op_graph_dock = createPanelDock(
         tr("Operation Graph"),
         QStringLiteral("op_graph_dock"),
-        op_graph_view_,
+        op_graph_panel_,
         Qt::RightDockWidgetArea);
 
     auto* op_output_dock = createPanelDock(
@@ -106,19 +94,19 @@ void MainWindow::createMenuBar()
 
 void MainWindow::createDemoGraph()
 {
-    const auto source_node = op_graph_model_->addNode(tr("Text Source"));
-    const auto transform_node = op_graph_model_->addNode(tr("Transform"));
+    const auto source_node = op_graph_panel_->model().addNode(tr("Text Source"));
+    const auto transform_node = op_graph_panel_->model().addNode(tr("Transform"));
 
-    op_graph_model_->setNodeData(source_node, NodeRole::Position, QPointF(-250.0, 0.0));
-    op_graph_model_->setNodeData(transform_node, NodeRole::Position, QPointF(100.0, 0.0));
+    op_graph_panel_->model().setNodeData(source_node, NodeRole::Position, QPointF(-250.0, 0.0));
+    op_graph_panel_->model().setNodeData(transform_node, NodeRole::Position, QPointF(100.0, 0.0));
 
-    op_graph_model_->addConnection({
+    op_graph_panel_->model().addConnection({
         .outNodeId = source_node,
         .outPortIndex = 0,
         .inNodeId = transform_node,
         .inPortIndex = 0 });
 
-    op_graph_view_->zoomFitAll();
+    op_graph_panel_->view().zoomFitAll();
 }
 
 QDockWidget* MainWindow::createPanelDock(
