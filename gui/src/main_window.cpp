@@ -110,8 +110,8 @@ void MainWindow::createDemoGraph()
 }
 
 QDockWidget* MainWindow::createPanelDock(
-    QString const& title,
-    QString const& object_name,
+    const QString& title,
+    const QString& object_name,
     QWidget* content,
     Qt::DockWidgetArea area)
 {

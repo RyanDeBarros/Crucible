@@ -27,6 +27,10 @@ FetchContent_MakeAvailable(QtNodes)
 
 qt_add_executable(crucible_gui)
 
+set_target_properties(crucible_gui PROPERTIES
+    AUTORCC ON
+)
+
 target_compile_features(crucible_gui
     PRIVATE
         cxx_std_23
@@ -52,6 +56,11 @@ add_custom_command(TARGET crucible_gui POST_BUILD
 target_include_directories(crucible_gui
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_sources(crucible_gui
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/crucible.qrc
 )
 
 add_subdirectory(include/crucible/gui)

@@ -1,0 +1,32 @@
+QDockWidget {
+    border: 1px solid {{dock/separator}};
+}
+
+QDockWidget::title {
+    background: {{background}};
+    color: {{foreground}};
+    padding: 6px;
+    border-bottom: 1px solid {{dock/separator}};
+}
+
+QMainWindow::separator {
+    background: {{separator}};
+    width: 2px;
+    height: 2px;
+}
+
+QMainWindow::separator:hover {
+    background: {{hover}};
+}
+
+QMenuBar {
+    background: {{background}};
+    color: {{foreground}};
+    border-bottom: 2px solid {{separator}};
+}
+
+QStatusBar {
+    background: {{background}};
+    color: {{foreground}};
+    border-top: 2px solid {{separator}};
+}
