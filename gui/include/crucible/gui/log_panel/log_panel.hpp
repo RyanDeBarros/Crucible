@@ -45,9 +45,11 @@ private:
     void createTable();
     void initPoll();
 
+    void refresh();
+
     void setLevelFilter(core::LogLevelMask mask);
     void setColumnFilter(LogColumnMask mask);
-    void refresh();
+    void requestClearLog();
 };
 
 } // crucible::gui

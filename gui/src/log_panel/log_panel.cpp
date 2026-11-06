@@ -11,6 +11,7 @@
 #include <QEvent>
 #include <QHeaderView>
 #include <QKeyEvent>
+#include <QMessageBox>
 #include <QScrollBar>
 #include <QTableView>
 #include <QTimer>
@@ -82,7 +83,7 @@ void LogPanel::createLayout()
 
     connect(controls_, &LogControls::levelFilterChanged, this, &LogPanel::setLevelFilter);
     connect(controls_, &LogControls::columnFilterChanged, this, &LogPanel::setColumnFilter);
-    connect(controls_, &LogControls::clearRequested, model_, &LogModel::clear); // TODO confirmation popup
+    connect(controls_, &LogControls::clearRequested, this, &LogPanel::requestClearLog);
 }
 
 void LogPanel::createTable()
@@ -128,6 +129,12 @@ void LogPanel::initPoll()
     timer->start(250); // TODO app setting
 }
 
+void LogPanel::refresh()
+{
+    ScrollbarPreserver sp(*table_);
+    model_->refresh();
+}
+
 void LogPanel::setLevelFilter(core::LogLevelMask mask)
 {
     ScrollbarPreserver sp(*table_);
@@ -145,10 +152,17 @@ void LogPanel::setColumnFilter(LogColumnMask mask)
         table_->setColumnHidden(i, !(mask & static_cast<LogColumn>(i)));
 }
 
-void LogPanel::refresh()
+void LogPanel::requestClearLog()
 {
-    ScrollbarPreserver sp(*table_);
-    model_->refresh();
+    auto reply = QMessageBox::question(
+        this,
+        "Clear log",
+        "Are you sure you want to clear the log? This action cannot be undone.",
+        { QMessageBox::Yes, QMessageBox::No },
+        QMessageBox::No);
+
+    if (reply == QMessageBox::Yes)
+        model_->clear();
 }
 
 } // crucible::gui
