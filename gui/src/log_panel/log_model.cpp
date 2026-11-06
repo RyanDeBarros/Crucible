@@ -54,8 +54,6 @@ int LogModel::columnCount(const QModelIndex& parent) const
     return parent.isValid() ? 0 : LogColumn::_Count;
 }
 
-// TODO filter for which columns besides 'message' should be shown
-
 QVariant LogModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(filter_->size()))
