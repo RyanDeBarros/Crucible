@@ -36,6 +36,8 @@ bool LogPanel::eventFilter(QObject* watched, QEvent* event)
         auto* keyEvent = static_cast<QKeyEvent*>(event);
         if (keyEvent->matches(QKeySequence::Copy))
         {
+            // TODO only allow selection on message column
+
             QString text;
 
             const auto indexes = table_->selectionModel()->selectedIndexes();
@@ -73,7 +75,7 @@ void LogPanel::createLayout()
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    controls_ = new LogControls(~core::logLevelMask(core::LogLevel::Debug), this);
+    controls_ = new LogControls(~core::LogLevelMask(core::LogLevel::Debug), this);
     model_->setFilter(controls_->mask());
     createTable();
 

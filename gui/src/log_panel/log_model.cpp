@@ -40,7 +40,7 @@ LogModel::LogModel(core::Logger& logger, QObject* parent)
     : QAbstractTableModel(parent)
     , logger_(logger)
 {
-    setFilter(~0);
+    setFilter(core::LogLevelMask::full());
 }
 
 int LogModel::rowCount(const QModelIndex& parent) const
@@ -196,7 +196,7 @@ void LogModel::setFilter(core::LogLevelMask mask)
         endResetModel();
     }
 
-    LOG.debug(kLog) << "Log filter set to " << mask; // TODO operator<<(ostream&, mask)
+    LOG.debug(kLog) << "Log filter set to " << mask;
 }
 
 void LogModel::clear()

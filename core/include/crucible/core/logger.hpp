@@ -9,8 +9,7 @@
 namespace crucible::core
 {
 
-enum class LogLevel
-    : unsigned int
+enum class LogLevel : unsigned int
 {
     Debug,
     Info,
@@ -18,6 +17,8 @@ enum class LogLevel
     Error,
     _Count
 };
+
+extern std::ostream& operator<<(std::ostream& os, LogLevel level);
 
 struct LogCategory
 {
@@ -34,12 +35,90 @@ struct LogEntry
     std::string message;
 };
 
-using LogLevelMask = std::uint32_t;
-
-constexpr LogLevelMask logLevelMask(LogLevel level)
+struct LogLevelMask
 {
-    return 1u << static_cast<std::underlying_type_t<LogLevel>>(level);
-}
+    uint32_t bits = 0;
+
+    constexpr explicit LogLevelMask() = default;
+
+    constexpr LogLevelMask(LogLevel level)
+        : bits(1u << static_cast<std::underlying_type_t<LogLevel>>(level))
+    {
+    }
+
+    constexpr bool operator==(const LogLevelMask& o) const
+    {
+        return bits == o.bits;
+    }
+
+    constexpr operator bool() const
+    {
+        return bits != 0;
+    }
+
+    constexpr LogLevelMask operator~() const
+    {
+        LogLevelMask mask{};
+        mask.bits = ~bits;
+        return mask;
+    }
+
+    constexpr LogLevelMask operator&(LogLevelMask o) const
+    {
+        LogLevelMask mask{};
+        mask.bits = bits & o.bits;
+        return mask;
+    }
+
+    constexpr LogLevelMask operator&(LogLevel level) const
+    {
+        return *this & LogLevelMask(level);
+    }
+
+    constexpr LogLevelMask& operator&=(LogLevelMask o)
+    {
+        bits &= o.bits;
+        return *this;
+    }
+
+    constexpr LogLevelMask& operator&=(LogLevel level)
+    {
+        return *this &= LogLevelMask(level);
+    }
+
+    constexpr LogLevelMask operator|(LogLevelMask o) const
+    {
+        LogLevelMask mask{};
+        mask.bits = bits | o.bits;
+        return mask;
+    }
+
+    constexpr LogLevelMask operator|(LogLevel level) const
+    {
+        return *this | LogLevelMask(level);
+    }
+
+    constexpr LogLevelMask& operator|=(LogLevelMask o)
+    {
+        bits |= o.bits;
+        return *this;
+    }
+
+    constexpr LogLevelMask& operator|=(LogLevel level)
+    {
+        return *this |= LogLevelMask(level);
+    }
+
+    constexpr static LogLevelMask full()
+    {
+        LogLevelMask mask{};
+        for (size_t i = 0; i < static_cast<size_t>(LogLevel::_Count); ++i)
+            mask.bits |= 1 << i;
+        return mask;
+    }
+};
+
+extern std::ostream& operator<<(std::ostream& os, LogLevelMask mask);
 
 struct LogEntryReference
 {
@@ -97,7 +176,7 @@ public:
     void add_entry(LogEntry entry);
     void clear();
 
-    std::unique_ptr<LogStoreFilter> filter(LogLevelMask mask = ~0) const;
+    std::unique_ptr<LogStoreFilter> filter(LogLevelMask mask = LogLevelMask::full()) const;
 };
 
 class Logger;

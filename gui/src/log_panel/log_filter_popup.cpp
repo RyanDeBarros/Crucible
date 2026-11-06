@@ -28,12 +28,12 @@ LogFilterPopup::LogFilterPopup(core::LogLevelMask initialFilter, QWidget* parent
 
 core::LogLevelMask LogFilterPopup::mask()
 {
-    core::LogLevelMask mask = 0;
+    core::LogLevelMask mask{};
 
     for (std::size_t i = 0; i < filter_buttons_.size(); ++i)
     {
         if (filter_buttons_[i]->isChecked())
-            mask |= core::logLevelMask(static_cast<core::LogLevel>(i));
+            mask |= static_cast<core::LogLevel>(i);
     }
 
     return mask;
@@ -42,7 +42,7 @@ core::LogLevelMask LogFilterPopup::mask()
 void LogFilterPopup::addFilter(core::LogLevel level, const QString& label, core::LogLevelMask initialFilter)
 {
     auto* checkbox = new QCheckBox(label, this);
-    checkbox->setChecked(core::logLevelMask(level) & initialFilter);
+    checkbox->setChecked(initialFilter & level);
     checkbox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
     filter_buttons_[static_cast<std::size_t>(level)] = checkbox;
