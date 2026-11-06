@@ -8,6 +8,8 @@
 namespace crucible::gui
 {
 
+class LogFilterPopup;
+
 class LogControls
     : public QWidget
 {
@@ -17,8 +19,7 @@ private:
     QToolButton* filter_button_ = nullptr;
     QToolButton* clear_button_ = nullptr;
     
-    QMenu* filter_menu_;
-    std::array<QAction*, static_cast<size_t>(core::LogLevel::_Count)> filter_actions_{};
+    LogFilterPopup* filter_popup_ = nullptr;
 
 public:
     explicit LogControls(QWidget* parent = nullptr);
@@ -29,8 +30,7 @@ signals:
 
 private:
     void createFilterButton();
-    void addFilter(core::LogLevel level, const QString& label);
-    void updateFilter();
+    void toggleFilterPopup();
 
     void createClearButton();
 };

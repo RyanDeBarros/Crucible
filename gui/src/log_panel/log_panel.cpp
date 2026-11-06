@@ -8,11 +8,8 @@
 #include <QEvent>
 #include <QHeaderView>
 #include <QKeyEvent>
-#include <QMenu>
 #include <QScrollBar>
 #include <QTimer>
-#include <QToolButton>
-#include <QVBoxLayout>
 
 namespace crucible::gui
 {

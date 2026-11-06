@@ -1,5 +1,7 @@
 #include <crucible/gui/log_panel/log_controls.hpp>
 
+#include <crucible/gui/log_panel/log_filter_popup.hpp>
+
 #include <QMenu>
 #include <QToolButton>
 
@@ -25,40 +27,26 @@ void LogControls::createFilterButton()
     filter_button_ = new QToolButton(this);
     filter_button_->setIcon(QIcon(":/icons/filter"));
     filter_button_->setToolTip(tr("Filter log levels"));
-    filter_button_->setPopupMode(QToolButton::InstantPopup);
+    connect(filter_button_, &QToolButton::clicked, this, &LogControls::toggleFilterPopup);
 
-    filter_menu_ = new QMenu(filter_button_);
-
-    addFilter(core::LogLevel::Debug, tr("Debug"));
-    addFilter(core::LogLevel::Info, tr("Info"));
-    addFilter(core::LogLevel::Warning, tr("Warning"));
-    addFilter(core::LogLevel::Error, tr("Error"));
-
-    filter_button_->setMenu(filter_menu_);
+    filter_popup_ = new LogFilterPopup(this);
+    connect(filter_popup_, &LogFilterPopup::filterChanged, this, &LogControls::filterChanged);
 }
 
-void LogControls::addFilter(core::LogLevel level, const QString& label)
+void LogControls::toggleFilterPopup()
 {
-    auto* action = filter_menu_->addAction(label);
-    action->setCheckable(true);
-    action->setChecked(true);
-
-    filter_actions_[static_cast<size_t>(level)] = action;
-
-    connect(action, &QAction::toggled, this, &LogControls::updateFilter);
-}
-
-void LogControls::updateFilter()
-{
-    core::LogLevelMask mask = 0;
-
-    for (size_t i = 0; i < filter_actions_.size(); ++i)
+    if (filter_popup_->isVisible())
     {
-        if (filter_actions_[i]->isChecked())
-            mask |= core::logLevelMask(static_cast<core::LogLevel>(i));
+        filter_popup_->hide();
+        return;
     }
 
-    filterChanged(mask);
+    filter_popup_->adjustSize();
+
+    const QPoint position = filter_button_->mapToGlobal(QPoint(0, filter_button_->height()));
+
+    filter_popup_->move(position);
+    filter_popup_->show();
 }
 
 void LogControls::createClearButton()
