@@ -4,4 +4,5 @@ target_sources(crucible_gui
         stylesheet.hpp
 )
 
+add_subdirectory(log_panel)
 add_subdirectory(op_graph)

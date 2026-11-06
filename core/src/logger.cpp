@@ -3,7 +3,7 @@
 namespace crucible
 {
 
-extern core::Logger LOG;
+core::Logger LOG;
 
 } // crucible
 
