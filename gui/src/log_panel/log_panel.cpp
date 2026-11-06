@@ -73,15 +73,16 @@ void LogPanel::createLayout()
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    controls_ = new LogControls(~core::LogLevelMask(core::LogLevel::Debug), this);
-    model_->setFilter(controls_->mask());
+    controls_ = new LogControls(this);
+    model_->setLevelFilter(controls_->level_mask());
     createTable();
 
     layout->addWidget(controls_);
     layout->addWidget(table_);
 
-    connect(controls_, &LogControls::filterChanged, this, &LogPanel::setFilter);
-    connect(controls_, &LogControls::clearRequested, model_, &LogModel::clear);
+    connect(controls_, &LogControls::levelFilterChanged, this, &LogPanel::setLevelFilter);
+    connect(controls_, &LogControls::columnFilterChanged, this, &LogPanel::setColumnFilter);
+    connect(controls_, &LogControls::clearRequested, model_, &LogModel::clear); // TODO confirmation popup
 }
 
 void LogPanel::createTable()
@@ -102,15 +103,19 @@ void LogPanel::createTable()
     table_->setAlternatingRowColors(true);
 
     table_->horizontalHeader()->setSectionResizeMode(
-        LogModel::Timestamp,
+        LogColumn::Timestamp,
         QHeaderView::ResizeToContents);
 
     table_->horizontalHeader()->setSectionResizeMode(
-        LogModel::Level,
+        LogColumn::Level,
         QHeaderView::ResizeToContents);
 
     table_->horizontalHeader()->setSectionResizeMode(
-        LogModel::Message,
+        LogColumn::Category,
+        QHeaderView::ResizeToContents);
+
+    table_->horizontalHeader()->setSectionResizeMode(
+        LogColumn::Message,
         QHeaderView::Stretch);
 
     setWordWrap(false); // TODO app setting
@@ -123,10 +128,21 @@ void LogPanel::initPoll()
     timer->start(250); // TODO app setting
 }
 
-void LogPanel::setFilter(core::LogLevelMask mask)
+void LogPanel::setLevelFilter(core::LogLevelMask mask)
 {
     ScrollbarPreserver sp(*table_);
-    model_->setFilter(mask);
+    LOG.debug(kLog) << "Log level filter set to " << mask;
+
+    model_->setLevelFilter(mask);
+}
+
+void LogPanel::setColumnFilter(LogColumnMask mask)
+{
+    ScrollbarPreserver sp(*table_);
+    LOG.debug(kLog) << "Log column filter set to " << mask;
+
+    for (size_t i = 0; i < static_cast<size_t>(LogColumn::_Count); ++i)
+        table_->setColumnHidden(i, !(mask & static_cast<LogColumn>(i)));
 }
 
 void LogPanel::refresh()

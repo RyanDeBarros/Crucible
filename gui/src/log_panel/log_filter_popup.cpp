@@ -6,7 +6,7 @@
 namespace crucible::gui
 {
 
-LogFilterPopup::LogFilterPopup(core::LogLevelMask initialFilter, QWidget* parent)
+LogFilterPopup::LogFilterPopup(QWidget* parent)
     : QFrame(parent, Qt::Popup)
 {
     setFrameShape(QFrame::StyledPanel);
@@ -15,44 +15,89 @@ LogFilterPopup::LogFilterPopup(core::LogLevelMask initialFilter, QWidget* parent
     layout->setContentsMargins(4, 4, 4, 4);
     layout->setSpacing(2);
 
-    addFilter(core::LogLevel::Debug, tr("Debug"), initialFilter);
-    addFilter(core::LogLevel::Info, tr("Info"), initialFilter);
-    addFilter(core::LogLevel::Warning, tr("Warning"), initialFilter);
-    addFilter(core::LogLevel::Error, tr("Error"), initialFilter);
+    addFilter(core::LogLevel::Debug, tr("Debug"));
+    addFilter(core::LogLevel::Info, tr("Info"));
+    addFilter(core::LogLevel::Warning, tr("Warning"));
+    addFilter(core::LogLevel::Error, tr("Error"));
 
-    for (auto* button : filter_buttons_)
+    addFilter(LogColumn::Timestamp, tr("Timestamp"));
+    addFilter(LogColumn::Level, tr("Level"));
+    addFilter(LogColumn::Category, tr("Category"));
+
+    for (auto* button : level_buttons_)
         layout->addWidget(button);
 
-    updateFilter();
+    auto* line = new QFrame(this);
+    line->setFrameShape(QFrame::HLine);
+
+    layout->addWidget(line);
+
+    for (auto* button : column_buttons_)
+    {
+        if (button)
+            layout->addWidget(button);
+    }
+
+    updateLevelFilter();
+    updateColumnFilter();
 }
 
-core::LogLevelMask LogFilterPopup::mask()
+core::LogLevelMask LogFilterPopup::level_mask()
 {
     core::LogLevelMask mask{};
 
-    for (std::size_t i = 0; i < filter_buttons_.size(); ++i)
+    for (std::size_t i = 0; i < level_buttons_.size(); ++i)
     {
-        if (filter_buttons_[i]->isChecked())
+        if (level_buttons_[i]->isChecked())
             mask |= static_cast<core::LogLevel>(i);
     }
 
     return mask;
 }
 
-void LogFilterPopup::addFilter(core::LogLevel level, const QString& label, core::LogLevelMask initialFilter)
+LogColumnMask LogFilterPopup::column_mask()
 {
-    auto* checkbox = new QCheckBox(label, this);
-    checkbox->setChecked(initialFilter & level);
-    checkbox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    LogColumnMask mask{};
 
-    filter_buttons_[static_cast<std::size_t>(level)] = checkbox;
+    for (std::size_t i = 0; i < column_buttons_.size(); ++i)
+    {
+        if (!column_buttons_[i] || column_buttons_[i]->isChecked())
+            mask |= static_cast<LogColumn>(i);
+    }
 
-    connect(checkbox, &QCheckBox::toggled, this, &LogFilterPopup::updateFilter);
+    return mask;
 }
 
-void LogFilterPopup::updateFilter()
+void LogFilterPopup::addFilter(core::LogLevel level, const QString& label)
 {
-    emit filterChanged(mask());
+    auto* checkbox = new QCheckBox(label, this);
+    checkbox->setChecked(~core::LogLevelMask(core::LogLevel::Debug) & level);
+    checkbox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
+    level_buttons_[static_cast<std::size_t>(level)] = checkbox;
+
+    connect(checkbox, &QCheckBox::toggled, this, &LogFilterPopup::updateLevelFilter);
+}
+
+void LogFilterPopup::addFilter(LogColumn column, const QString& label)
+{
+    auto* checkbox = new QCheckBox(label, this);
+    checkbox->setChecked(true);
+    checkbox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
+    column_buttons_[static_cast<std::size_t>(column)] = checkbox;
+
+    connect(checkbox, &QCheckBox::toggled, this, &LogFilterPopup::updateColumnFilter);
+}
+
+void LogFilterPopup::updateLevelFilter()
+{
+    emit levelFilterChanged(level_mask());
+}
+
+void LogFilterPopup::updateColumnFilter()
+{
+    emit columnFilterChanged(column_mask());
 }
 
 } // crucible::gui

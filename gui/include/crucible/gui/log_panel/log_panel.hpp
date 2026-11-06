@@ -2,6 +2,8 @@
 
 #include <crucible/core/logging/logger.hpp>
 
+#include <crucible/gui/log_panel/log_column.hpp>
+
 #include <QWidget>
 
 class QTableView;
@@ -43,7 +45,8 @@ private:
     void createTable();
     void initPoll();
 
-    void setFilter(core::LogLevelMask mask);
+    void setLevelFilter(core::LogLevelMask mask);
+    void setColumnFilter(LogColumnMask mask);
     void refresh();
 };
 

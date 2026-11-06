@@ -2,6 +2,8 @@
 
 #include <crucible/core/logging/log_level.hpp>
 
+#include <crucible/gui/log_panel/log_column.hpp>
+
 #include <QWidget>
 
 namespace crucible::gui
@@ -21,16 +23,18 @@ private:
     LogFilterPopup* filter_popup_ = nullptr;
 
 public:
-    explicit LogControls(core::LogLevelMask initialFilter, QWidget* parent = nullptr);
+    explicit LogControls(QWidget* parent = nullptr);
 
-    core::LogLevelMask mask();
+    core::LogLevelMask level_mask();
+    LogColumnMask column_mask();
 
 signals:
-    void filterChanged(core::LogLevelMask mask);
+    void levelFilterChanged(core::LogLevelMask mask);
+    void columnFilterChanged(LogColumnMask mask);
     void clearRequested();
 
 private:
-    void createFilterButton(core::LogLevelMask initialFilter);
+    void createFilterButton();
     void toggleFilterPopup();
 
     void createClearButton();

@@ -2,6 +2,8 @@
 
 #include <crucible/core/logging/log_level.hpp>
 
+#include <crucible/gui/log_panel/log_column.hpp>
+
 #include <QFrame>
 
 class QCheckBox;
@@ -15,19 +17,24 @@ class LogFilterPopup
     Q_OBJECT;
 
 private:
-    std::array<QCheckBox*, static_cast<std::size_t>(core::LogLevel::_Count)> filter_buttons_{};
+    std::array<QCheckBox*, static_cast<std::size_t>(core::LogLevel::_Count)> level_buttons_{};
+    std::array<QCheckBox*, static_cast<std::size_t>(LogColumn::_Count)> column_buttons_{};
 
 public:
-    explicit LogFilterPopup(core::LogLevelMask initialFilter, QWidget* parent = nullptr);
+    explicit LogFilterPopup(QWidget* parent = nullptr);
 
-    core::LogLevelMask mask();
+    core::LogLevelMask level_mask();
+    LogColumnMask column_mask();
 
 signals:
-    void filterChanged(core::LogLevelMask mask);
+    void levelFilterChanged(core::LogLevelMask mask);
+    void columnFilterChanged(LogColumnMask mask);
 
 private:
-    void addFilter(core::LogLevel level, const QString& label, core::LogLevelMask initialFilter);
-    void updateFilter();
+    void addFilter(core::LogLevel level, const QString& label);
+    void addFilter(LogColumn column, const QString& label);
+    void updateLevelFilter();
+    void updateColumnFilter();
 };
 
 } // crucible::gui

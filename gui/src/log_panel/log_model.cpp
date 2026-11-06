@@ -1,6 +1,7 @@
 #include <crucible/gui/log_panel/log_model.hpp>
 
 #include <crucible/gui/log_panel/log_categories.hpp>
+#include <crucible/gui/log_panel/log_column.hpp>
 
 #include <QBrush>
 #include <QDateTime>
@@ -40,7 +41,7 @@ LogModel::LogModel(core::Logger& logger, QObject* parent)
     : QAbstractTableModel(parent)
     , logger_(logger)
 {
-    setFilter(core::LogLevelMask::full());
+    setLevelFilter(core::LogLevelMask::full());
 }
 
 int LogModel::rowCount(const QModelIndex& parent) const
@@ -50,7 +51,7 @@ int LogModel::rowCount(const QModelIndex& parent) const
 
 int LogModel::columnCount(const QModelIndex& parent) const
 {
-    return parent.isValid() ? 0 : Column::_Count;
+    return parent.isValid() ? 0 : LogColumn::_Count;
 }
 
 // TODO filter for which columns besides 'message' should be shown
@@ -68,13 +69,13 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
     {
         switch (index.column())
         {
-        case Column::Timestamp:
+        case LogColumn::Timestamp:
         {
             const auto timestamp = std::chrono::system_clock::to_time_t(entry.timestamp);
             return QDateTime::fromSecsSinceEpoch(timestamp).toString("HH:mm:ss.zzz");
         }
 
-        case Column::Level:
+        case LogColumn::Level:
             switch (entry.level)
             {
             case core::LogLevel::Debug:
@@ -93,10 +94,10 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
                 return {};
             }
 
-        case Column::Category:
+        case LogColumn::Category:
             return QString::fromStdString(entry.category.text);
 
-        case Column::Message:
+        case LogColumn::Message:
             return QString::fromStdString(entry.message);
         }
     }
@@ -105,10 +106,10 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
     {
         switch (index.column())
         {
-        case Column::Timestamp:
+        case LogColumn::Timestamp:
             return QBrush(QColor(130, 130, 130)); // TODO use stylesheet file?
 
-        case Column::Level:
+        case LogColumn::Level:
         {
             switch (entry.level)
             {
@@ -129,7 +130,7 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
             }
         }
 
-        case Column::Category:
+        case LogColumn::Category:
             return QBrush(logCategoryColor(entry.category));
 
         default:
@@ -137,7 +138,7 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
         }
     }
     
-    if (message_tooltip && role == Qt::ToolTipRole && index.column() == Column::Message)
+    if (message_tooltip && role == Qt::ToolTipRole && index.column() == LogColumn::Message)
         return QString::fromStdString(entry.message);
 
     return {};
@@ -150,16 +151,16 @@ QVariant LogModel::headerData(int section, Qt::Orientation orientation, int role
 
     switch (section)
     {
-    case Column::Timestamp:
+    case LogColumn::Timestamp:
         return "Time";
 
-    case Column::Level:
+    case LogColumn::Level:
         return "Level";
 
-    case Column::Category:
+    case LogColumn::Category:
         return "Category";
 
-    case Column::Message:
+    case LogColumn::Message:
         return "Message";
 
     default:
@@ -184,7 +185,7 @@ void LogModel::refresh()
     filter_->refresh(&callback);
 }
 
-void LogModel::setFilter(core::LogLevelMask mask)
+void LogModel::setLevelFilter(core::LogLevelMask mask)
 {
     {
         auto entries = logger_.lock_entries();
@@ -195,8 +196,6 @@ void LogModel::setFilter(core::LogLevelMask mask)
         filter_ = entries->filter(mask);
         endResetModel();
     }
-
-    LOG.debug(kLog) << "Log filter set to " << mask;
 }
 
 void LogModel::clear()

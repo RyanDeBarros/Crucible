@@ -9,13 +9,13 @@
 namespace crucible::gui
 {
 
-LogControls::LogControls(core::LogLevelMask initialFilter, QWidget* parent)
+LogControls::LogControls(QWidget* parent)
     : QWidget(parent)
 {
     auto* controls_layout = new QHBoxLayout(this);
     controls_layout->setContentsMargins(4, 2, 4, 2);
 
-    createFilterButton(initialFilter);
+    createFilterButton();
     createClearButton();
 
     controls_layout->addWidget(filter_button_);
@@ -23,20 +23,34 @@ LogControls::LogControls(core::LogLevelMask initialFilter, QWidget* parent)
     controls_layout->addStretch();
 }
 
-core::LogLevelMask LogControls::mask()
+core::LogLevelMask LogControls::level_mask()
 {
-    return filter_popup_->mask();
+    return filter_popup_->level_mask();
 }
 
-void LogControls::createFilterButton(core::LogLevelMask initialFilter)
+LogColumnMask LogControls::column_mask()
+{
+    return filter_popup_->column_mask();
+}
+
+void LogControls::createFilterButton()
 {
     filter_button_ = new QToolButton(this);
     filter_button_->setIcon(QIcon(":/icons/filter"));
-    filter_button_->setToolTip(tr("Filter log levels"));
+    filter_button_->setToolTip(tr("Filter options"));
     connect(filter_button_, &QToolButton::clicked, this, &LogControls::toggleFilterPopup);
 
-    filter_popup_ = new LogFilterPopup(initialFilter, this);
-    connect(filter_popup_, &LogFilterPopup::filterChanged, this, &LogControls::filterChanged);
+    filter_popup_ = new LogFilterPopup(this);
+    connect(
+        filter_popup_,
+        &LogFilterPopup::levelFilterChanged,
+        this,
+        &LogControls::levelFilterChanged);
+    connect(
+        filter_popup_,
+        &LogFilterPopup::columnFilterChanged,
+        this,
+        &LogControls::columnFilterChanged);
 }
 
 void LogControls::toggleFilterPopup()

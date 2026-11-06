@@ -2,6 +2,8 @@
 
 #include <crucible/core/logging/logger.hpp>
 
+#include <crucible/gui/log_panel/log_column.hpp>
+
 #include <QAbstractTableModel>
 
 namespace crucible::gui
@@ -17,21 +19,12 @@ class LogModel
     friend class LogModelRefreshCallback;
 
 public:
-    enum Column
-    {
-        Timestamp,
-        Level,
-        Category,
-        Message,
-        _Count
-    };
-
-public:
     bool message_tooltip = false;
 
 private:
     core::Logger& logger_;
     std::unique_ptr<core::LogStoreFilter> filter_;
+    LogColumnMask column_mask_;
 
 public:
     explicit LogModel(core::Logger& logger, QObject* parent = nullptr);
@@ -43,7 +36,7 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
     void refresh();
-    void setFilter(core::LogLevelMask mask);
+    void setLevelFilter(core::LogLevelMask mask);
     void clear();
 };
 
