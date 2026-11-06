@@ -5,7 +5,7 @@
 namespace crucible::gui
 {
 
-LogModel::LogModel(const core::Logger& logger, QObject* parent)
+LogModel::LogModel(core::Logger& logger, QObject* parent)
     : QAbstractTableModel(parent)
     , logger_(logger)
 {
@@ -143,6 +143,16 @@ void LogModel::setFilter(core::LogLevelMask mask)
 
     beginResetModel();
     filter_ = entries->filter(mask);
+    endResetModel();
+}
+
+void LogModel::clear()
+{
+    auto entries = logger_.lock_entries();
+
+    beginResetModel();
+    entries->clear();
+    filter_->refresh();
     endResetModel();
 }
 

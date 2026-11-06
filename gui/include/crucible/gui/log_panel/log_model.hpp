@@ -27,11 +27,11 @@ public:
     bool message_tooltip = false;
 
 private:
-    const core::Logger& logger_;
+    core::Logger& logger_;
     std::unique_ptr<core::LogStoreFilter> filter_;
 
 public:
-    explicit LogModel(const core::Logger& logger, QObject* parent = nullptr);
+    explicit LogModel(core::Logger& logger, QObject* parent = nullptr);
 
     int rowCount(const QModelIndex& parent = {}) const override;
     int columnCount(const QModelIndex& parent = {}) const override;
@@ -41,6 +41,7 @@ public:
 
     void refresh();
     void setFilter(core::LogLevelMask mask);
+    void clear();
 };
 
 } // crucible::gui

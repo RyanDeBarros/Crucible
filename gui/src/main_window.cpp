@@ -3,6 +3,8 @@
 #include <crucible/gui/log_panel/log_panel.hpp>
 #include <crucible/gui/op_graph/op_graph_panel.hpp>
 
+#include <crucible/core/logger.hpp>
+
 #include <QMenuBar>
 #include <QScreen>
 #include <QStatusBar>

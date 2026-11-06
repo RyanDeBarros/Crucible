@@ -103,7 +103,7 @@ LogLine::~LogLine()
     }
 }
 
-Logger::LockedEntries::LockedEntries(const Logger& logger)
+Logger::LockedEntries::LockedEntries(Logger& logger)
     : logger_(&logger)
     , lock_(logger.acquire_lock())
 {
@@ -120,7 +120,17 @@ const LogStore& Logger::LockedEntries::operator*() const
     return logger().store_;
 }
 
+LogStore& Logger::LockedEntries::operator*()
+{
+    return logger().store_;
+}
+
 const LogStore* Logger::LockedEntries::operator->() const
+{
+    return &logger().store_;
+}
+
+LogStore* Logger::LockedEntries::operator->()
 {
     return &logger().store_;
 }
@@ -133,7 +143,15 @@ const Logger& Logger::LockedEntries::logger() const
     return *logger_;
 }
 
-Logger::LockedEntries Logger::lock_entries() const
+Logger& Logger::LockedEntries::logger()
+{
+    if (!logger_)
+        throw std::runtime_error("Locked entries points to null logger");
+
+    return *logger_;
+}
+
+Logger::LockedEntries Logger::lock_entries()
 {
     return LockedEntries(*this);
 }

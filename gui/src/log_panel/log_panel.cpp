@@ -1,5 +1,6 @@
 #include <crucible/gui/log_panel/log_panel.hpp>
 
+#include <crucible/gui/log_panel/log_controls.hpp>
 #include <crucible/gui/log_panel/log_model.hpp>
 
 #include <QApplication>
@@ -16,7 +17,7 @@
 namespace crucible::gui
 {
 
-LogPanel::LogPanel(const core::Logger& logger, QWidget* parent)
+LogPanel::LogPanel(core::Logger& logger, QWidget* parent)
     : QWidget(parent)
 {
     model_ = new LogModel(logger, this);
@@ -89,31 +90,20 @@ void LogPanel::setWordWrap(bool on)
     table_->setTextElideMode(on ? Qt::ElideNone : Qt::ElideRight);
 }
 
-void LogPanel::createFilterButton()
+void LogPanel::createLayout()
 {
-    filter_button_ = new QToolButton(this);
-    filter_button_->setIcon(QIcon(":/icons/filter"));
-    filter_button_->setToolTip(tr("Filter log levels"));
-    filter_button_->setPopupMode(QToolButton::InstantPopup);
+    auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
 
-    filter_menu_ = new QMenu(filter_button_);
+    controls_ = new LogControls(this);
+    createTable();
 
-    const auto add_filter = [this](core::LogLevel level, QString const& label) {
-        auto* action = filter_menu_->addAction(label);
-        action->setCheckable(true);
-        action->setChecked(true);
+    layout->addWidget(controls_);
+    layout->addWidget(table_);
 
-        filter_actions_[static_cast<size_t>(level)] = action;
-
-        connect(action, &QAction::toggled, this, [this] { updateFilter(); });
-    };
-
-    add_filter(core::LogLevel::Debug, tr("Debug"));
-    add_filter(core::LogLevel::Info, tr("Info"));
-    add_filter(core::LogLevel::Warning, tr("Warning"));
-    add_filter(core::LogLevel::Error, tr("Error"));
-
-    filter_button_->setMenu(filter_menu_);
+    connect(controls_, &LogControls::filterChanged, model_, &LogModel::setFilter);
+    connect(controls_, &LogControls::clearRequested, model_, &LogModel::clear);
 }
 
 void LogPanel::createTable()
@@ -148,25 +138,6 @@ void LogPanel::createTable()
     setWordWrap(false); // TODO app setting
 }
 
-void LogPanel::createLayout()
-{
-    createFilterButton();
-    createTable();
-
-    auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(0);
-
-    auto* controls_layout = new QHBoxLayout();
-    controls_layout->setContentsMargins(4, 2, 4, 2);
-
-    controls_layout->addStretch();
-    controls_layout->addWidget(filter_button_);
-
-    layout->addLayout(controls_layout);
-    layout->addWidget(table_);
-}
-
 void LogPanel::initPoll()
 {
     auto* timer = new QTimer(this);
@@ -183,19 +154,6 @@ void LogPanel::refresh()
 
     if (at_bottom)
         table_->scrollToBottom();
-}
-
-void LogPanel::updateFilter()
-{
-    core::LogLevelMask mask = 0;
-
-    for (size_t i = 0; i < filter_actions_.size(); ++i)
-    {
-        if (filter_actions_[i]->isChecked())
-            mask |= core::logLevelMask(static_cast<core::LogLevel>(i));
-    }
-
-    model_->setFilter(mask);
 }
 
 } // crucible::gui

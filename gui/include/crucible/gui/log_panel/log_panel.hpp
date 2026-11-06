@@ -1,7 +1,5 @@
 #pragma once
 
-#include <crucible/core/logger.hpp>
-
 #include <QTableView>
 #include <QWidget>
 
@@ -15,6 +13,7 @@ class Logger;
 namespace crucible::gui
 {
 
+class LogControls;
 class LogModel;
 
 class LogPanel
@@ -23,15 +22,12 @@ class LogPanel
     Q_OBJECT;
 
 private:
+    LogControls* controls_;
     LogModel* model_;
     QTableView* table_;
 
-    QToolButton* filter_button_ = nullptr;
-    QMenu* filter_menu_;
-    std::array<QAction*, static_cast<size_t>(core::LogLevel::_Count)> filter_actions_{};
-
 public:
-    explicit LogPanel(const core::Logger& logger, QWidget* parent = nullptr);
+    explicit LogPanel(core::Logger& logger, QWidget* parent = nullptr);
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
@@ -40,13 +36,11 @@ public:
     void setWordWrap(bool on);
 
 private:
-    void createFilterButton();
-    void createTable();
     void createLayout();
+    void createTable();
     void initPoll();
 
     void refresh();
-    void updateFilter();
 };
 
 } // crucible::gui

@@ -118,11 +118,11 @@ public:
         friend class Logger;
 
     private:
-        const Logger* logger_;
+        Logger* logger_;
         std::unique_lock<std::mutex> lock_;
 
     private:
-        LockedEntries(const Logger& logger);
+        LockedEntries(Logger& logger);
 
     public:
         LockedEntries(const LockedEntries&) = delete;
@@ -132,10 +132,13 @@ public:
         LockedEntries& operator=(LockedEntries&&) = delete;
 
         const LogStore& operator*() const;
+        LogStore& operator*();
         const LogStore* operator->() const;
+        LogStore* operator->();
 
     private:
         const Logger& logger() const;
+        Logger& logger();
     };
 
 private:
@@ -143,7 +146,7 @@ private:
     mutable std::mutex mutex_;
 
 public:
-    LockedEntries lock_entries() const;
+    LockedEntries lock_entries();
 
     LogLine debug();
     LogLine info();

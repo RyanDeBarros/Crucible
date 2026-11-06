@@ -5,5 +5,6 @@
     </qresource>
     <qresource prefix="/icons">
         <file alias="filter">icons/filter.svg</file>
+        <file alias="clear_log">icons/clear_log.svg</file>
     </qresource>
 </RCC>
