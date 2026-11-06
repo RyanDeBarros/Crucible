@@ -9,13 +9,13 @@
 namespace crucible::gui
 {
 
-LogControls::LogControls(QWidget* parent)
+LogControls::LogControls(core::LogLevelMask initialFilter, QWidget* parent)
     : QWidget(parent)
 {
     auto* controls_layout = new QHBoxLayout(this);
     controls_layout->setContentsMargins(4, 2, 4, 2);
 
-    createFilterButton();
+    createFilterButton(initialFilter);
     createClearButton();
 
     controls_layout->addWidget(filter_button_);
@@ -23,14 +23,14 @@ LogControls::LogControls(QWidget* parent)
     controls_layout->addStretch();
 }
 
-void LogControls::createFilterButton()
+void LogControls::createFilterButton(core::LogLevelMask initialFilter)
 {
     filter_button_ = new QToolButton(this);
     filter_button_->setIcon(QIcon(":/icons/filter"));
     filter_button_->setToolTip(tr("Filter log levels"));
     connect(filter_button_, &QToolButton::clicked, this, &LogControls::toggleFilterPopup);
 
-    filter_popup_ = new LogFilterPopup(this);
+    filter_popup_ = new LogFilterPopup(initialFilter, this);
     connect(filter_popup_, &LogFilterPopup::filterChanged, this, &LogControls::filterChanged);
 }
 

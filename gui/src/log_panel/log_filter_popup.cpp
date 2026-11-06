@@ -6,7 +6,7 @@
 namespace crucible::gui
 {
 
-LogFilterPopup::LogFilterPopup(QWidget* parent)
+LogFilterPopup::LogFilterPopup(core::LogLevelMask initialFilter, QWidget* parent)
     : QFrame(parent, Qt::Popup)
 {
     setFrameShape(QFrame::StyledPanel);
@@ -15,10 +15,10 @@ LogFilterPopup::LogFilterPopup(QWidget* parent)
     layout->setContentsMargins(4, 4, 4, 4);
     layout->setSpacing(2);
 
-    addFilter(core::LogLevel::Debug, tr("Debug"));
-    addFilter(core::LogLevel::Info, tr("Info"));
-    addFilter(core::LogLevel::Warning, tr("Warning"));
-    addFilter(core::LogLevel::Error, tr("Error"));
+    addFilter(core::LogLevel::Debug, tr("Debug"), initialFilter);
+    addFilter(core::LogLevel::Info, tr("Info"), initialFilter);
+    addFilter(core::LogLevel::Warning, tr("Warning"), initialFilter);
+    addFilter(core::LogLevel::Error, tr("Error"), initialFilter);
 
     for (auto* button : filter_buttons_)
         layout->addWidget(button);
@@ -26,10 +26,10 @@ LogFilterPopup::LogFilterPopup(QWidget* parent)
     updateFilter();
 }
 
-void LogFilterPopup::addFilter(core::LogLevel level, const QString& label)
+void LogFilterPopup::addFilter(core::LogLevel level, const QString& label, core::LogLevelMask initialFilter)
 {
     auto* checkbox = new QCheckBox(label, this);
-    checkbox->setChecked(true);
+    checkbox->setChecked(core::logLevelMask(level) & initialFilter);
     checkbox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
     filter_buttons_[static_cast<std::size_t>(level)] = checkbox;

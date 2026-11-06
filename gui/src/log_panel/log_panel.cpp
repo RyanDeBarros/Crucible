@@ -22,35 +22,6 @@ LogPanel::LogPanel(core::Logger& logger, QWidget* parent)
     model_ = new LogModel(logger, this);
     createLayout();
     initPoll();
-
-
-    auto* testTimer = new QTimer(this);
-
-    connect(testTimer, &QTimer::timeout, this, [this]() {
-        static int counter = 0;
-
-        switch (counter++ % 4)
-        {
-        case 0:
-            LOG.debug() << "Debug message #" << counter;
-            break;
-
-        case 1:
-            LOG.info() << "Info message #" << counter;
-            break;
-
-        case 2:
-            LOG.warning() << "Warning message #" << counter;
-            break;
-
-        case 3:
-            LOG.error() << "Error message #" << counter;
-            break;
-        }
-
-    });
-
-    testTimer->start(1000);
 }
 
 bool LogPanel::eventFilter(QObject* watched, QEvent* event)
@@ -95,7 +66,7 @@ void LogPanel::createLayout()
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    controls_ = new LogControls(this);
+    controls_ = new LogControls(~core::logLevelMask(core::LogLevel::Debug), this);
     createTable();
 
     layout->addWidget(controls_);

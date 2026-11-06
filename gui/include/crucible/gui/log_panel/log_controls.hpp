@@ -21,14 +21,14 @@ private:
     LogFilterPopup* filter_popup_ = nullptr;
 
 public:
-    explicit LogControls(QWidget* parent = nullptr);
+    explicit LogControls(core::LogLevelMask initialFilter, QWidget* parent = nullptr);
 
 signals:
     void filterChanged(core::LogLevelMask mask);
     void clearRequested();
 
 private:
-    void createFilterButton();
+    void createFilterButton(core::LogLevelMask initialFilter);
     void toggleFilterPopup();
 
     void createClearButton();
