@@ -6,6 +6,34 @@
 namespace crucible::gui
 {
 
+class LogModelRefreshCallback
+    : public core::LogRefreshCallback
+{
+private:
+    LogModel& model_;
+
+public:
+    explicit LogModelRefreshCallback(LogModel& model);
+
+    void before_append(std::size_t row) override;
+    void after_append() override;
+};
+
+LogModelRefreshCallback::LogModelRefreshCallback(LogModel& model)
+    : model_(model)
+{
+}
+
+void LogModelRefreshCallback::before_append(std::size_t row)
+{
+    model_.beginInsertRows(QModelIndex(), static_cast<int>(row), static_cast<int>(row));
+}
+
+void LogModelRefreshCallback::after_append()
+{
+    model_.endInsertRows();
+}
+
 LogModel::LogModel(core::Logger& logger, QObject* parent)
     : QAbstractTableModel(parent)
     , logger_(logger)
@@ -131,9 +159,16 @@ void LogModel::refresh()
     // lock logger for refresh
     auto entries = logger_.lock_entries();
 
-    beginResetModel();
-    filter_->refresh();
-    endResetModel();
+    if (filter_->invalidated())
+    {
+        beginResetModel();
+        filter_->refresh();
+        endResetModel();
+        return;
+    }
+
+    LogModelRefreshCallback callback(*this);
+    filter_->refresh(&callback);
 }
 
 void LogModel::setFilter(core::LogLevelMask mask)

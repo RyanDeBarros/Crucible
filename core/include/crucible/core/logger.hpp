@@ -41,6 +41,14 @@ struct LogEntryReference
 
 class LogStore;
 
+struct LogRefreshCallback
+{
+    virtual ~LogRefreshCallback() = default;
+
+    virtual void before_append(size_t row) = 0;
+    virtual void after_append() = 0;
+};
+
 class LogStoreFilter
 {
     friend class LogStore;
@@ -60,10 +68,11 @@ public:
     size_t size() const;
     const LogEntry& operator[](size_t index) const;
 
-    void refresh();
+    bool invalidated() const;
+    void refresh(LogRefreshCallback* callback = nullptr);
 
 private:
-    void append_missing();
+    void append_missing(LogRefreshCallback* callback = nullptr);
     void assert_valid() const;
 };
 

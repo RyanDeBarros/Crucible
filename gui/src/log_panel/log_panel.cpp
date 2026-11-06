@@ -140,7 +140,7 @@ void LogPanel::createTable()
 void LogPanel::initPoll()
 {
     auto* timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &LogPanel::refresh); // TODO use beginInsertRows()/endInsertRows() instead of rebuilding with refresh()
+    connect(timer, &QTimer::timeout, this, &LogPanel::refresh);
     timer->start(250); // TODO app setting
 }
 

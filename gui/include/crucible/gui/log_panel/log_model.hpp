@@ -7,10 +7,14 @@
 namespace crucible::gui
 {
 
+class LogModelRefreshCallback;
+
 class LogModel
     : public QAbstractTableModel
 {
     Q_OBJECT;
+
+    friend class LogModelRefreshCallback;
 
 public:
     enum Column

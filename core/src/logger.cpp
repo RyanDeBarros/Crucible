@@ -36,25 +36,38 @@ const LogEntry& LogStoreFilter::operator[](size_t index) const
     return store_.entry_lists_[static_cast<size_t>(ref.level)][ref.index];
 }
 
-void LogStoreFilter::refresh()
+bool LogStoreFilter::invalidated() const
 {
-    if (store_version_ != store_.version_)
+    return store_version_ != store_.version_;
+}
+
+void LogStoreFilter::refresh(LogRefreshCallback* callback)
+{
+    if (invalidated())
     {
         chronology_.clear();
         end_index_ = 0;
         store_version_ = store_.version_;
     }
 
-    append_missing();
+    append_missing(callback);
 }
 
-void LogStoreFilter::append_missing()
+void LogStoreFilter::append_missing(LogRefreshCallback* callback)
 {
     while (end_index_ < store_.chronology_.size())
     {
         LogEntryReference ref = store_.chronology_[end_index_++];
         if (mask_ & logLevelMask(ref.level))
+        {
+            if (callback)
+                callback->before_append(chronology_.size());
+
             chronology_.push_back(ref);
+
+            if (callback)
+                callback->after_append();
+        }
     }
 }
 
