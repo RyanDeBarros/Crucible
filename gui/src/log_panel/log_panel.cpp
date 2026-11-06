@@ -7,6 +7,7 @@
 #include <QEvent>
 #include <QHeaderView>
 #include <QKeyEvent>
+#include <QScrollBar>
 #include <QTimer>
 #include <QVBoxLayout>
 
@@ -113,10 +114,13 @@ bool LogPanel::eventFilter(QObject* watched, QEvent* event)
 
 void LogPanel::refresh()
 {
+    auto* scrollbar = table_->verticalScrollBar();
+    const bool at_bottom = scrollbar->value() >= scrollbar->maximum();
+
     model_->refresh();
 
-    // TODO only if already at bottom
-    table_->scrollToBottom();
+    if (at_bottom)
+        table_->scrollToBottom();
 }
 
 } // crucible::gui
