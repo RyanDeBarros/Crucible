@@ -4,6 +4,8 @@
 #include <crucible/gui/log_panel/log_controls.hpp>
 #include <crucible/gui/log_panel/log_model.hpp>
 
+#include <crucible/gui/util/scrollbar_preserver.hpp>
+
 #include <QApplication>
 #include <QClipboard>
 #include <QEvent>
@@ -123,25 +125,14 @@ void LogPanel::initPoll()
 
 void LogPanel::setFilter(core::LogLevelMask mask)
 {
-    // TODO RAII utility for this scrollbar to bottom restore
-    auto* scrollbar = table_->verticalScrollBar();
-    const bool at_bottom = scrollbar->value() >= scrollbar->maximum();
-
+    ScrollbarPreserver sp(*table_);
     model_->setFilter(mask);
-
-    if (at_bottom)
-        table_->scrollToBottom();
 }
 
 void LogPanel::refresh()
 {
-    auto* scrollbar = table_->verticalScrollBar();
-    const bool at_bottom = scrollbar->value() >= scrollbar->maximum();
-
+    ScrollbarPreserver sp(*table_);
     model_->refresh();
-
-    if (at_bottom)
-        table_->scrollToBottom();
 }
 
 } // crucible::gui
