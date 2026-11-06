@@ -5,7 +5,7 @@
 
 #include <crucible/gui/op_graph/op_graph_panel.hpp>
 
-#include <crucible/core/logger.hpp>
+#include <crucible/core/logging/logger.hpp>
 
 #include <QDockWidget>
 #include <QMenuBar>

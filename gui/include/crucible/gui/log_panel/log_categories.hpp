@@ -1,6 +1,6 @@
 #pragma once
 
-#include <crucible/core/log_categories.hpp>
+#include <crucible/core/logging/log_category.hpp>
 
 #include <QColor>
 

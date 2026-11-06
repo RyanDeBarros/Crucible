@@ -1,9 +1,16 @@
 #pragma once
 
-#include <crucible/core/logger.hpp>
+#include <string>
 
 namespace crucible::core
 {
+
+struct LogCategory
+{
+    std::string text;
+
+    bool operator==(const LogCategory&) const = default;
+};
 
 extern const LogCategory kCore;
 extern const LogCategory kIO;

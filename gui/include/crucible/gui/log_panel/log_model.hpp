@@ -1,6 +1,6 @@
 #pragma once
 
-#include <crucible/core/logger.hpp>
+#include <crucible/core/logging/logger.hpp>
 
 #include <QAbstractTableModel>
 

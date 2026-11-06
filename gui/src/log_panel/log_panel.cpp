@@ -36,8 +36,6 @@ bool LogPanel::eventFilter(QObject* watched, QEvent* event)
         auto* keyEvent = static_cast<QKeyEvent*>(event);
         if (keyEvent->matches(QKeySequence::Copy))
         {
-            // TODO only allow selection on message column
-
             QString text;
 
             const auto indexes = table_->selectionModel()->selectedIndexes();

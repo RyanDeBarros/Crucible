@@ -9,7 +9,7 @@ const core::LogCategory kApp = { "App" };
 const core::LogCategory kLog = { "Log" };
 const core::LogCategory kOpGraph = { "Op Graph" };
 
-// TODO app settings for colors
+// TODO use stylesheet file?
 QColor logCategoryColor(const core::LogCategory& category)
 {
     if (category == kApp)

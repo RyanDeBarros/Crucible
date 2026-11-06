@@ -1,4 +1,4 @@
-#include <crucible/core/log_categories.hpp>
+#include <crucible/core/logging/log_category.hpp>
 
 namespace crucible::core
 {

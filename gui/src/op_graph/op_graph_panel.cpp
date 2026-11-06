@@ -6,7 +6,7 @@
 
 #include <crucible/gui/log_panel/log_categories.hpp>
 
-#include <crucible/core/logger.hpp>
+#include <crucible/core/logging/logger.hpp>
 
 #include <QVBoxLayout>
 
