@@ -19,9 +19,6 @@ class LogModel
 {
     Q_OBJECT;
 
-private:
-    const core::Logger& logger_;
-
 public:
     enum Column
     {
@@ -31,6 +28,13 @@ public:
         _Count
     };
 
+public:
+    bool message_tooltip = false;
+
+private:
+    const core::Logger& logger_;
+
+public:
     explicit LogModel(const core::Logger& logger, QObject* parent = nullptr);
 
     int rowCount(const QModelIndex& parent = {}) const override;

@@ -98,6 +98,9 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
             return {};
         }
     }
+    
+    if (message_tooltip && role == Qt::ToolTipRole && index.column() == Column::Message)
+        return QString::fromStdString(entry.message);
 
     return {};
 }

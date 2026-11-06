@@ -46,7 +46,7 @@ LogPanel::LogPanel(const core::Logger& logger, QWidget* parent)
         LogModel::Message,
         QHeaderView::Stretch);
 
-    table_->setWordWrap(false);
+    setWordWrap(false); // TODO app setting
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -110,6 +110,15 @@ bool LogPanel::eventFilter(QObject* watched, QEvent* event)
     }
 
     return QWidget::eventFilter(watched, event);
+}
+
+void LogPanel::setWordWrap(bool on)
+{
+    model_->message_tooltip = !on;
+
+    table_->setWordWrap(on);
+    table_->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    table_->setTextElideMode(on ? Qt::ElideNone : Qt::ElideRight);
 }
 
 void LogPanel::refresh()

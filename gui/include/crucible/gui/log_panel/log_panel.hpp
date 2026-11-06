@@ -32,6 +32,9 @@ public:
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
 
+public:
+    void setWordWrap(bool on);
+
 private:
     void refresh();
 };
