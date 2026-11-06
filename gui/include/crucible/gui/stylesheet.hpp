@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QString>
+class QString;
 
 namespace crucible::gui
 {

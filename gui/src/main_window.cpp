@@ -1,17 +1,19 @@
 #include <crucible/gui/main_window.hpp>
 
-#include <crucible/gui/op_graph/op_graph_model.hpp>
-#include <crucible/gui/op_graph/op_graph_panel.hpp>
-#include <crucible/gui/op_graph/op_graph_view.hpp>
+#include <crucible/gui/log_panel/log_categories.hpp>
+#include <crucible/gui/log_panel/log_panel.hpp>
 
+#include <crucible/gui/op_graph/op_graph_panel.hpp>
+
+#include <crucible/core/logging/logger.hpp>
+
+#include <QDockWidget>
 #include <QMenuBar>
 #include <QScreen>
 #include <QStatusBar>
 
 namespace crucible::gui
 {
-
-using QtNodes::NodeRole;
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -31,16 +33,19 @@ MainWindow::MainWindow(QWidget* parent)
 
 void MainWindow::createPanels()
 {
+    LOG.debug(kApp) << "Creating panels...";
+
     auto* ram_dock = createPanelDock(
         tr("RAM"),
         QStringLiteral("ram_dock"),
         new QWidget(),
         Qt::LeftDockWidgetArea);
 
+    auto* log_panel = new LogPanel(LOG);
     auto* log_dock = createPanelDock(
         tr("Log"),
         QStringLiteral("log_dock"),
-        new QWidget(),
+        log_panel,
         Qt::LeftDockWidgetArea);
 
     splitDockWidget(ram_dock, log_dock, Qt::Vertical);
@@ -62,11 +67,11 @@ void MainWindow::createPanels()
 
     ram_dock->raise();
 
-    op_graph_panel_ = new OpGraphPanel();
+    auto* op_graph_panel = new OpGraphPanel();
     auto* op_graph_dock = createPanelDock(
         tr("Operation Graph"),
         QStringLiteral("op_graph_dock"),
-        op_graph_panel_,
+        op_graph_panel,
         Qt::RightDockWidgetArea);
 
     auto* op_output_dock = createPanelDock(
@@ -80,6 +85,8 @@ void MainWindow::createPanels()
     resizeDocks({ ram_dock, op_graph_dock }, { 480, 1440 }, Qt::Horizontal);
     resizeDocks({ ram_dock, log_dock }, { 700, 300 }, Qt::Vertical);
     resizeDocks({ op_graph_dock, op_output_dock }, { 750, 250 }, Qt::Vertical);
+
+    LOG.debug(kApp) << "...panels created";
 }
 
 void MainWindow::createMenuBar()

@@ -1,4 +1,1 @@
-target_sources(crucible_core
-    PRIVATE
-        module.cpp
-)
+add_subdirectory(logging)

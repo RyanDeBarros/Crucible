@@ -1,19 +1,16 @@
 #pragma once
 
-#include <QDockWidget>
 #include <QMainWindow>
+
+class QDockWidget;
 
 namespace crucible::gui
 {
-
-class OpGraphPanel;
 
 class MainWindow
     : public QMainWindow
 {
     std::vector<QDockWidget*> panel_docks_;
-
-    OpGraphPanel* op_graph_panel_;
 
 public:
     explicit MainWindow(QWidget* parent = nullptr);
