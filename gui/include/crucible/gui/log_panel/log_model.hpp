@@ -1,15 +1,10 @@
 #pragma once
 
+#include <crucible/core/logger.hpp>
+
 #include <QAbstractTableModel>
 #include <QDateTime>
 #include <QString>
-
-namespace crucible::core
-{
-
-class Logger;
-
-} // crucible::core
 
 namespace crucible::gui
 {
@@ -33,6 +28,7 @@ public:
 
 private:
     const core::Logger& logger_;
+    std::unique_ptr<core::LogStoreFilter> filter_;
 
 public:
     explicit LogModel(const core::Logger& logger, QObject* parent = nullptr);
@@ -44,6 +40,7 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
     void refresh();
+    void setFilter(core::LogLevelMask mask);
 };
 
 } // crucible::gui

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <chrono>
 #include <mutex>
 #include <sstream>
@@ -9,11 +10,13 @@ namespace crucible::core
 {
 
 enum class LogLevel
+    : unsigned int
 {
     Debug,
     Info,
     Warning,
-    Error
+    Error,
+    _Count
 };
 
 struct LogEntry
@@ -21,6 +24,63 @@ struct LogEntry
     std::chrono::system_clock::time_point timestamp;
     LogLevel level;
     std::string message;
+};
+
+using LogLevelMask = std::uint32_t;
+
+constexpr LogLevelMask logLevelMask(LogLevel level)
+{
+    return 1u << static_cast<std::underlying_type_t<LogLevel>>(level);
+}
+
+struct LogEntryReference
+{
+    LogLevel level;
+    size_t index;
+};
+
+class LogStore;
+
+class LogStoreFilter
+{
+    friend class LogStore;
+
+private:
+    const LogStore& store_;
+    LogLevelMask mask_;
+    std::vector<LogEntryReference> chronology_;
+    size_t store_version_ = 0;
+    size_t end_index_ = 0;
+
+public:
+    LogStoreFilter(const LogStore& store, LogLevelMask mask);
+
+    LogLevelMask mask() const;
+
+    size_t size() const;
+    const LogEntry& operator[](size_t index) const;
+
+    void refresh();
+
+private:
+    void append_missing();
+    void assert_valid() const;
+};
+
+class LogStore
+{
+    friend class LogStoreFilter;
+
+private:
+    std::array<std::vector<LogEntry>, static_cast<size_t>(LogLevel::_Count)> entry_lists_;
+    std::vector<LogEntryReference> chronology_;
+    size_t version_ = 0;
+
+public:
+    void add_entry(LogEntry entry);
+    void clear();
+
+    std::unique_ptr<LogStoreFilter> filter(LogLevelMask mask = ~0) const;
 };
 
 class Logger;
@@ -71,20 +131,15 @@ public:
         LockedEntries& operator=(const LockedEntries&) = delete;
         LockedEntries& operator=(LockedEntries&&) = delete;
 
-        size_t size() const;
-        bool empty() const;
-        const LogEntry& operator[](size_t index) const;
-        auto begin() const;
-        auto end() const;
-        auto cbegin() const;
-        auto cend() const;
+        const LogStore& operator*() const;
+        const LogStore* operator->() const;
 
     private:
         const Logger& logger() const;
     };
 
 private:
-    std::vector<LogEntry> entries_;
+    LogStore store_;
     mutable std::mutex mutex_;
 
 public:

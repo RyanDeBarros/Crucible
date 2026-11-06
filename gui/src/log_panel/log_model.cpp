@@ -1,7 +1,5 @@
 #include <crucible/gui/log_panel/log_model.hpp>
 
-#include <crucible/core/logger.hpp>
-
 #include <QBrush>
 
 namespace crucible::gui
@@ -11,11 +9,12 @@ LogModel::LogModel(const core::Logger& logger, QObject* parent)
     : QAbstractTableModel(parent)
     , logger_(logger)
 {
+    setFilter(~0);
 }
 
 int LogModel::rowCount(const QModelIndex& parent) const
 {
-    return parent.isValid() ? 0 : static_cast<int>(logger_.lock_entries().size());
+    return parent.isValid() ? 0 : static_cast<int>(filter_->size());
 }
 
 int LogModel::columnCount(const QModelIndex& parent) const
@@ -25,12 +24,12 @@ int LogModel::columnCount(const QModelIndex& parent) const
 
 QVariant LogModel::data(const QModelIndex& index, int role) const
 {
-    auto entries = logger_.lock_entries();
-
-    if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(entries.size()))
+    if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(filter_->size()))
         return {};
 
-    const auto& entry = entries[index.row()];
+    // lock logger for [] query
+    auto entries = logger_.lock_entries();
+    const auto& entry = (*filter_)[index.row()];
 
     if (role == Qt::DisplayRole)
     {
@@ -128,7 +127,22 @@ QVariant LogModel::headerData(int section, Qt::Orientation orientation, int role
 
 void LogModel::refresh()
 {
+    // lock logger for refresh
+    auto entries = logger_.lock_entries();
+
     beginResetModel();
+    filter_->refresh();
+    endResetModel();
+}
+
+void LogModel::setFilter(core::LogLevelMask mask)
+{
+    auto entries = logger_.lock_entries();
+    if (filter_ && filter_->mask() == mask)
+        return;
+
+    beginResetModel();
+    filter_ = entries->filter(mask);
     endResetModel();
 }
 

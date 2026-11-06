@@ -60,7 +60,7 @@ target_include_directories(crucible_gui
 
 target_sources(crucible_gui
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/crucible.qrc
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources/crucible.qrc
 )
 
 add_subdirectory(include/crucible/gui)

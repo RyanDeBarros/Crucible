@@ -7,8 +7,10 @@
 #include <QEvent>
 #include <QHeaderView>
 #include <QKeyEvent>
+#include <QMenu>
 #include <QScrollBar>
 #include <QTimer>
+#include <QToolButton>
 #include <QVBoxLayout>
 
 namespace crucible::gui
@@ -18,43 +20,9 @@ LogPanel::LogPanel(const core::Logger& logger, QWidget* parent)
     : QWidget(parent)
 {
     model_ = new LogModel(logger, this);
+    createLayout();
+    initPoll();
 
-    table_ = new QTableView(this);
-    table_->setModel(model_);
-
-    table_->setSelectionBehavior(QAbstractItemView::SelectItems);
-    table_->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    table_->setEditTriggers(QAbstractItemView::NoEditTriggers);
-
-    table_->installEventFilter(this);
-
-    table_->verticalHeader()->hide();
-    table_->horizontalHeader()->setStretchLastSection(true);
-
-    table_->setShowGrid(false);
-    table_->setAlternatingRowColors(true);
-
-    table_->horizontalHeader()->setSectionResizeMode(
-        LogModel::Timestamp,
-        QHeaderView::ResizeToContents);
-
-    table_->horizontalHeader()->setSectionResizeMode(
-        LogModel::Level,
-        QHeaderView::ResizeToContents);
-
-    table_->horizontalHeader()->setSectionResizeMode(
-        LogModel::Message,
-        QHeaderView::Stretch);
-
-    setWordWrap(false); // TODO app setting
-
-    auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(table_);
-
-    auto* timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &LogPanel::refresh);
-    timer->start(250); // TODO app setting
 
     auto* testTimer = new QTimer(this);
 
@@ -121,6 +89,91 @@ void LogPanel::setWordWrap(bool on)
     table_->setTextElideMode(on ? Qt::ElideNone : Qt::ElideRight);
 }
 
+void LogPanel::createFilterButton()
+{
+    filter_button_ = new QToolButton(this);
+    filter_button_->setIcon(QIcon(":/icons/filter"));
+    filter_button_->setToolTip(tr("Filter log levels"));
+    filter_button_->setPopupMode(QToolButton::InstantPopup);
+
+    filter_menu_ = new QMenu(filter_button_);
+
+    const auto add_filter = [this](core::LogLevel level, QString const& label) {
+        auto* action = filter_menu_->addAction(label);
+        action->setCheckable(true);
+        action->setChecked(true);
+
+        filter_actions_[static_cast<size_t>(level)] = action;
+
+        connect(action, &QAction::toggled, this, [this] { updateFilter(); });
+    };
+
+    add_filter(core::LogLevel::Debug, tr("Debug"));
+    add_filter(core::LogLevel::Info, tr("Info"));
+    add_filter(core::LogLevel::Warning, tr("Warning"));
+    add_filter(core::LogLevel::Error, tr("Error"));
+
+    filter_button_->setMenu(filter_menu_);
+}
+
+void LogPanel::createTable()
+{
+    table_ = new QTableView(this);
+    table_->setModel(model_);
+
+    table_->setSelectionBehavior(QAbstractItemView::SelectItems);
+    table_->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    table_->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    table_->installEventFilter(this);
+
+    table_->verticalHeader()->hide();
+    table_->horizontalHeader()->setStretchLastSection(true);
+
+    table_->setShowGrid(false);
+    table_->setAlternatingRowColors(true);
+
+    table_->horizontalHeader()->setSectionResizeMode(
+        LogModel::Timestamp,
+        QHeaderView::ResizeToContents);
+
+    table_->horizontalHeader()->setSectionResizeMode(
+        LogModel::Level,
+        QHeaderView::ResizeToContents);
+
+    table_->horizontalHeader()->setSectionResizeMode(
+        LogModel::Message,
+        QHeaderView::Stretch);
+
+    setWordWrap(false); // TODO app setting
+}
+
+void LogPanel::createLayout()
+{
+    createFilterButton();
+    createTable();
+
+    auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+
+    auto* controls_layout = new QHBoxLayout();
+    controls_layout->setContentsMargins(4, 2, 4, 2);
+
+    controls_layout->addStretch();
+    controls_layout->addWidget(filter_button_);
+
+    layout->addLayout(controls_layout);
+    layout->addWidget(table_);
+}
+
+void LogPanel::initPoll()
+{
+    auto* timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &LogPanel::refresh); // TODO use beginInsertRows()/endInsertRows() instead of rebuilding with refresh()
+    timer->start(250); // TODO app setting
+}
+
 void LogPanel::refresh()
 {
     auto* scrollbar = table_->verticalScrollBar();
@@ -130,6 +183,19 @@ void LogPanel::refresh()
 
     if (at_bottom)
         table_->scrollToBottom();
+}
+
+void LogPanel::updateFilter()
+{
+    core::LogLevelMask mask = 0;
+
+    for (size_t i = 0; i < filter_actions_.size(); ++i)
+    {
+        if (filter_actions_[i]->isChecked())
+            mask |= core::logLevelMask(static_cast<core::LogLevel>(i));
+    }
+
+    model_->setFilter(mask);
 }
 
 } // crucible::gui
