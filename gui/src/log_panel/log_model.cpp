@@ -1,6 +1,7 @@
 #include <crucible/gui/log_panel/log_model.hpp>
 
 #include <QBrush>
+#include <QDateTime>
 
 namespace crucible::gui
 {

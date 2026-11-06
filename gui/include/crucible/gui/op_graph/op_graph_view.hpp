@@ -1,7 +1,13 @@
 #pragma once
 
 #include <QtNodes/internal/GraphicsView.hpp>
-#include <QtNodes/internal/NodeGraphicsObject.hpp>
+
+namespace QtNodes
+{
+
+class NodeGraphicsObject;
+
+}
 
 namespace crucible::gui
 {

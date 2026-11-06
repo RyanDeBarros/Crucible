@@ -1,7 +1,8 @@
 #pragma once
 
-#include <QDockWidget>
 #include <QMainWindow>
+
+class QDockWidget;
 
 namespace crucible::gui
 {

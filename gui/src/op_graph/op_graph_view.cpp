@@ -3,6 +3,8 @@
 #include <crucible/gui/op_graph/op_graph_model.hpp>
 #include <crucible/gui/op_graph/op_graph_scene.hpp>
 
+#include <QtNodes/internal/NodeGraphicsObject.hpp>
+
 #include <QContextMenuEvent>
 #include <QMenu>
 

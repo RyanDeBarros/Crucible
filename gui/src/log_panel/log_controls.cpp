@@ -2,6 +2,7 @@
 
 #include <crucible/gui/log_panel/log_filter_popup.hpp>
 
+#include <QHBoxLayout>
 #include <QMenu>
 #include <QToolButton>
 

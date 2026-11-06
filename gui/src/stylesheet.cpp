@@ -2,6 +2,7 @@
 
 #include <QFile>
 #include <QMap>
+#include <QString>
 #include <QTextStream>
 
 namespace crucible::gui

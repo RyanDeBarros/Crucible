@@ -3,8 +3,6 @@
 #include <crucible/core/logger.hpp>
 
 #include <QAbstractTableModel>
-#include <QDateTime>
-#include <QString>
 
 namespace crucible::gui
 {

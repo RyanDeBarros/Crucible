@@ -5,6 +5,7 @@
 
 #include <crucible/core/logger.hpp>
 
+#include <QDockWidget>
 #include <QMenuBar>
 #include <QScreen>
 #include <QStatusBar>

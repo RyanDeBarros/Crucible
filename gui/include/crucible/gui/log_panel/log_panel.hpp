@@ -1,7 +1,8 @@
 #pragma once
 
-#include <QTableView>
 #include <QWidget>
+
+class QTableView;
 
 namespace crucible::core
 {

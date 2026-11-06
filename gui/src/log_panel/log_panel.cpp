@@ -9,7 +9,9 @@
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QScrollBar>
+#include <QTableView>
 #include <QTimer>
+#include <QVBoxLayout>
 
 namespace crucible::gui
 {

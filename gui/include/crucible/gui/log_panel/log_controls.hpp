@@ -2,7 +2,6 @@
 
 #include <crucible/core/logger.hpp>
 
-#include <QHBoxLayout>
 #include <QWidget>
 
 namespace crucible::gui
