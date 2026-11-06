@@ -4,6 +4,8 @@
 #include <crucible/gui/op_graph/op_graph_scene.hpp>
 #include <crucible/gui/op_graph/op_graph_view.hpp>
 
+#include <crucible/core/logger.hpp>
+
 #include <QVBoxLayout>
 
 namespace crucible::gui
@@ -14,6 +16,8 @@ OpGraphPanel::OpGraphPanel(QWidget* parent)
     , model_(std::make_unique<OpGraphModel>())
     , scene_(std::make_unique<OpGraphScene>(*model_))
 {
+    LOG.debug() << "Initializing operation graph panel...";
+
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
 

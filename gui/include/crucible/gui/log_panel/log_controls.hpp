@@ -23,6 +23,8 @@ private:
 public:
     explicit LogControls(core::LogLevelMask initialFilter, QWidget* parent = nullptr);
 
+    core::LogLevelMask mask();
+
 signals:
     void filterChanged(core::LogLevelMask mask);
     void clearRequested();

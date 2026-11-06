@@ -23,6 +23,11 @@ LogControls::LogControls(core::LogLevelMask initialFilter, QWidget* parent)
     controls_layout->addStretch();
 }
 
+core::LogLevelMask LogControls::mask()
+{
+    return filter_popup_->mask();
+}
+
 void LogControls::createFilterButton(core::LogLevelMask initialFilter)
 {
     filter_button_ = new QToolButton(this);

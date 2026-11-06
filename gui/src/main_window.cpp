@@ -31,6 +31,8 @@ MainWindow::MainWindow(QWidget* parent)
 
 void MainWindow::createPanels()
 {
+    LOG.debug() << "Creating panels...";
+
     auto* ram_dock = createPanelDock(
         tr("RAM"),
         QStringLiteral("ram_dock"),
@@ -81,6 +83,8 @@ void MainWindow::createPanels()
     resizeDocks({ ram_dock, op_graph_dock }, { 480, 1440 }, Qt::Horizontal);
     resizeDocks({ ram_dock, log_dock }, { 700, 300 }, Qt::Vertical);
     resizeDocks({ op_graph_dock, op_output_dock }, { 750, 250 }, Qt::Vertical);
+
+    LOG.debug() << "...panels created";
 }
 
 void MainWindow::createMenuBar()

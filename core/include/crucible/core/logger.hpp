@@ -23,6 +23,7 @@ struct LogEntry
 {
     std::chrono::system_clock::time_point timestamp;
     LogLevel level;
+    // TODO category -> debug(category=""), info(category=""), warning(category=""), error(category="") in logger + use constants for category passed.
     std::string message;
 };
 

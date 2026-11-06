@@ -26,6 +26,19 @@ LogFilterPopup::LogFilterPopup(core::LogLevelMask initialFilter, QWidget* parent
     updateFilter();
 }
 
+core::LogLevelMask LogFilterPopup::mask()
+{
+    core::LogLevelMask mask = 0;
+
+    for (std::size_t i = 0; i < filter_buttons_.size(); ++i)
+    {
+        if (filter_buttons_[i]->isChecked())
+            mask |= core::logLevelMask(static_cast<core::LogLevel>(i));
+    }
+
+    return mask;
+}
+
 void LogFilterPopup::addFilter(core::LogLevel level, const QString& label, core::LogLevelMask initialFilter)
 {
     auto* checkbox = new QCheckBox(label, this);
@@ -39,15 +52,7 @@ void LogFilterPopup::addFilter(core::LogLevel level, const QString& label, core:
 
 void LogFilterPopup::updateFilter()
 {
-    core::LogLevelMask mask = 0;
-
-    for (std::size_t i = 0; i < filter_buttons_.size(); ++i)
-    {
-        if (filter_buttons_[i]->isChecked())
-            mask |= core::logLevelMask(static_cast<core::LogLevel>(i));
-    }
-
-    emit filterChanged(mask);
+    emit filterChanged(mask());
 }
 
 } // crucible::gui

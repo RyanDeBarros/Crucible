@@ -1,5 +1,7 @@
 #pragma once
 
+#include <crucible/core/logger.hpp>
+
 #include <QWidget>
 
 class QTableView;
@@ -41,6 +43,7 @@ private:
     void createTable();
     void initPoll();
 
+    void setFilter(core::LogLevelMask mask);
     void refresh();
 };
 

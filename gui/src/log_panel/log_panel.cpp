@@ -19,6 +19,8 @@ namespace crucible::gui
 LogPanel::LogPanel(core::Logger& logger, QWidget* parent)
     : QWidget(parent)
 {
+    LOG.debug() << "Initializing log panel...";
+
     model_ = new LogModel(logger, this);
     createLayout();
     initPoll();
@@ -53,6 +55,8 @@ bool LogPanel::eventFilter(QObject* watched, QEvent* event)
 
 void LogPanel::setWordWrap(bool on)
 {
+    LOG.debug() << "Log panel word wrap set to " << (on ? "on" : "off");
+    
     model_->message_tooltip = !on;
 
     table_->setWordWrap(on);
@@ -67,12 +71,13 @@ void LogPanel::createLayout()
     layout->setSpacing(0);
 
     controls_ = new LogControls(~core::logLevelMask(core::LogLevel::Debug), this);
+    model_->setFilter(controls_->mask());
     createTable();
 
     layout->addWidget(controls_);
     layout->addWidget(table_);
 
-    connect(controls_, &LogControls::filterChanged, model_, &LogModel::setFilter);
+    connect(controls_, &LogControls::filterChanged, this, &LogPanel::setFilter);
     connect(controls_, &LogControls::clearRequested, model_, &LogModel::clear);
 }
 
@@ -113,6 +118,18 @@ void LogPanel::initPoll()
     auto* timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &LogPanel::refresh);
     timer->start(250); // TODO app setting
+}
+
+void LogPanel::setFilter(core::LogLevelMask mask)
+{
+    // TODO RAII utility for this scrollbar to bottom restore
+    auto* scrollbar = table_->verticalScrollBar();
+    const bool at_bottom = scrollbar->value() >= scrollbar->maximum();
+
+    model_->setFilter(mask);
+
+    if (at_bottom)
+        table_->scrollToBottom();
 }
 
 void LogPanel::refresh()

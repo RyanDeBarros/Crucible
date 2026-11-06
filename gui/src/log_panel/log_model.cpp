@@ -173,13 +173,17 @@ void LogModel::refresh()
 
 void LogModel::setFilter(core::LogLevelMask mask)
 {
-    auto entries = logger_.lock_entries();
-    if (filter_ && filter_->mask() == mask)
-        return;
+    {
+        auto entries = logger_.lock_entries();
+        if (filter_ && filter_->mask() == mask)
+            return;
 
-    beginResetModel();
-    filter_ = entries->filter(mask);
-    endResetModel();
+        beginResetModel();
+        filter_ = entries->filter(mask);
+        endResetModel();
+    }
+
+    LOG.debug() << "Log filter set to " << mask; // TODO operator<<(ostream&, mask)
 }
 
 void LogModel::clear()
