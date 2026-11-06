@@ -98,9 +98,10 @@ std::unique_ptr<LogStoreFilter> LogStore::filter(LogLevelMask mask) const
     return std::make_unique<LogStoreFilter>(*this, mask);
 }
 
-LogLine::LogLine(Logger& logger, LogLevel level)
+LogLine::LogLine(Logger& logger, LogLevel level, LogCategory category)
     : logger_(logger)
     , level_(level)
+    , category_(std::move(category))
     , lock_(logger.acquire_lock())
 {
 }
@@ -109,7 +110,7 @@ LogLine::~LogLine()
 {
     try
     {
-        logger_.submit(level_, str());
+        logger_.submit(level_, std::move(category_), str());
     }
     catch (...)
     {
@@ -169,31 +170,32 @@ Logger::LockedEntries Logger::lock_entries()
     return LockedEntries(*this);
 }
 
-LogLine Logger::debug()
+LogLine Logger::debug(LogCategory category)
 {
-    return LogLine(*this, LogLevel::Debug);
+    return LogLine(*this, LogLevel::Debug, std::move(category));
 }
 
-LogLine Logger::info()
+LogLine Logger::info(LogCategory category)
 {
-    return LogLine(*this, LogLevel::Info);
+    return LogLine(*this, LogLevel::Info, std::move(category));
 }
 
-LogLine Logger::warning()
+LogLine Logger::warning(LogCategory category)
 {
-    return LogLine(*this, LogLevel::Warning);
+    return LogLine(*this, LogLevel::Warning, std::move(category));
 }
 
-LogLine Logger::error()
+LogLine Logger::error(LogCategory category)
 {
-    return LogLine(*this, LogLevel::Error);
+    return LogLine(*this, LogLevel::Error, std::move(category));
 }
 
-void Logger::submit(LogLevel level, std::string message)
+void Logger::submit(LogLevel level, LogCategory category, std::string message)
 {
     LogEntry entry{
         .timestamp = std::chrono::system_clock::now(),
         .level = level,
+        .category = std::move(category),
         .message = std::move(message)
     };
 

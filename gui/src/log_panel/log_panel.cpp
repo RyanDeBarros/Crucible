@@ -1,5 +1,6 @@
 #include <crucible/gui/log_panel/log_panel.hpp>
 
+#include <crucible/gui/log_panel/log_categories.hpp>
 #include <crucible/gui/log_panel/log_controls.hpp>
 #include <crucible/gui/log_panel/log_model.hpp>
 
@@ -19,7 +20,7 @@ namespace crucible::gui
 LogPanel::LogPanel(core::Logger& logger, QWidget* parent)
     : QWidget(parent)
 {
-    LOG.debug() << "Initializing log panel...";
+    LOG.debug(kLog) << "Initializing log panel...";
 
     model_ = new LogModel(logger, this);
     createLayout();
@@ -55,7 +56,7 @@ bool LogPanel::eventFilter(QObject* watched, QEvent* event)
 
 void LogPanel::setWordWrap(bool on)
 {
-    LOG.debug() << "Log panel word wrap set to " << (on ? "on" : "off");
+    LOG.debug(kLog) << "Log panel word wrap set to " << (on ? "on" : "off");
     
     model_->message_tooltip = !on;
 

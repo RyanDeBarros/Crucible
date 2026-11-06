@@ -19,11 +19,18 @@ enum class LogLevel
     _Count
 };
 
+struct LogCategory
+{
+    std::string text;
+
+    bool operator==(const LogCategory&) const = default;
+};
+
 struct LogEntry
 {
     std::chrono::system_clock::time_point timestamp;
     LogLevel level;
-    // TODO category -> debug(category=""), info(category=""), warning(category=""), error(category="") in logger + use constants for category passed.
+    LogCategory category;
     std::string message;
 };
 
@@ -103,10 +110,11 @@ class LogLine
 private:
     Logger& logger_;
     LogLevel level_;
+    LogCategory category_;
     std::unique_lock<std::mutex> lock_;
 
 private:
-    LogLine(Logger& logger, LogLevel level);
+    LogLine(Logger& logger, LogLevel level, LogCategory category);
 
 public:
     LogLine(const LogLine&) = delete;
@@ -158,13 +166,13 @@ private:
 public:
     LockedEntries lock_entries();
 
-    LogLine debug();
-    LogLine info();
-    LogLine warning();
-    LogLine error();
+    LogLine debug(LogCategory category);
+    LogLine info(LogCategory category);
+    LogLine warning(LogCategory category);
+    LogLine error(LogCategory category);
 
 private:
-    void submit(LogLevel level, std::string message);
+    void submit(LogLevel level, LogCategory category, std::string message);
     std::unique_lock<std::mutex> acquire_lock() const;
 };
 

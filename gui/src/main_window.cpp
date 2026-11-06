@@ -1,6 +1,8 @@
 #include <crucible/gui/main_window.hpp>
 
+#include <crucible/gui/log_panel/log_categories.hpp>
 #include <crucible/gui/log_panel/log_panel.hpp>
+
 #include <crucible/gui/op_graph/op_graph_panel.hpp>
 
 #include <crucible/core/logger.hpp>
@@ -31,7 +33,7 @@ MainWindow::MainWindow(QWidget* parent)
 
 void MainWindow::createPanels()
 {
-    LOG.debug() << "Creating panels...";
+    LOG.debug(kApp) << "Creating panels...";
 
     auto* ram_dock = createPanelDock(
         tr("RAM"),
@@ -84,7 +86,7 @@ void MainWindow::createPanels()
     resizeDocks({ ram_dock, log_dock }, { 700, 300 }, Qt::Vertical);
     resizeDocks({ op_graph_dock, op_output_dock }, { 750, 250 }, Qt::Vertical);
 
-    LOG.debug() << "...panels created";
+    LOG.debug(kApp) << "...panels created";
 }
 
 void MainWindow::createMenuBar()

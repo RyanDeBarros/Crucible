@@ -21,6 +21,7 @@ public:
     {
         Timestamp,
         Level,
+        Category,
         Message,
         _Count
     };

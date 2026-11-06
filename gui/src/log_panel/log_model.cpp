@@ -1,5 +1,7 @@
 #include <crucible/gui/log_panel/log_model.hpp>
 
+#include <crucible/gui/log_panel/log_categories.hpp>
+
 #include <QBrush>
 #include <QDateTime>
 
@@ -51,6 +53,8 @@ int LogModel::columnCount(const QModelIndex& parent) const
     return parent.isValid() ? 0 : Column::_Count;
 }
 
+// TODO filter for which columns besides 'message' should be shown
+
 QVariant LogModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(filter_->size()))
@@ -89,6 +93,9 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
                 return {};
             }
 
+        case Column::Category:
+            return QString::fromStdString(entry.category.text);
+
         case Column::Message:
             return QString::fromStdString(entry.message);
         }
@@ -122,6 +129,9 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
             }
         }
 
+        case Column::Category:
+            return QBrush(logCategoryColor(entry.category));
+
         default:
             return {};
         }
@@ -145,6 +155,9 @@ QVariant LogModel::headerData(int section, Qt::Orientation orientation, int role
 
     case Column::Level:
         return "Level";
+
+    case Column::Category:
+        return "Category";
 
     case Column::Message:
         return "Message";
@@ -183,7 +196,7 @@ void LogModel::setFilter(core::LogLevelMask mask)
         endResetModel();
     }
 
-    LOG.debug() << "Log filter set to " << mask; // TODO operator<<(ostream&, mask)
+    LOG.debug(kLog) << "Log filter set to " << mask; // TODO operator<<(ostream&, mask)
 }
 
 void LogModel::clear()
