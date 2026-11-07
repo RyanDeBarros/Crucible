@@ -24,7 +24,6 @@ signals:
 public:
     explicit LoggingPreferences(QWidget* parent = nullptr);
 
-    void load(QSettings& settings);
     void save(QSettings& settings) const;
     void resetToDefaults();
 };

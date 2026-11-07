@@ -34,7 +34,6 @@ private:
     void createLayout();
 
     void modified();
-    void loadSettings();
     void saveSettings();
     void resetToDefaults();
 };

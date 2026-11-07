@@ -15,11 +15,6 @@ GeneralPreferences::GeneralPreferences(QWidget* parent)
     auto* layout = new QFormLayout(this);
 }
 
-void GeneralPreferences::load(QSettings& settings)
-{
-    PREFS.general.load(settings);
-}
-
 void GeneralPreferences::save(QSettings& settings) const
 {
     PREFS.general.save(settings);

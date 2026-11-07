@@ -10,8 +10,8 @@ static const char* const kWordWrap = "word_wrap";
 static const char* const kRefreshInterval = "refresh_interval";
 
 LoggingSettings::LoggingSettings()
-    : word_wrap(false)
-    , refresh_interval(250)
+    : word_wrap_(false)
+    , refresh_interval_(250)
 {
 }
 
@@ -21,11 +21,8 @@ void LoggingSettings::load(QSettings& settings)
 
     LoggingSettings defaults;
 
-    word_wrap = settings.value(kWordWrap, defaults.word_wrap).toBool();
-    modified(WordWrap);
-
-    refresh_interval = settings.value(kRefreshInterval, defaults.refresh_interval).toInt();
-    modified(RefreshInterval);
+    setWordWrap(settings.value(kWordWrap, defaults.wordWrap()).toBool());
+    setRefreshInterval(settings.value(kRefreshInterval, defaults.refreshInterval()).toInt());
 
     settings.endGroup();
 }
@@ -34,8 +31,8 @@ void LoggingSettings::save(QSettings& settings) const
 {
     settings.beginGroup(kLoggingGroup);
 
-    settings.setValue(kWordWrap, word_wrap);
-    settings.setValue(kRefreshInterval, refresh_interval);
+    settings.setValue(kWordWrap, wordWrap());
+    settings.setValue(kRefreshInterval, refreshInterval());
 
     settings.endGroup();
 }
@@ -44,10 +41,29 @@ void LoggingSettings::resetToDefaults()
 {
     LoggingSettings defaults;
 
-    word_wrap = defaults.word_wrap;
-    modified(WordWrap);
+    setWordWrap(defaults.wordWrap());
+    setRefreshInterval(defaults.refreshInterval());
+}
 
-    refresh_interval = defaults.refresh_interval;
+bool LoggingSettings::wordWrap() const
+{
+    return word_wrap_;
+}
+
+int LoggingSettings::refreshInterval() const
+{
+    return refresh_interval_;
+}
+
+void LoggingSettings::setWordWrap(bool word_wrap)
+{
+    word_wrap_ = word_wrap;
+    modified(WordWrap);
+}
+
+void LoggingSettings::setRefreshInterval(int refresh_interval)
+{
+    refresh_interval_ = refresh_interval;
     modified(RefreshInterval);
 }
 

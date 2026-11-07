@@ -19,14 +19,22 @@ public:
         RefreshInterval,
     };
 
-    bool word_wrap;
-    int refresh_interval;
+private:
+    bool word_wrap_;
+    int refresh_interval_;
 
+public:
     explicit LoggingSettings();
 
     void load(QSettings& settings);
     void save(QSettings& settings) const;
     void resetToDefaults();
+
+    bool wordWrap() const;
+    int refreshInterval() const;
+
+    void setWordWrap(bool word_wrap);
+    void setRefreshInterval(int refresh_interval);
 
 signals:
     void modified(Property property);

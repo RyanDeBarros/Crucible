@@ -26,8 +26,9 @@ PreferencesDialog::PreferencesDialog(QWidget* parent)
     resize(1440, 810);
     installEventFilter(this);
 
+    // TODO grey filter on window behind dialog?
+
     createLayout();
-    loadSettings();
 }
 
 bool PreferencesDialog::eventFilter(QObject* watched, QEvent* event)
@@ -79,15 +80,6 @@ void PreferencesDialog::createLayout()
 void PreferencesDialog::modified()
 {
     setWindowModified(true);
-}
-
-void PreferencesDialog::loadSettings()
-{
-    auto settings = PREFS.getSettings();
-
-    general_tab_->load(settings);
-    logging_tab_->load(settings);
-    setWindowModified(false);
 }
 
 void PreferencesDialog::saveSettings()

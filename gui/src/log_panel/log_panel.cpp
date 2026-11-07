@@ -66,8 +66,8 @@ void LogPanel::setWordWrap(bool on)
     LOG.debug(kLog) << "Log panel word wrap set to " << (on ? "on" : "off");
     
     table_->setWordWrap(on);
-    table_->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     table_->setTextElideMode(on ? Qt::ElideNone : Qt::ElideRight);
+    table_->resizeRowsToContents();
 }
 
 void LogPanel::createLayout()
@@ -99,6 +99,7 @@ void LogPanel::createTable()
 
     table_->installEventFilter(this);
 
+    table_->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     table_->verticalHeader()->hide();
     table_->horizontalHeader()->setStretchLastSection(true);
 
@@ -121,7 +122,7 @@ void LogPanel::createTable()
         LogColumn::Message,
         QHeaderView::Stretch);
 
-    setWordWrap(PREFS.logging.word_wrap);
+    setWordWrap(PREFS.logging.wordWrap());
     connect(
         &PREFS.logging,
         &LoggingSettings::modified,
@@ -129,7 +130,7 @@ void LogPanel::createTable()
         [this](LoggingSettings::Property property) {
             if (property == LoggingSettings::WordWrap)
             {
-                setWordWrap(PREFS.logging.word_wrap); // TODO setting word wrap does not work with table already populated?
+                setWordWrap(PREFS.logging.wordWrap());
                 refresh();
             }
         });
@@ -140,14 +141,14 @@ void LogPanel::initPoll()
     poll_timer_ = new QTimer(this);
     connect(poll_timer_, &QTimer::timeout, this, &LogPanel::refresh);
 
-    poll_timer_->start(PREFS.logging.refresh_interval);
+    poll_timer_->start(PREFS.logging.refreshInterval());
     connect(
         &PREFS.logging,
         &LoggingSettings::modified,
         this,
         [this](LoggingSettings::Property property) {
             if (property == LoggingSettings::RefreshInterval)
-                poll_timer_->setInterval(PREFS.logging.refresh_interval);
+                poll_timer_->setInterval(PREFS.logging.refreshInterval());
         });
 }
 
