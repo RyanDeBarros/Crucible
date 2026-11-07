@@ -17,8 +17,6 @@
 namespace crucible::gui
 {
 
-// TODO shortcut (ctrl + ',') to open preferences
-
 PreferencesDialog::PreferencesDialog(QWidget* parent)
     : QDialog(parent)
 {

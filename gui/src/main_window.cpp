@@ -94,7 +94,9 @@ void MainWindow::createPanels()
 void MainWindow::createMenuBar()
 {
     auto* edit_menu = menuBar()->addMenu(tr("Edit"));
-    auto* preferences_action = edit_menu->addAction(tr("Preferences..."));
+    auto* preferences_action = edit_menu->addAction(
+        tr("Preferences..."),
+        QKeySequence(Qt::ControlModifier | Qt::Key_Comma));
     connect(preferences_action, &QAction::triggered, this, [this]() {
         PreferencesDialog dialog(this);
         dialog.exec();
