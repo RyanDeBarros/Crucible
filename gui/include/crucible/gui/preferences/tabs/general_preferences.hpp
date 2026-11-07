@@ -15,12 +15,11 @@ class GeneralPreferences
 public:
     explicit GeneralPreferences(QWidget* parent = nullptr);
 
-signals:
-    void modified();
-
-public:
     void save(QSettings& settings) const;
     void resetToDefaults();
+
+signals:
+    void modified();
 };
 
 } // crucible::gui

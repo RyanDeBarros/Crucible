@@ -19,7 +19,7 @@ LoggingPreferences::LoggingPreferences(QWidget* parent)
     auto* layout = new QFormLayout(this);
 
     word_wrap_ = new QCheckBox(this); // TODO make this a toggle icon button directly in logging controls instead of preferences
-    word_wrap_->setChecked(PREFS.logging.wordWrap());
+    word_wrap_->setChecked(*PREFS.logging.word_wrap);
     connect(word_wrap_, &QCheckBox::checkStateChanged, this, &LoggingPreferences::modified);
     layout->addRow(tr("Word wrap"), word_wrap_);
 
@@ -27,15 +27,15 @@ LoggingPreferences::LoggingPreferences(QWidget* parent)
     refresh_interval_->setRange(50, 5000);
     refresh_interval_->setSingleStep(50);
     refresh_interval_->setSuffix(tr(" ms"));
-    refresh_interval_->setValue(PREFS.logging.refreshInterval());
+    refresh_interval_->setValue(*PREFS.logging.refresh_interval);
     connect(refresh_interval_, &QSpinBox::valueChanged, this, &LoggingPreferences::modified);
     layout->addRow(tr("Refresh interval"), refresh_interval_);
 }
 
 void LoggingPreferences::save(QSettings& settings) const
 {
-    PREFS.logging.setWordWrap(word_wrap_->isChecked());
-    PREFS.logging.setRefreshInterval(refresh_interval_->value());
+    PREFS.logging.word_wrap.set(word_wrap_->isChecked());
+    PREFS.logging.refresh_interval.set(refresh_interval_->value());
 
     PREFS.logging.save(settings);
 }
@@ -43,8 +43,8 @@ void LoggingPreferences::save(QSettings& settings) const
 void LoggingPreferences::resetToDefaults()
 {
     PREFS.logging.resetToDefaults();
-    word_wrap_->setChecked(PREFS.logging.wordWrap());
-    refresh_interval_->setValue(PREFS.logging.refreshInterval());
+    word_wrap_->setChecked(*PREFS.logging.word_wrap);
+    refresh_interval_->setValue(*PREFS.logging.refresh_interval);
 }
 
 } // crucible::gui

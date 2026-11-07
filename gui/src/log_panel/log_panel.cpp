@@ -122,18 +122,11 @@ void LogPanel::createTable()
         LogColumn::Message,
         QHeaderView::Stretch);
 
-    setWordWrap(PREFS.logging.wordWrap());
-    connect(
-        &PREFS.logging,
-        &LoggingSettings::modified,
-        this,
-        [this](LoggingSettings::Property property) {
-            if (property == LoggingSettings::WordWrap)
-            {
-                setWordWrap(PREFS.logging.wordWrap());
-                refresh();
-            }
-        });
+    setWordWrap(*PREFS.logging.word_wrap);
+    connect(&PREFS.logging.word_wrap, &SignalProperty<bool>::modified, this, [this]() {
+        setWordWrap(*PREFS.logging.word_wrap);
+        refresh();
+    });
 }
 
 void LogPanel::initPoll()
@@ -141,15 +134,10 @@ void LogPanel::initPoll()
     poll_timer_ = new QTimer(this);
     connect(poll_timer_, &QTimer::timeout, this, &LogPanel::refresh);
 
-    poll_timer_->start(PREFS.logging.refreshInterval());
-    connect(
-        &PREFS.logging,
-        &LoggingSettings::modified,
-        this,
-        [this](LoggingSettings::Property property) {
-            if (property == LoggingSettings::RefreshInterval)
-                poll_timer_->setInterval(PREFS.logging.refreshInterval());
-        });
+    poll_timer_->start(*PREFS.logging.refresh_interval);
+    connect(&PREFS.logging.refresh_interval, &SignalProperty<int>::modified, this, [this]() {
+        poll_timer_->setInterval(*PREFS.logging.refresh_interval);
+    });
 }
 
 void LogPanel::refresh()
