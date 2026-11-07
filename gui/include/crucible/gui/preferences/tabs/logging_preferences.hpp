@@ -1,0 +1,28 @@
+#pragma once
+
+#include <QWidget>
+
+class QCheckBox;
+class QSpinBox;
+class QSettings;
+
+namespace crucible::gui
+{
+
+class LoggingPreferences
+    : public QWidget
+{
+    Q_OBJECT;
+
+private:
+    QCheckBox* word_wrap_ = nullptr;
+    QSpinBox* refresh_interval_ = nullptr;
+
+public:
+    explicit LoggingPreferences(QWidget* parent = nullptr);
+
+    void load(QSettings& settings);
+    void save(QSettings& settings) const;
+};
+
+} // crucible::gui

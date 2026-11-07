@@ -1,7 +1,14 @@
 #include <crucible/gui/preferences/preferences_dialog.hpp>
 
+#include <crucible/gui/preferences/tabs/general_preferences.hpp>
+#include <crucible/gui/preferences/tabs/logging_preferences.hpp>
+
 #include <QDialogButtonBox>
+#include <QEvent>
+#include <QKeyEvent>
 #include <QVBoxLayout>
+#include <QSettings>
+#include <QStandardPaths>
 #include <QTabWidget>
 #include <QWidget>
 
@@ -14,8 +21,23 @@ PreferencesDialog::PreferencesDialog(QWidget* parent)
     setWindowTitle(tr("Preferences"));
     setModal(true);
     resize(1440, 810);
+    installEventFilter(this);
 
     createLayout();
+
+    loadSettings();
+}
+
+bool PreferencesDialog::eventFilter(QObject* watched, QEvent* event)
+{
+    if (watched == this && event->type() == QEvent::KeyPress)
+    {
+        auto* keyEvent = static_cast<QKeyEvent*>(event);
+        if (keyEvent->key() == Qt::Key_Enter || keyEvent->key() == Qt::Key_Return)
+            return true; // enter key should not close dialog
+    }
+
+    return QDialog::eventFilter(watched, event);
 }
 
 void PreferencesDialog::createLayout()
@@ -28,11 +50,43 @@ void PreferencesDialog::createLayout()
     buttons_ = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     layout->addWidget(buttons_);
 
-    connect(buttons_, &QDialogButtonBox::accepted, this, &QDialog::accept);
+    connect(buttons_, &QDialogButtonBox::accepted, this, [this]() {
+        saveSettings();
+        accept();
+    });
+
     connect(buttons_, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
-    tabs_->addTab(new QWidget(tabs_), tr("General"));
-    tabs_->addTab(new QWidget(tabs_), tr("Logging"));
+    general_tab_ = new GeneralPreferences(tabs_);
+    tabs_->addTab(general_tab_, tr("General"));
+
+    logging_tab_ = new LoggingPreferences(tabs_);
+    tabs_->addTab(logging_tab_, tr("Logging"));
+}
+
+void PreferencesDialog::loadSettings()
+{
+    auto s = settings();
+
+    general_tab_->load(s);
+    logging_tab_->load(s);
+}
+
+void PreferencesDialog::saveSettings() const
+{
+    auto s = settings();
+
+    general_tab_->save(s);
+    logging_tab_->save(s);
+
+    s.sync();
+}
+
+QSettings PreferencesDialog::settings() const
+{
+    return QSettings(
+        QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + "/preferences.ini",
+        QSettings::IniFormat);
 }
 
 } // crucible::gui

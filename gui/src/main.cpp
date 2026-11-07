@@ -16,7 +16,7 @@ static int run(int argc, char* argv[])
 
     QApplication app(argc, argv);
     app.setApplicationName("Crucible");
-    app.setOrganizationName("Crucible");
+    app.setOrganizationName("Ryan de Barros");
 
     LOG.debug(kApp) << "Loading stylesheet...";
     app.setStyleSheet(load_stylesheet(

@@ -3,10 +3,14 @@
 #include <QDialog>
 
 class QDialogButtonBox;
+class QSettings;
 class QTabWidget;
 
 namespace crucible::gui
 {
+
+class GeneralPreferences;
+class LoggingPreferences;
 
 class PreferencesDialog
     : public QDialog
@@ -17,11 +21,22 @@ private:
     QTabWidget* tabs_ = nullptr;
     QDialogButtonBox* buttons_ = nullptr;
 
+    GeneralPreferences* general_tab_ = nullptr;
+    LoggingPreferences* logging_tab_ = nullptr;
+
 public:
     explicit PreferencesDialog(QWidget* parent = nullptr);
 
+protected:
+    bool eventFilter(QObject* watched, QEvent* event) override;
+
 private:
     void createLayout();
+
+    void loadSettings();
+    void saveSettings() const;
+
+    QSettings settings() const;
 };
 
 } // crucible::gui
