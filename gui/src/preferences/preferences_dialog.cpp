@@ -26,9 +26,18 @@ PreferencesDialog::PreferencesDialog(QWidget* parent)
     resize(1440, 810);
     installEventFilter(this);
 
-    // TODO grey filter on window behind dialog?
-
     createLayout();
+
+    if (parent)
+    {
+        auto* bkg_overlay = new QWidget(parent);
+        bkg_overlay->setStyleSheet("background-color: rgba(0, 0, 0, 200);"); // TODO use stylesheet file?
+        bkg_overlay->setGeometry(parent->rect());
+        bkg_overlay->raise();
+        bkg_overlay->show();
+
+        connect(this, &QDialog::finished, bkg_overlay, &QWidget::deleteLater);
+    }
 }
 
 bool PreferencesDialog::eventFilter(QObject* watched, QEvent* event)
