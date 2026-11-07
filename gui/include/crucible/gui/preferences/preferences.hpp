@@ -2,6 +2,8 @@
 
 #include <memory>
 
+class QSettings;
+
 namespace crucible::gui
 {
 
@@ -19,6 +21,9 @@ public:
     LoggingSettings& logging;
 
     explicit Preferences();
+
+    void loadSettings();
+    QSettings getSettings() const;
 };
 
 extern Preferences PREFS;

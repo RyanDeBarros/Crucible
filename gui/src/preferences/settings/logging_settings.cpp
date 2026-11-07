@@ -22,7 +22,10 @@ void LoggingSettings::load(QSettings& settings)
     LoggingSettings defaults;
 
     word_wrap = settings.value(kWordWrap, defaults.word_wrap).toBool();
+    modified(WordWrap);
+
     refresh_interval = settings.value(kRefreshInterval, defaults.refresh_interval).toInt();
+    modified(RefreshInterval);
 
     settings.endGroup();
 }
@@ -40,8 +43,12 @@ void LoggingSettings::save(QSettings& settings) const
 void LoggingSettings::resetToDefaults()
 {
     LoggingSettings defaults;
+
     word_wrap = defaults.word_wrap;
+    modified(WordWrap);
+
     refresh_interval = defaults.refresh_interval;
+    modified(RefreshInterval);
 }
 
 } // crucible::gui

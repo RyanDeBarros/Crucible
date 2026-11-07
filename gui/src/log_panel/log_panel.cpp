@@ -65,8 +65,6 @@ void LogPanel::setWordWrap(bool on)
 {
     LOG.debug(kLog) << "Log panel word wrap set to " << (on ? "on" : "off");
     
-    model_->message_tooltip = !on;
-
     table_->setWordWrap(on);
     table_->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     table_->setTextElideMode(on ? Qt::ElideNone : Qt::ElideRight);
@@ -131,7 +129,7 @@ void LogPanel::createTable()
         [this](LoggingSettings::Property property) {
             if (property == LoggingSettings::WordWrap)
             {
-                setWordWrap(PREFS.logging.word_wrap); // TODO setting word wrap does not work
+                setWordWrap(PREFS.logging.word_wrap); // TODO setting word wrap does not work with table already populated?
                 refresh();
             }
         });

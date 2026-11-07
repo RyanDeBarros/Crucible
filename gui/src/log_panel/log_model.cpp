@@ -136,7 +136,7 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
         }
     }
     
-    if (message_tooltip && role == Qt::ToolTipRole && index.column() == LogColumn::Message)
+    if (role == Qt::ToolTipRole && index.column() == LogColumn::Message)
         return QString::fromStdString(entry.message);
 
     return {};

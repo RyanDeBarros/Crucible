@@ -3,7 +3,10 @@
 
 #include <crucible/gui/log_panel/log_categories.hpp>
 
+#include <crucible/gui/preferences/preferences.hpp>
+
 #include <crucible/core/logging/logger.hpp>
+
 
 #include <QApplication>
 
@@ -23,7 +26,7 @@ static int run(int argc, char* argv[])
         QStringLiteral(":/style/dark.qss"),
         QStringLiteral(":/style/dark.vars")));
 
-    // TODO load preferences here
+    PREFS.loadSettings();
 
     LOG.debug(kApp) << "Initializing window...";
     MainWindow main_window;

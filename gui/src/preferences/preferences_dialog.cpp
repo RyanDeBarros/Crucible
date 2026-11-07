@@ -1,5 +1,7 @@
 #include <crucible/gui/preferences/preferences_dialog.hpp>
 
+#include <crucible/gui/preferences/preferences.hpp>
+
 #include <crucible/gui/preferences/tabs/general_preferences.hpp>
 #include <crucible/gui/preferences/tabs/logging_preferences.hpp>
 
@@ -9,7 +11,6 @@
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QSettings>
-#include <QStandardPaths>
 #include <QTabWidget>
 #include <QWidget>
 
@@ -84,21 +85,21 @@ void PreferencesDialog::modified()
 
 void PreferencesDialog::loadSettings()
 {
-    auto s = settings();
+    auto settings = PREFS.getSettings();
 
-    general_tab_->load(s);
-    logging_tab_->load(s);
+    general_tab_->load(settings);
+    logging_tab_->load(settings);
     setWindowModified(false);
 }
 
 void PreferencesDialog::saveSettings()
 {
-    auto s = settings();
+    auto settings = PREFS.getSettings();
 
-    general_tab_->save(s);
-    logging_tab_->save(s);
+    general_tab_->save(settings);
+    logging_tab_->save(settings);
 
-    s.sync();
+    settings.sync();
     setWindowModified(false);
 }
 
@@ -106,14 +107,6 @@ void PreferencesDialog::resetToDefaults()
 {
     general_tab_->resetToDefaults();
     logging_tab_->resetToDefaults();
-    //modified();
-}
-
-QSettings PreferencesDialog::settings() const
-{
-    return QSettings(
-        QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + "/preferences.ini",
-        QSettings::IniFormat);
 }
 
 } // crucible::gui

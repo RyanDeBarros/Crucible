@@ -37,8 +37,6 @@ private:
     void loadSettings();
     void saveSettings();
     void resetToDefaults();
-
-    QSettings settings() const;
 };
 
 } // crucible::gui
