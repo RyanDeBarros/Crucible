@@ -4,6 +4,10 @@
 #include <crucible/gui/log_panel/log_controls.hpp>
 #include <crucible/gui/log_panel/log_model.hpp>
 
+#include <crucible/gui/preferences/preferences.hpp>
+
+#include <crucible/gui/preferences/settings/logging_settings.hpp>
+
 #include <crucible/gui/util/scrollbar_preserver.hpp>
 
 #include <QApplication>
@@ -119,14 +123,34 @@ void LogPanel::createTable()
         LogColumn::Message,
         QHeaderView::Stretch);
 
-    setWordWrap(false); // TODO app setting
+    setWordWrap(PREFS.logging.word_wrap);
+    connect(
+        &PREFS.logging,
+        &LoggingSettings::modified,
+        this,
+        [this](LoggingSettings::Property property) {
+            if (property == LoggingSettings::WordWrap)
+            {
+                setWordWrap(PREFS.logging.word_wrap); // TODO setting word wrap does not work
+                refresh();
+            }
+        });
 }
 
 void LogPanel::initPoll()
 {
-    auto* timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &LogPanel::refresh);
-    timer->start(250); // TODO app setting
+    poll_timer_ = new QTimer(this);
+    connect(poll_timer_, &QTimer::timeout, this, &LogPanel::refresh);
+
+    poll_timer_->start(PREFS.logging.refresh_interval);
+    connect(
+        &PREFS.logging,
+        &LoggingSettings::modified,
+        this,
+        [this](LoggingSettings::Property property) {
+            if (property == LoggingSettings::RefreshInterval)
+                poll_timer_->setInterval(PREFS.logging.refresh_interval);
+        });
 }
 
 void LogPanel::refresh()

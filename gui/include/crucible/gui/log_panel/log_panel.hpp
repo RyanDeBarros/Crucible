@@ -7,6 +7,7 @@
 #include <QWidget>
 
 class QTableView;
+class QTimer;
 
 namespace crucible::core
 {
@@ -27,9 +28,10 @@ class LogPanel
     Q_OBJECT;
 
 private:
-    LogControls* controls_;
-    LogModel* model_;
-    QTableView* table_;
+    LogControls* controls_ = nullptr;
+    LogModel* model_ = nullptr;
+    QTableView* table_ = nullptr;
+    QTimer* poll_timer_ = nullptr;
 
 public:
     explicit LogPanel(core::Logger& logger, QWidget* parent = nullptr);

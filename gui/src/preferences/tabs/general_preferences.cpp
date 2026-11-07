@@ -1,12 +1,13 @@
 #include <crucible/gui/preferences/tabs/general_preferences.hpp>
 
+#include <crucible/gui/preferences/preferences.hpp>
+
+#include <crucible/gui/preferences/settings/general_settings.hpp>
+
 #include <QFormLayout>
-#include <QSettings>
 
 namespace crucible::gui
 {
-
-static const char* const kGeneralGroup = "general";
 
 GeneralPreferences::GeneralPreferences(QWidget* parent)
     : QWidget(parent)
@@ -16,18 +17,17 @@ GeneralPreferences::GeneralPreferences(QWidget* parent)
 
 void GeneralPreferences::load(QSettings& settings)
 {
-    settings.beginGroup(kGeneralGroup);
-    settings.endGroup();
+    PREFS.general.load(settings);
 }
 
 void GeneralPreferences::save(QSettings& settings) const
 {
-    settings.beginGroup(kGeneralGroup);
-    settings.endGroup();
+    PREFS.general.save(settings);
 }
 
 void GeneralPreferences::resetToDefaults()
 {
+    PREFS.general.resetToDefaults();
 }
 
 } // crucible::gui

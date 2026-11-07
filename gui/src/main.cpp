@@ -23,6 +23,8 @@ static int run(int argc, char* argv[])
         QStringLiteral(":/style/dark.qss"),
         QStringLiteral(":/style/dark.vars")));
 
+    // TODO load preferences here
+
     LOG.debug(kApp) << "Initializing window...";
     MainWindow main_window;
     main_window.show();
