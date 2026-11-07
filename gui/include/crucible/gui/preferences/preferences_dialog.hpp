@@ -33,8 +33,10 @@ protected:
 private:
     void createLayout();
 
+    void modified();
     void loadSettings();
-    void saveSettings() const;
+    void saveSettings();
+    void resetToDefaults();
 
     QSettings settings() const;
 };

@@ -18,11 +18,15 @@ private:
     QCheckBox* word_wrap_ = nullptr;
     QSpinBox* refresh_interval_ = nullptr;
 
+signals:
+    void modified();
+
 public:
     explicit LoggingPreferences(QWidget* parent = nullptr);
 
     void load(QSettings& settings);
     void save(QSettings& settings) const;
+    void resetToDefaults();
 };
 
 } // crucible::gui

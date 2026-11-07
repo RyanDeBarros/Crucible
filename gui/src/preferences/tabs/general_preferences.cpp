@@ -26,4 +26,8 @@ void GeneralPreferences::save(QSettings& settings) const
     settings.endGroup();
 }
 
+void GeneralPreferences::resetToDefaults()
+{
+}
+
 } // crucible::gui

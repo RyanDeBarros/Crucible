@@ -7,6 +7,7 @@
 #include <QEvent>
 #include <QKeyEvent>
 #include <QVBoxLayout>
+#include <QPushButton>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QTabWidget>
@@ -18,13 +19,13 @@ namespace crucible::gui
 PreferencesDialog::PreferencesDialog(QWidget* parent)
     : QDialog(parent)
 {
-    setWindowTitle(tr("Preferences"));
+    setWindowTitle(tr("Preferences[*]"));
+    setWindowModified(false);
     setModal(true);
     resize(1440, 810);
     installEventFilter(this);
 
     createLayout();
-
     loadSettings();
 }
 
@@ -47,7 +48,9 @@ void PreferencesDialog::createLayout()
     tabs_ = new QTabWidget(this);
     layout->addWidget(tabs_);
 
-    buttons_ = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
+    buttons_ = new QDialogButtonBox(
+        QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Reset,
+        this);
     layout->addWidget(buttons_);
 
     connect(buttons_, &QDialogButtonBox::accepted, this, [this]() {
@@ -55,13 +58,26 @@ void PreferencesDialog::createLayout()
         accept();
     });
 
+    connect(
+        buttons_->button(QDialogButtonBox::Reset),
+        &QPushButton::clicked,
+        this,
+        &PreferencesDialog::resetToDefaults);
+
     connect(buttons_, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     general_tab_ = new GeneralPreferences(tabs_);
+    connect(general_tab_, &GeneralPreferences::modified, this, &PreferencesDialog::modified);
     tabs_->addTab(general_tab_, tr("General"));
 
     logging_tab_ = new LoggingPreferences(tabs_);
+    connect(logging_tab_, &LoggingPreferences::modified, this, &PreferencesDialog::modified);
     tabs_->addTab(logging_tab_, tr("Logging"));
+}
+
+void PreferencesDialog::modified()
+{
+    setWindowModified(true);
 }
 
 void PreferencesDialog::loadSettings()
@@ -70,9 +86,10 @@ void PreferencesDialog::loadSettings()
 
     general_tab_->load(s);
     logging_tab_->load(s);
+    setWindowModified(false);
 }
 
-void PreferencesDialog::saveSettings() const
+void PreferencesDialog::saveSettings()
 {
     auto s = settings();
 
@@ -80,6 +97,14 @@ void PreferencesDialog::saveSettings() const
     logging_tab_->save(s);
 
     s.sync();
+    setWindowModified(false);
+}
+
+void PreferencesDialog::resetToDefaults()
+{
+    general_tab_->resetToDefaults();
+    logging_tab_->resetToDefaults();
+    //modified();
 }
 
 QSettings PreferencesDialog::settings() const
