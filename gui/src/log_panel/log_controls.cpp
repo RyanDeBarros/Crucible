@@ -1,5 +1,7 @@
 #include <crucible/gui/log_panel/log_controls.hpp>
 
+#include <crucible/gui/gui_state.hpp>
+
 #include <crucible/gui/log_panel/log_filter_popup.hpp>
 
 #include <crucible/gui/util/icons.hpp>
@@ -70,9 +72,11 @@ void LogControls::createWordWrapButton()
     word_wrap_button_->setToolTip(tr("Toggle word wrap"));
     word_wrap_button_->setCheckable(true);
     word_wrap_button_->setStyleSheet(loadStylesheet(Stylesheet::ToggleIcon));
-    // TODO load initial word wrap state from settings file that's not preferences.ini, but for GUI persistent state.
+    word_wrap_button_->setChecked(*GuiState{}.logging.word_wrap());
     connect(word_wrap_button_, &QToolButton::toggled, this, [this]() {
-        Q_EMIT wordWrapToggled(word_wrap_button_->isChecked());
+        const bool on = word_wrap_button_->isChecked();
+        GuiState{}.logging.word_wrap().set(on);
+        Q_EMIT wordWrapToggled(on);
     });
 }
 

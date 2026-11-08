@@ -1,5 +1,6 @@
 target_sources(crucible_gui
     PRIVATE
+        gui_state.cpp
         main.cpp
         main_window.cpp
 )
