@@ -8,12 +8,12 @@
 namespace crucible::core::typing
 {
 
-constexpr uint64_t fnv1a_hash(std::string_view str) noexcept
+constexpr std::uint64_t fnv1a_hash(std::string_view str) noexcept
 {
-    uint64_t hash = 0xcbf29ce484222325ULL;
+    std::uint64_t hash = 0xcbf29ce484222325ULL;
     for (char c : str)
     {
-        hash ^= static_cast<uint64_t>(static_cast<unsigned char>(c));
+        hash ^= static_cast<std::uint64_t>(static_cast<unsigned char>(c));
         hash *= 0x00000100000001B3ULL;
     }
     return hash;
@@ -30,7 +30,7 @@ constexpr std::string_view compiler_type_name() noexcept
 }
 
 template<typename T>
-constexpr uint64_t type_id() noexcept
+constexpr std::uint64_t type_id() noexcept
 {
     return fnv1a_hash(compiler_type_name<std::remove_cvref_t<T>>());
 }
@@ -41,10 +41,10 @@ struct TypeErasure
     friend constexpr TypeErasure erase_type() noexcept;
 
 private:
-    uint64_t uid_;
+    std::uint64_t uid_;
 
 private:
-    constexpr explicit TypeErasure(uint64_t uid) noexcept
+    constexpr explicit TypeErasure(std::uint64_t uid) noexcept
         : uid_(uid)
     {
     }
@@ -65,7 +65,7 @@ public:
     }
 
     [[nodiscard]]
-    constexpr uint64_t uid() const
+    constexpr std::uint64_t uid() const
     {
         return uid_;
     }

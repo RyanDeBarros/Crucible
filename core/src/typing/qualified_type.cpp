@@ -125,27 +125,27 @@ std::unique_ptr<QualifiedType> QualifiedType::to_ptr() &&
 
 QualifiedType QualifiedType::make_bool()
 {
-    return QualifiedType(Kind::Bool);
+    return QualifiedType(Kind::Bool, nullptr, nullptr, 0);
 }
 
 QualifiedType QualifiedType::make_int()
 {
-    return QualifiedType(Kind::Int);
+    return QualifiedType(Kind::Int, nullptr, nullptr, 0);
 }
 
 QualifiedType QualifiedType::make_float()
 {
-    return QualifiedType(Kind::Float);
+    return QualifiedType(Kind::Float, nullptr, nullptr, 0);
 }
 
 QualifiedType QualifiedType::make_string()
 {
-    return QualifiedType(Kind::String);
+    return QualifiedType(Kind::String, nullptr, nullptr, 0);
 }
 
 QualifiedType QualifiedType::make_pointer(QualifiedType pointer_type)
 {
-    return QualifiedType(Kind::Pointer, std::move(pointer_type).to_ptr());
+    return QualifiedType(Kind::Pointer, std::move(pointer_type).to_ptr(), nullptr, 0);
 }
 
 QualifiedType QualifiedType::make_enum(KindInstance instance)
@@ -155,17 +155,17 @@ QualifiedType QualifiedType::make_enum(KindInstance instance)
 
 QualifiedType QualifiedType::make_list(QualifiedType elem_type)
 {
-    return QualifiedType(Kind::List, std::move(elem_type).to_ptr());
+    return QualifiedType(Kind::List, std::move(elem_type).to_ptr(), nullptr, 0);
 }
 
 QualifiedType QualifiedType::make_set(QualifiedType elem_type)
 {
-    return QualifiedType(Kind::Set, std::move(elem_type).to_ptr());
+    return QualifiedType(Kind::Set, std::move(elem_type).to_ptr(), nullptr, 0);
 }
 
 QualifiedType QualifiedType::make_map(QualifiedType key_type, QualifiedType map_type)
 {
-    return QualifiedType(Kind::Map, std::move(key_type).to_ptr(), std::move(map_type).to_ptr());
+    return QualifiedType(Kind::Map, std::move(key_type).to_ptr(), std::move(map_type).to_ptr(), 0);
 }
 
 QualifiedType QualifiedType::make_struct(KindInstance instance)
@@ -175,7 +175,7 @@ QualifiedType QualifiedType::make_struct(KindInstance instance)
 
 QualifiedType QualifiedType::make_joker()
 {
-    return QualifiedType(Kind::Joker);
+    return QualifiedType(Kind::Joker, nullptr, nullptr, 0);
 }
 
 } // crucible::core::typing

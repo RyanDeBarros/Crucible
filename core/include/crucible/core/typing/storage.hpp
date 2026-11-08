@@ -19,7 +19,7 @@ struct BoolPayload
 
 struct IntPayload
 {
-    int64_t value;
+    std::int64_t value;
 };
 
 struct FloatPayload
@@ -34,12 +34,12 @@ struct StringPayload
 
 struct PointerPayload
 {
-    ModuleId value;
+    modules::ModuleId value;
 };
 
 struct EnumPayload
 {
-    uint64_t value;
+    std::uint64_t value;
 };
 
 template<typename T> // T must be payload type

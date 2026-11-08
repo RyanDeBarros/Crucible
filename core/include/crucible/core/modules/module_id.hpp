@@ -1,6 +1,6 @@
 #pragma once
 
-namespace crucible::core
+namespace crucible::core::modules
 {
 
 struct ModuleId
@@ -13,4 +13,4 @@ struct ModuleId
     }
 };
 
-} // crucible::core
+} // crucible::core::modules

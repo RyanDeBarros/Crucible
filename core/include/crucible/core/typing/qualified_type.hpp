@@ -29,14 +29,14 @@ class QualifiedType
     Kind base_type_;
     std::unique_ptr<QualifiedType> key_type_; // pointer, list, set, map
     std::unique_ptr<QualifiedType> value_type_; // map
-    KindInstance instance_ = 0; // enum, struct
+    KindInstance instance_; // enum, struct
 
 private:
     QualifiedType(
         Kind base_type,
-        std::unique_ptr<QualifiedType> key_type = nullptr,
-        std::unique_ptr<QualifiedType> value_type = nullptr,
-        KindInstance instance = 0);
+        std::unique_ptr<QualifiedType> key_type,
+        std::unique_ptr<QualifiedType> value_type,
+        KindInstance instance);
 
 public:
     QualifiedType(const QualifiedType&);
