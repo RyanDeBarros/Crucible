@@ -22,9 +22,7 @@ static int run(int argc, char* argv[])
     app.setOrganizationName("Ryan de Barros");
 
     LOG.debug(kApp) << "Loading stylesheet...";
-    app.setStyleSheet(loadStylesheet(
-        QStringLiteral(":/style/dark.qss"),
-        QStringLiteral(":/style/dark.vars")));
+    app.setStyleSheet(loadStylesheet(Stylesheet::Dark));
 
     PREFS.loadSettings();
 

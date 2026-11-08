@@ -45,7 +45,7 @@ bool LogControls::wordWrap() const
 void LogControls::createFilterButton()
 {
     filter_button_ = new QToolButton(this);
-    filter_button_->setIcon(QIcon(":/icons/filter"));
+    filter_button_->setIcon(QIcon(QStringLiteral(":/icons/filter"))); // TODO central registry like Stylesheet for icons
     filter_button_->setToolTip(tr("Filter options"));
     connect(filter_button_, &QToolButton::clicked, this, &LogControls::toggleFilterPopup);
 
@@ -65,10 +65,10 @@ void LogControls::createFilterButton()
 void LogControls::createWordWrapButton()
 {
     word_wrap_button_ = new QToolButton(this);
-    word_wrap_button_->setIcon(QIcon(":/icons/word_wrap"));
+    word_wrap_button_->setIcon(QIcon(QStringLiteral(":/icons/word_wrap")));
     word_wrap_button_->setToolTip(tr("Toggle word wrap"));
     word_wrap_button_->setCheckable(true);
-    word_wrap_button_->setStyleSheet(loadStylesheet(":/style/toggle_icon.qss"));
+    word_wrap_button_->setStyleSheet(loadStylesheet(Stylesheet::ToggleIcon));
     // TODO load initial word wrap state from settings file that's not preferences.ini, but for GUI persistent state.
     connect(word_wrap_button_, &QToolButton::toggled, this, [this]() {
         Q_EMIT wordWrapToggled(word_wrap_button_->isChecked());
@@ -78,7 +78,7 @@ void LogControls::createWordWrapButton()
 void LogControls::createClearButton()
 {
     clear_button_ = new QToolButton(this);
-    clear_button_->setIcon(QIcon(":/icons/clear_log"));
+    clear_button_->setIcon(QIcon(QStringLiteral(":/icons/clear_log")));
     clear_button_->setToolTip(tr("Clear log"));
 
     connect(clear_button_, &QToolButton::clicked, this, &LogControls::clearRequested);

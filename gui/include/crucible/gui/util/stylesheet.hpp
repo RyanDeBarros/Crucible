@@ -5,7 +5,12 @@ class QString;
 namespace crucible::gui
 {
 
-extern QString loadStylesheet(const QString& stylesheet_path);
-extern QString loadStylesheet(const QString& stylesheet_path, const QString& variables_path);
+enum class Stylesheet
+{
+    Dark,
+    ToggleIcon,
+};
+
+extern QString loadStylesheet(Stylesheet stylesheet);
 
 } // crucible::gui
