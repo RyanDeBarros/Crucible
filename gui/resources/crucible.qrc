@@ -2,9 +2,11 @@
     <qresource prefix="/style">
         <file alias="dark.qss">style/dark.qss</file>
         <file alias="dark.vars">style/dark.vars</file>
+        <file alias="toggle_icon.qss">style/toggle_icon.qss</file>
     </qresource>
     <qresource prefix="/icons">
         <file alias="filter">icons/filter.svg</file>
         <file alias="clear_log">icons/clear_log.svg</file>
+        <file alias="word_wrap">icons/word_wrap.svg</file>
     </qresource>
 </RCC>

@@ -31,7 +31,7 @@ PreferencesDialog::PreferencesDialog(QWidget* parent)
     if (parent)
     {
         auto* bkg_overlay = new QWidget(parent);
-        bkg_overlay->setStyleSheet("background-color: rgba(0, 0, 0, 200);"); // TODO use stylesheet file?
+        bkg_overlay->setStyleSheet("background-color: rgba(0, 0, 0, 200);");
         bkg_overlay->setGeometry(parent->rect());
         bkg_overlay->raise();
         bkg_overlay->show();

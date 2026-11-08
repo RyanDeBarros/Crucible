@@ -8,10 +8,22 @@
 namespace crucible::gui
 {
 
+// TODO move to util/ and rename to loadStylesheet(). Cache stylesheets since they might be used multiple times. In fact, pass enums instead of paths.
+
+QString load_stylesheet(const QString& stylesheet_path)
+{
+    QFile stylesheet_file(stylesheet_path);
+
+    if (!stylesheet_file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return {};
+
+    return QString::fromUtf8(stylesheet_file.readAll());
+}
+
 QString load_stylesheet(const QString& stylesheet_path, const QString& variables_path)
 {
-    QFile variables_file(variables_path);
     QFile stylesheet_file(stylesheet_path);
+    QFile variables_file(variables_path);
 
     if (!variables_file.open(QIODevice::ReadOnly | QIODevice::Text) ||
         !stylesheet_file.open(QIODevice::ReadOnly | QIODevice::Text))

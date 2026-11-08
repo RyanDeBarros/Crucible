@@ -18,6 +18,7 @@ class LogControls
 
 private:
     QToolButton* filter_button_ = nullptr;
+    QToolButton* word_wrap_button_ = nullptr;
     QToolButton* clear_button_ = nullptr;
     
     LogFilterPopup* filter_popup_ = nullptr;
@@ -35,9 +36,10 @@ signals:
 
 private:
     void createFilterButton();
-    void toggleFilterPopup();
-
+    void createWordWrapButton();
     void createClearButton();
+
+    void toggleFilterPopup();
 };
 
 } // crucible::gui
