@@ -11,6 +11,6 @@ enum class Stylesheet
     ToggleIcon,
 };
 
-extern QString loadStylesheet(Stylesheet stylesheet);
+extern const QString& loadStylesheet(Stylesheet stylesheet);
 
 } // crucible::gui

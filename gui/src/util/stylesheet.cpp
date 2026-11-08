@@ -5,44 +5,23 @@
 #include <QString>
 #include <QTextStream>
 
-template<>
-struct std::hash<std::pair<QString, QString>>
-{
-    size_t operator()(const std::pair<QString, QString>& pair) const
-    {
-        return std::hash<QString>{}(pair.first) ^ std::hash<QString>{}(pair.second);
-    }
-};
-
 namespace crucible::gui
 {
 
-static std::unordered_map<QString, QString> cached_static_stylesheets;
-static std::unordered_map<std::pair<QString, QString>, QString> cached_variable_stylesheets;
+static std::unordered_map<Stylesheet, std::unique_ptr<QString>> cached_stylesheets;
 
 static QString loadStylesheet(const QString& stylesheet_path)
 {
-    auto it = cached_static_stylesheets.find(stylesheet_path);
-    if (it != cached_static_stylesheets.end())
-        return it->second;
-
     QFile stylesheet_file(stylesheet_path);
 
     if (!stylesheet_file.open(QIODevice::ReadOnly | QIODevice::Text))
         return {};
 
-    return cached_static_stylesheets.emplace(
-        stylesheet_path,
-        QString::fromUtf8(stylesheet_file.readAll())).first->second;
+    return QString::fromUtf8(stylesheet_file.readAll());
 }
 
 static QString loadStylesheet(const QString& stylesheet_path, const QString& variables_path)
 {
-    auto pair = std::make_pair(stylesheet_path, variables_path);
-    auto it = cached_variable_stylesheets.find(pair);
-    if (it != cached_variable_stylesheets.end())
-        return it->second;
-
     QFile stylesheet_file(stylesheet_path);
     QFile variables_file(variables_path);
 
@@ -78,10 +57,10 @@ static QString loadStylesheet(const QString& stylesheet_path, const QString& var
     for (auto it = variables.cbegin(); it != variables.cend(); ++it)
         stylesheet.replace(QString("{{%1}}").arg(it.key()), it.value());
 
-    return cached_variable_stylesheets.emplace(pair, stylesheet).first->second;
+    return stylesheet;
 }
 
-QString loadStylesheet(Stylesheet stylesheet)
+static QString loadStylesheetImpl(Stylesheet stylesheet)
 {
     switch (stylesheet)
     {
@@ -95,6 +74,19 @@ QString loadStylesheet(Stylesheet stylesheet)
 
     default:
         return {};
+    }
+}
+
+const QString& loadStylesheet(Stylesheet stylesheet)
+{
+    auto it = cached_stylesheets.find(stylesheet);
+    if (it != cached_stylesheets.end())
+        return *it->second;
+    else
+    {
+        return *cached_stylesheets.emplace(
+            stylesheet,
+            std::make_unique<QString>(loadStylesheetImpl(stylesheet))).first->second;
     }
 }
 

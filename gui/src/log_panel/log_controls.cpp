@@ -2,6 +2,7 @@
 
 #include <crucible/gui/log_panel/log_filter_popup.hpp>
 
+#include <crucible/gui/util/icons.hpp>
 #include <crucible/gui/util/stylesheet.hpp>
 
 #include <QHBoxLayout>
@@ -45,7 +46,7 @@ bool LogControls::wordWrap() const
 void LogControls::createFilterButton()
 {
     filter_button_ = new QToolButton(this);
-    filter_button_->setIcon(QIcon(QStringLiteral(":/icons/filter"))); // TODO central registry like Stylesheet for icons
+    filter_button_->setIcon(loadIcon(Icon::Filter));
     filter_button_->setToolTip(tr("Filter options"));
     connect(filter_button_, &QToolButton::clicked, this, &LogControls::toggleFilterPopup);
 
@@ -65,7 +66,7 @@ void LogControls::createFilterButton()
 void LogControls::createWordWrapButton()
 {
     word_wrap_button_ = new QToolButton(this);
-    word_wrap_button_->setIcon(QIcon(QStringLiteral(":/icons/word_wrap")));
+    word_wrap_button_->setIcon(loadIcon(Icon::WordWrap));
     word_wrap_button_->setToolTip(tr("Toggle word wrap"));
     word_wrap_button_->setCheckable(true);
     word_wrap_button_->setStyleSheet(loadStylesheet(Stylesheet::ToggleIcon));
@@ -78,7 +79,7 @@ void LogControls::createWordWrapButton()
 void LogControls::createClearButton()
 {
     clear_button_ = new QToolButton(this);
-    clear_button_->setIcon(QIcon(QStringLiteral(":/icons/clear_log")));
+    clear_button_->setIcon(loadIcon(Icon::ClearLog));
     clear_button_->setToolTip(tr("Clear log"));
 
     connect(clear_button_, &QToolButton::clicked, this, &LogControls::clearRequested);
