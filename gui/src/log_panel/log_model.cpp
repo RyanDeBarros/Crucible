@@ -105,7 +105,7 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
         switch (index.column())
         {
         case LogColumn::Timestamp:
-            return QBrush(QColor(130, 130, 130)); // TODO use stylesheet file?
+            return QBrush(QColor(130, 130, 130));
 
         case LogColumn::Level:
         {
@@ -136,7 +136,7 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
         }
     }
     
-    if (message_tooltip && role == Qt::ToolTipRole && index.column() == LogColumn::Message)
+    if (role == Qt::ToolTipRole && index.column() == LogColumn::Message)
         return QString::fromStdString(entry.message);
 
     return {};

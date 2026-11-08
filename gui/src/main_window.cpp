@@ -5,6 +5,8 @@
 
 #include <crucible/gui/op_graph/op_graph_panel.hpp>
 
+#include <crucible/gui/preferences/preferences_dialog.hpp>
+
 #include <crucible/core/logging/logger.hpp>
 
 #include <QDockWidget>
@@ -91,6 +93,15 @@ void MainWindow::createPanels()
 
 void MainWindow::createMenuBar()
 {
+    auto* edit_menu = menuBar()->addMenu(tr("Edit"));
+    auto* preferences_action = edit_menu->addAction(
+        tr("Preferences..."),
+        QKeySequence(Qt::ControlModifier | Qt::Key_Comma));
+    connect(preferences_action, &QAction::triggered, this, [this]() {
+        PreferencesDialog dialog(this);
+        dialog.exec();
+    });
+
     auto* window_menu = menuBar()->addMenu(tr("Window"));
 
     for (auto* dock : panel_docks_)

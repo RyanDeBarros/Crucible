@@ -4,6 +4,10 @@
 #include <crucible/gui/log_panel/log_controls.hpp>
 #include <crucible/gui/log_panel/log_model.hpp>
 
+#include <crucible/gui/preferences/preferences.hpp>
+
+#include <crucible/gui/preferences/settings/logging_settings.hpp>
+
 #include <crucible/gui/util/scrollbar_preserver.hpp>
 
 #include <QApplication>
@@ -61,11 +65,9 @@ void LogPanel::setWordWrap(bool on)
 {
     LOG.debug(kLog) << "Log panel word wrap set to " << (on ? "on" : "off");
     
-    model_->message_tooltip = !on;
-
     table_->setWordWrap(on);
-    table_->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     table_->setTextElideMode(on ? Qt::ElideNone : Qt::ElideRight);
+    table_->resizeRowsToContents();
 }
 
 void LogPanel::createLayout()
@@ -83,7 +85,10 @@ void LogPanel::createLayout()
 
     connect(controls_, &LogControls::levelFilterChanged, this, &LogPanel::setLevelFilter);
     connect(controls_, &LogControls::columnFilterChanged, this, &LogPanel::setColumnFilter);
+    connect(controls_, &LogControls::wordWrapToggled, this, &LogPanel::setWordWrap);
     connect(controls_, &LogControls::clearRequested, this, &LogPanel::requestClearLog);
+
+    setWordWrap(controls_->wordWrap());
 }
 
 void LogPanel::createTable()
@@ -97,6 +102,7 @@ void LogPanel::createTable()
 
     table_->installEventFilter(this);
 
+    table_->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     table_->verticalHeader()->hide();
     table_->horizontalHeader()->setStretchLastSection(true);
 
@@ -118,15 +124,17 @@ void LogPanel::createTable()
     table_->horizontalHeader()->setSectionResizeMode(
         LogColumn::Message,
         QHeaderView::Stretch);
-
-    setWordWrap(false); // TODO app setting
 }
 
 void LogPanel::initPoll()
 {
-    auto* timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &LogPanel::refresh);
-    timer->start(250); // TODO app setting
+    poll_timer_ = new QTimer(this);
+    connect(poll_timer_, &QTimer::timeout, this, &LogPanel::refresh);
+
+    poll_timer_->start(*PREFS.logging.refresh_interval);
+    connect(&PREFS.logging.refresh_interval, &SignalProperty<int>::modified, this, [this]() {
+        poll_timer_->setInterval(*PREFS.logging.refresh_interval);
+    });
 }
 
 void LogPanel::refresh()

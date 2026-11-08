@@ -18,6 +18,7 @@ class LogControls
 
 private:
     QToolButton* filter_button_ = nullptr;
+    QToolButton* word_wrap_button_ = nullptr;
     QToolButton* clear_button_ = nullptr;
     
     LogFilterPopup* filter_popup_ = nullptr;
@@ -25,19 +26,22 @@ private:
 public:
     explicit LogControls(QWidget* parent = nullptr);
 
-    core::LogLevelMask level_mask();
-    LogColumnMask column_mask();
+    core::LogLevelMask level_mask() const;
+    LogColumnMask column_mask() const;
+    bool wordWrap() const;
 
 signals:
     void levelFilterChanged(core::LogLevelMask mask);
     void columnFilterChanged(LogColumnMask mask);
+    void wordWrapToggled(bool on);
     void clearRequested();
 
 private:
     void createFilterButton();
-    void toggleFilterPopup();
-
+    void createWordWrapButton();
     void createClearButton();
+
+    void toggleFilterPopup();
 };
 
 } // crucible::gui

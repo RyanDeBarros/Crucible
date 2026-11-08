@@ -1,7 +1,10 @@
 #include <crucible/gui/main_window.hpp>
-#include <crucible/gui/stylesheet.hpp>
 
 #include <crucible/gui/log_panel/log_categories.hpp>
+
+#include <crucible/gui/preferences/preferences.hpp>
+
+#include <crucible/gui/util/stylesheet.hpp>
 
 #include <crucible/core/logging/logger.hpp>
 
@@ -16,12 +19,12 @@ static int run(int argc, char* argv[])
 
     QApplication app(argc, argv);
     app.setApplicationName("Crucible");
-    app.setOrganizationName("Crucible");
+    app.setOrganizationName("Ryan de Barros");
 
     LOG.debug(kApp) << "Loading stylesheet...";
-    app.setStyleSheet(load_stylesheet(
-        QStringLiteral(":/style/dark.qss"),
-        QStringLiteral(":/style/dark.vars")));
+    app.setStyleSheet(loadStylesheet(Stylesheet::Dark));
+
+    PREFS.loadSettings();
 
     LOG.debug(kApp) << "Initializing window...";
     MainWindow main_window;

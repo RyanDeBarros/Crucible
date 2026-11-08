@@ -1,0 +1,4 @@
+QToolButton:checked {
+    border: 2px solid #ABABAB;
+    border-radius: 4px;
+}

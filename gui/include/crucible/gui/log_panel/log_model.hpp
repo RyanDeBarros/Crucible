@@ -18,9 +18,6 @@ class LogModel
 
     friend class LogModelRefreshCallback;
 
-public:
-    bool message_tooltip = false;
-
 private:
     core::Logger& logger_;
     std::unique_ptr<core::LogStoreFilter> filter_;
