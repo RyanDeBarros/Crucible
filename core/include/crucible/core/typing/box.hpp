@@ -18,6 +18,7 @@ class Box
 
     struct Ops
     {
+        TypeErasure type; // TODO do similar thing in imp
         Dtor dtor = nullptr;
         Copier copy = nullptr;
         CopyAssign copy_assign = nullptr;
@@ -27,14 +28,15 @@ class Box
 private:
     template<typename T>
     static constexpr Ops kOps = {
-        [](void* ptr) { delete static_cast<T*>(ptr); },
-        [](const void* ptr) -> void* {
+        .type = erase_type<T>(),
+        .dtor = [](void* ptr) { delete static_cast<T*>(ptr); },
+        .copy = [](const void* ptr) -> void* {
             if constexpr (std::is_copy_constructible_v<T>)
                 return ptr ? new T(*static_cast<const T*>(ptr)) : nullptr;
             else
                 return nullptr;
         },
-        [](void* to, const void* from) {
+        .copy_assign = [](void* to, const void* from) {
             if constexpr (std::is_copy_assignable_v<T>)
             {
                 *static_cast<T*>(to) = *static_cast<const T*>(from);
@@ -43,7 +45,7 @@ private:
             else
                 return false;
         },
-        [](void* to, void* from) {
+        .move_assign = [](void* to, void* from) {
             if constexpr (std::is_move_assignable_v<T>)
             {
                 *static_cast<T*>(to) = std::move(*static_cast<T*>(from));
@@ -55,7 +57,6 @@ private:
     };
 
     void* raw_ = nullptr;
-    TypeErasure type_;
     const Ops* ops_ = nullptr;
 
 public:
@@ -64,14 +65,12 @@ public:
     template<typename T>
     Box(T* raw)
         : raw_(raw)
-        , type_(erase_type<T>())
         , ops_(&kOps<T>)
     {
     }
 
     Box(const Box& o)
         : raw_(o.try_copy(o.raw_))
-        , type_(o.type_)
         , ops_(o.ops_)
     {
         if (o.raw_ && !raw_)
@@ -80,11 +79,9 @@ public:
 
     Box(Box&& o) noexcept
         : raw_(o.raw_)
-        , type_(o.type_)
         , ops_(o.ops_)
     {
         o.raw_ = nullptr;
-        o.type_ = TypeErasure();
         o.ops_ = nullptr;
     }
 
@@ -97,13 +94,13 @@ public:
     {
         if (this != &o)
         {
-            if (type_ != o.type_ || !try_copy_assign(raw_, o.raw_))
+            if (type() != o.type() || !try_copy_assign(raw_, o.raw_))
             {
                 try_dtor(raw_);
                 raw_ = o.try_copy(o.raw_);
             }
 
-            type_ = o.type_;
+            type() = o.type();
             ops_ = o.ops_;
 
             if (o.raw_ && !raw_)
@@ -117,17 +114,15 @@ public:
     {
         if (this != &o)
         {
-            if (type_ != o.type_ || !try_move_assign(raw_, o.raw_))
+            if (type() != o.type() || !try_move_assign(raw_, o.raw_))
             {
                 try_dtor(raw_);
                 raw_ = o.raw_;
             }
 
-            type_ = o.type_;
             ops_ = o.ops_;
 
             o.raw_ = nullptr;
-            o.type_ = TypeErasure();
             o.ops_ = nullptr;
         }
 
@@ -138,17 +133,17 @@ public:
     template<typename T>
     bool holds() const
     {
-        return type_ == erase_type<T>();
+        return type() == erase_type<T>();
     }
 
     bool holds(TypeErasure type) const
     {
-        return type_ == type;
+        return this->type() == type;
     }
 
     TypeErasure type() const
     {
-        return type_;
+        return ops_ ? ops_->type : TypeErasure();
     }
 
     const void* unsafe_raw() const

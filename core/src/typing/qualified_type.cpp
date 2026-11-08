@@ -85,6 +85,26 @@ bool QualifiedType::operator!=(const QualifiedType& o) const
         || not_equal_ptrs(value_type_, o.value_type_);
 }
 
+Kind QualifiedType::base_type() const
+{
+    return base_type_;
+}
+
+const QualifiedType* QualifiedType::key_type() const
+{
+    return key_type_ ? key_type_.get() : nullptr;
+}
+
+const QualifiedType* QualifiedType::value_type() const
+{
+    return value_type_ ? value_type_.get() : nullptr;
+}
+
+KindInstance QualifiedType::instance() const
+{
+    return instance_;
+}
+
 std::unique_ptr<QualifiedType> QualifiedType::clone() const
 {
     return std::unique_ptr<QualifiedType>(new QualifiedType(
@@ -123,9 +143,9 @@ QualifiedType QualifiedType::make_string()
     return QualifiedType(Kind::String);
 }
 
-QualifiedType QualifiedType::make_pointer()
+QualifiedType QualifiedType::make_pointer(QualifiedType pointer_type)
 {
-    return QualifiedType(Kind::Pointer);
+    return QualifiedType(Kind::Pointer, std::move(pointer_type).to_ptr());
 }
 
 QualifiedType QualifiedType::make_enum(KindInstance instance)
