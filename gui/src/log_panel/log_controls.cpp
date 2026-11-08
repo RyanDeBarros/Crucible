@@ -27,14 +27,19 @@ LogControls::LogControls(QWidget* parent)
     controls_layout->addStretch();
 }
 
-core::LogLevelMask LogControls::level_mask()
+core::LogLevelMask LogControls::level_mask() const
 {
     return filter_popup_->level_mask();
 }
 
-LogColumnMask LogControls::column_mask()
+LogColumnMask LogControls::column_mask() const
 {
     return filter_popup_->column_mask();
+}
+
+bool LogControls::wordWrap() const
+{
+    return word_wrap_button_->isChecked();
 }
 
 void LogControls::createFilterButton()
@@ -64,8 +69,9 @@ void LogControls::createWordWrapButton()
     word_wrap_button_->setToolTip(tr("Toggle word wrap"));
     word_wrap_button_->setCheckable(true);
     word_wrap_button_->setStyleSheet(load_stylesheet(":/style/toggle_icon.qss"));
-    connect(word_wrap_button_, &QToolButton::toggled, this, []() {
-        // TODO
+    // TODO load initial word wrap state from settings file that's not preferences.ini, but for GUI persistent state.
+    connect(word_wrap_button_, &QToolButton::toggled, this, [this]() {
+        wordWrapToggled(word_wrap_button_->isChecked());
     });
 }
 

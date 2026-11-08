@@ -26,12 +26,14 @@ private:
 public:
     explicit LogControls(QWidget* parent = nullptr);
 
-    core::LogLevelMask level_mask();
-    LogColumnMask column_mask();
+    core::LogLevelMask level_mask() const;
+    LogColumnMask column_mask() const;
+    bool wordWrap() const;
 
 signals:
     void levelFilterChanged(core::LogLevelMask mask);
     void columnFilterChanged(LogColumnMask mask);
+    void wordWrapToggled(bool on);
     void clearRequested();
 
 private:

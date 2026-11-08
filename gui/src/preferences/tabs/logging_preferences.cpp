@@ -6,7 +6,6 @@
 
 #include <crucible/gui/util/block_signals.hpp>
 
-#include <QCheckBox>
 #include <QFormLayout>
 #include <QSpinBox>
 
@@ -17,11 +16,6 @@ LoggingPreferences::LoggingPreferences(QWidget* parent)
     : QWidget(parent)
 {
     auto* layout = new QFormLayout(this);
-
-    word_wrap_ = new QCheckBox(this); // TODO make this a toggle icon button directly in logging controls instead of preferences
-    word_wrap_->setChecked(*PREFS.logging.word_wrap);
-    connect(word_wrap_, &QCheckBox::checkStateChanged, this, &LoggingPreferences::modified);
-    layout->addRow(tr("Word wrap"), word_wrap_);
 
     refresh_interval_ = new QSpinBox(this);
     refresh_interval_->setRange(50, 5000);
@@ -34,7 +28,6 @@ LoggingPreferences::LoggingPreferences(QWidget* parent)
 
 void LoggingPreferences::save(QSettings& settings) const
 {
-    PREFS.logging.word_wrap.set(word_wrap_->isChecked());
     PREFS.logging.refresh_interval.set(refresh_interval_->value());
 
     PREFS.logging.save(settings);
@@ -43,7 +36,7 @@ void LoggingPreferences::save(QSettings& settings) const
 void LoggingPreferences::resetToDefaults()
 {
     PREFS.logging.resetToDefaults();
-    word_wrap_->setChecked(*PREFS.logging.word_wrap);
+
     refresh_interval_->setValue(*PREFS.logging.refresh_interval);
 }
 

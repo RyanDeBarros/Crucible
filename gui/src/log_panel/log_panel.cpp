@@ -85,7 +85,10 @@ void LogPanel::createLayout()
 
     connect(controls_, &LogControls::levelFilterChanged, this, &LogPanel::setLevelFilter);
     connect(controls_, &LogControls::columnFilterChanged, this, &LogPanel::setColumnFilter);
+    connect(controls_, &LogControls::wordWrapToggled, this, &LogPanel::setWordWrap);
     connect(controls_, &LogControls::clearRequested, this, &LogPanel::requestClearLog);
+
+    setWordWrap(controls_->wordWrap());
 }
 
 void LogPanel::createTable()
@@ -121,12 +124,6 @@ void LogPanel::createTable()
     table_->horizontalHeader()->setSectionResizeMode(
         LogColumn::Message,
         QHeaderView::Stretch);
-
-    setWordWrap(*PREFS.logging.word_wrap);
-    connect(&PREFS.logging.word_wrap, &SignalProperty<bool>::modified, this, [this]() {
-        setWordWrap(*PREFS.logging.word_wrap);
-        refresh();
-    });
 }
 
 void LogPanel::initPoll()

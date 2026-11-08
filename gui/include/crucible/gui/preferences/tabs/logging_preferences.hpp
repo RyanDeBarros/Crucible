@@ -2,7 +2,6 @@
 
 #include <QWidget>
 
-class QCheckBox;
 class QSpinBox;
 class QSettings;
 
@@ -15,7 +14,6 @@ class LoggingPreferences
     Q_OBJECT;
 
 private:
-    QCheckBox* word_wrap_ = nullptr;
     QSpinBox* refresh_interval_ = nullptr;
 
 public:

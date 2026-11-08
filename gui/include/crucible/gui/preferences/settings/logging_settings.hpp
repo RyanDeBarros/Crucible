@@ -9,7 +9,6 @@ namespace crucible::gui
 
 struct LoggingSettings
 {
-    SignalProperty<bool> word_wrap;
     SignalProperty<int> refresh_interval;
 
     explicit LoggingSettings();
