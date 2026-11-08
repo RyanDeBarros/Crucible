@@ -6,7 +6,7 @@
 #include <memory>
 #include <stdexcept>
 
-namespace crucible::core
+namespace crucible::core::typing
 {
 
 class Box
@@ -259,4 +259,4 @@ void forward_into_box(Box& b, T&& obj)
     copy_box<std::remove_cvref_t<T>>(b, std::forward<T>(obj));
 }
 
-} // crucible::core
+} // crucible::core::typing

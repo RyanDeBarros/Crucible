@@ -5,7 +5,7 @@
 #include <string_view>
 #include <type_traits>
 
-namespace crucible::core
+namespace crucible::core::typing
 {
 
 constexpr uint64_t fnv1a_hash(std::string_view str) noexcept
@@ -107,12 +107,12 @@ constexpr T* resolve_type(TypeErasure erasure, T* ptr) noexcept
     return resolve_type<T>(erasure, static_cast<void*>(ptr));
 }
 
-} // crucible::core
+} // crucible::core::typing
 
 template<>
-struct std::hash<crucible::core::TypeErasure>
+struct std::hash<crucible::core::typing::TypeErasure>
 {
-    size_t operator()(crucible::core::TypeErasure te) const
+    size_t operator()(crucible::core::typing::TypeErasure te) const
     {
         return te.hash();
     }
