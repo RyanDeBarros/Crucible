@@ -1,12 +1,12 @@
 #include <crucible/gui/main_window.hpp>
-#include <crucible/gui/stylesheet.hpp>
 
 #include <crucible/gui/log_panel/log_categories.hpp>
 
 #include <crucible/gui/preferences/preferences.hpp>
 
-#include <crucible/core/logging/logger.hpp>
+#include <crucible/gui/util/stylesheet.hpp>
 
+#include <crucible/core/logging/logger.hpp>
 
 #include <QApplication>
 
@@ -22,7 +22,7 @@ static int run(int argc, char* argv[])
     app.setOrganizationName("Ryan de Barros");
 
     LOG.debug(kApp) << "Loading stylesheet...";
-    app.setStyleSheet(load_stylesheet(
+    app.setStyleSheet(loadStylesheet(
         QStringLiteral(":/style/dark.qss"),
         QStringLiteral(":/style/dark.vars")));
 

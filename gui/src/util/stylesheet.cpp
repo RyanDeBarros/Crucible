@@ -1,4 +1,4 @@
-#include <crucible/gui/stylesheet.hpp>
+#include <crucible/gui/util/stylesheet.hpp>
 
 #include <QFile>
 #include <QMap>
@@ -8,9 +8,7 @@
 namespace crucible::gui
 {
 
-// TODO move to util/ and rename to loadStylesheet(). Cache stylesheets since they might be used multiple times. In fact, pass enums instead of paths.
-
-QString load_stylesheet(const QString& stylesheet_path)
+QString loadStylesheet(const QString& stylesheet_path)
 {
     QFile stylesheet_file(stylesheet_path);
 
@@ -20,7 +18,7 @@ QString load_stylesheet(const QString& stylesheet_path)
     return QString::fromUtf8(stylesheet_file.readAll());
 }
 
-QString load_stylesheet(const QString& stylesheet_path, const QString& variables_path)
+QString loadStylesheet(const QString& stylesheet_path, const QString& variables_path)
 {
     QFile stylesheet_file(stylesheet_path);
     QFile variables_file(variables_path);

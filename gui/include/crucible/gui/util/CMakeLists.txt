@@ -3,4 +3,5 @@ target_sources(crucible_gui
         block_signals.hpp
         scrollbar_preserver.hpp
         signal_property.hpp
+        stylesheet.hpp
 )
