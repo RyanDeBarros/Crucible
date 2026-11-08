@@ -72,7 +72,6 @@ NodeId OpGraphModel::addNode(QString node_type)
     node_ids_.insert(node_id);
     node_captions_[node_id] = node_type.isEmpty() ? defaultNodeName() : node_type;
 
-    // TODO use Q_EMIT in other places when calling signal methods
     Q_EMIT nodeCreated(node_id);
     return node_id;
 }

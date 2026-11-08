@@ -71,7 +71,7 @@ void LogControls::createWordWrapButton()
     word_wrap_button_->setStyleSheet(load_stylesheet(":/style/toggle_icon.qss"));
     // TODO load initial word wrap state from settings file that's not preferences.ini, but for GUI persistent state.
     connect(word_wrap_button_, &QToolButton::toggled, this, [this]() {
-        wordWrapToggled(word_wrap_button_->isChecked());
+        Q_EMIT wordWrapToggled(word_wrap_button_->isChecked());
     });
 }
 

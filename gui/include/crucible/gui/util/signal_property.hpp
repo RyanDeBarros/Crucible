@@ -45,7 +45,7 @@ public:
     void set(T value)
     {
         value_ = std::move(value);
-        modified();
+        Q_EMIT modified();
     }
 };
 

@@ -92,12 +92,12 @@ void LogFilterPopup::addFilter(LogColumn column, const QString& label)
 
 void LogFilterPopup::updateLevelFilter()
 {
-    emit levelFilterChanged(level_mask());
+    Q_EMIT levelFilterChanged(level_mask());
 }
 
 void LogFilterPopup::updateColumnFilter()
 {
-    emit columnFilterChanged(column_mask());
+    Q_EMIT columnFilterChanged(column_mask());
 }
 
 } // crucible::gui
