@@ -13,16 +13,19 @@ class Box
 {
     using Dtor = void (*)(void*);
     using Copier = void* (*)(const void*);
-    using CopyAssign = bool(*)(void*, const void*);
-    using MoveAssign = bool(*)(void*, void*);
+    using CopyAssign = bool (*)(void*, const void*);
+    using MoveAssign = bool (*)(void*, void*);
+    using Hasher = size_t (*)(const void*);
 
     struct Ops
     {
-        TypeErasure type; // TODO flesh out imp::box with type and hasher in Ops
+        // TODO flesh out imp::box with type and hasher in Ops
+        TypeErasure type;
         Dtor dtor = nullptr;
         Copier copy = nullptr;
         CopyAssign copy_assign = nullptr;
         MoveAssign move_assign = nullptr;
+        Hasher hasher = nullptr;
     };
 
 private:
@@ -53,6 +56,9 @@ private:
             }
             else
                 return false;
+        },
+        .hasher = [](const void* ptr) -> size_t {
+            std::hash<T>{}(*static_cast<const T*>(ptr));
         }
     };
 
@@ -187,6 +193,11 @@ public:
             return nullptr;
     }
 
+    size_t hash() const
+    {
+        return ops_ ? ops_->hasher(raw_) : throw std::runtime_error("Hasher not defined");
+    }
+
 private:
     void try_dtor(void* ptr) const
     {
@@ -255,3 +266,12 @@ void forward_into_box(Box& b, T&& obj)
 }
 
 } // crucible::core::typing
+
+template<>
+struct std::hash<crucible::core::typing::Box>
+{
+    size_t operator()(const crucible::core::typing::Box& box) const
+    {
+        return box.hash();
+    }
+};
