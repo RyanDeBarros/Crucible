@@ -22,6 +22,7 @@ enum class Kind
     Joker
 };
 
+// TODO rename to something like Specialization
 using KindInstance = size_t;
 
 class QualifiedType

@@ -1,10 +1,10 @@
 target_sources(crucible_core
     PRIVATE
         box.hpp
-        enum_registry.hpp
-        qualified_type.hpp
+        intern_registry.hpp
         nominal_registry.hpp
+        qualified_type.hpp
+        registries.hpp
         storage.hpp
-        struct_registry.hpp
         type_erasure.hpp
 )

@@ -15,7 +15,7 @@ class NominalRegistry
 {
     struct Slot
     {
-        std::optional<Template> definition;
+        std::optional<Template> tmpl;
         KindInstance next_free = 0;
     };
 
@@ -43,7 +43,7 @@ public:
             slots_.emplace_back();
         }
 
-        slots_[kind].definition.emplace(std::move(tmpl));
+        slots_[kind].tmpl.emplace(std::move(tmpl));
         slots_[kind].next_free = 0;
 
         return kind;
@@ -55,7 +55,7 @@ public:
 
         if (auto* slot = try_get_slot_unsafe(kind))
         {
-            slot->definition.reset();
+            slot->tmpl.reset();
             slot->next_free = free_head_;
             free_head_ = kind;
 
@@ -74,7 +74,7 @@ public:
     const Template& get(KindInstance kind) const
     {
         std::unique_lock lock(mutex_);
-        return *get_slot_unsafe(kind).definition;
+        return *get_slot_unsafe(kind).tmpl;
     }
 
 protected:
@@ -85,7 +85,7 @@ protected:
 private:
     const Slot* try_get_slot_unsafe(KindInstance kind) const
     {
-        if (kind == 0 || kind >= slots_.size() || !slots_[kind].definition)
+        if (kind == 0 || kind >= slots_.size() || !slots_[kind].tmpl)
             return nullptr;
         else
             return &slots_[kind];
@@ -93,7 +93,7 @@ private:
 
     Slot* try_get_slot_unsafe(KindInstance kind)
     {
-        if (kind == 0 || kind >= slots_.size() || !slots_[kind].definition)
+        if (kind == 0 || kind >= slots_.size() || !slots_[kind].tmpl)
             return nullptr;
         else
             return &slots_[kind];
