@@ -1,8 +1,6 @@
-
 #include <crucible/core/typing/enum_registry.hpp>
 
 #include <stdexcept>
-#include <utility>
 
 namespace crucible::core::typing
 {
@@ -53,8 +51,7 @@ bool EnumRegistry::delete_enum(KindInstance kind)
 bool EnumRegistry::enum_exists(KindInstance kind)
 {
     std::unique_lock lock(mutex_);
-
-    return kind != 0 && kind < slots_.size() && slots_[kind].definition.has_value();
+    return try_get_slot_unsafe(kind) != nullptr;
 }
 
 std::string EnumRegistry::enum_title(KindInstance kind)

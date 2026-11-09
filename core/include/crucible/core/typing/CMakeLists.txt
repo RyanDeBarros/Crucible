@@ -4,5 +4,6 @@ target_sources(crucible_core
         enum_registry.hpp
         qualified_type.hpp
         storage.hpp
+        struct_registry.hpp
         type_erasure.hpp
 )

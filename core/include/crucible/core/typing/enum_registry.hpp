@@ -1,12 +1,9 @@
-
 #pragma once
 
 #include <crucible/core/typing/qualified_type.hpp>
 
-#include <cstdint>
 #include <mutex>
 #include <optional>
-#include <string>
 #include <vector>
 
 namespace crucible::core::typing

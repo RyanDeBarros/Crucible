@@ -3,4 +3,5 @@ target_sources(crucible_core
         enum_registry.cpp
         qualified_type.cpp
         storage.cpp
+        struct_registry.cpp
 )
