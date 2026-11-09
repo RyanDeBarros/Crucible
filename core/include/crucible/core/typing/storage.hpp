@@ -42,22 +42,19 @@ struct EnumPayload
     std::uint64_t value;
 };
 
-template<typename T> // T must be payload type
 struct ListPayload
 {
-    std::vector<T> value;
+    std::vector<Box> value; // must contain payloads
 };
 
-template<typename T> // T must be payload type
 struct SetPayload
 {
-    std::unordered_set<T> value;
+    std::unordered_set<Box> value; // must contain payloads
 };
 
-template<typename K, typename V> // K and V must be payload types
 struct MapPayload
 {
-    std::unordered_map<K, V> value;
+    std::unordered_map<Box, Box> value; // must contain payloads
 };
 
 struct StructPayload

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <crucible/core/typing/qualified_type.hpp>
+#include <crucible/core/typing/kind.hpp>
 
 #include <mutex>
 #include <optional>

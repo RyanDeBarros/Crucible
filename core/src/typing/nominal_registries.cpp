@@ -1,10 +1,13 @@
-#include <crucible/core/typing/registries.hpp>
+#include <crucible/core/typing/nominal_registries.hpp>
 
-#include <stdexcept>
+#include <crucible/core/typing/qualified_type.hpp>
+
 #include <unordered_set>
 
 namespace crucible::core::typing
 {
+
+EnumRegistry gEnumRegistry{};
 
 std::string EnumRegistry::enum_title(Specialization spec) const
 {
@@ -24,6 +27,8 @@ std::uint64_t EnumRegistry::enum_count(Specialization spec) const
 {
     return get(spec).names.size();
 }
+
+StructRegistry gStructRegistry{};
 
 bool StructTemplate::valid() const
 {

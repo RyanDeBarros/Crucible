@@ -1,6 +1,7 @@
 #include <crucible/core/typing/storage.hpp>
 
-#include <crucible/core/typing/registries.hpp>
+#include <crucible/core/typing/intern_registries.hpp>
+#include <crucible/core/typing/nominal_registries.hpp>
 
 namespace crucible::core::typing
 {
@@ -40,8 +41,78 @@ Storage Storage::make_null(QualifiedType type)
     return Storage(std::move(type), Box{}, StorageState::Null);
 }
 
-static bool validate_struct_fields(Specialization spec, const StructPayload& payload)
+static bool validate_pointer(Specialization spec, const PointerPayload& payload)
 {
+    if (!gPointerRegistry.exists(spec))
+        return false;
+
+    const auto underlying = gPointerRegistry.underlying_type(spec);
+    // TODO return gModuleRegistry.type(payload.value) == underlying;
+    return true;
+}
+
+static bool validate_enum(Specialization spec, const EnumPayload& payload)
+{
+    if (!gEnumRegistry.exists(spec))
+        return false;
+    
+    return payload.value < gEnumRegistry.enum_count(spec);
+}
+
+static bool validate_list(Specialization spec, const ListPayload& payload)
+{
+    if (!gListRegistry.exists(spec))
+        return false;
+
+    const auto element_type = gListRegistry.element_type(spec);
+    for (const auto& elem : payload.value)
+    {
+        if (!Storage::is_valid_payload(element_type, elem))
+            return false;
+    }
+
+    return true;
+}
+
+static bool validate_set(Specialization spec, const SetPayload& payload)
+{
+    if (!gSetRegistry.exists(spec))
+        return false;
+
+    const auto element_type = gSetRegistry.element_type(spec);
+    for (const auto& elem : payload.value)
+    {
+        if (!Storage::is_valid_payload(element_type, elem))
+            return false;
+    }
+
+    return true;
+}
+
+static bool validate_map(Specialization spec, const MapPayload& payload)
+{
+    if (!gMapRegistry.exists(spec))
+        return false;
+
+    const auto key_type = gMapRegistry.key_type(spec);
+    const auto value_type = gMapRegistry.value_type(spec);
+    for (const auto& [key, value] : payload.value)
+    {
+        if (!Storage::is_valid_payload(key_type, key) ||
+            !Storage::is_valid_payload(value_type, value))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool validate_struct(Specialization spec, const StructPayload& payload)
+{
+    if (!gStructRegistry.exists(spec))
+        return false;
+
     const size_t field_count = gStructRegistry.struct_field_count(spec);
     if (field_count != payload.value.size())
         return false;
@@ -61,7 +132,7 @@ static bool validate_struct_fields(Specialization spec, const StructPayload& pay
 
 bool Storage::is_valid_payload(const QualifiedType& type, const Box& payload)
 {
-    switch (type.base_type())
+    switch (type.kind())
     {
     case Kind::Bool:
         return payload.holds<BoolPayload>();
@@ -76,31 +147,42 @@ bool Storage::is_valid_payload(const QualifiedType& type, const Box& payload)
         return payload.holds<StringPayload>();
 
     case Kind::Pointer:
-        return payload.holds<PointerPayload>();
+        if (auto* pld = payload.as<PointerPayload>())
+            return validate_pointer(type.specialization(), *pld);
+        else
+            return false;
 
     case Kind::Enum:
-        return payload.holds<EnumPayload>()
-            && gEnumRegistry.exists(type.specialization());
+        if (auto* pld = payload.as<EnumPayload>())
+            return validate_enum(type.specialization(), *pld);
+        else
+            return false;
 
     case Kind::List:
-        // TODO
-        break;
-        //return payload.holds<ListPayload>();
+        if (auto* pld = payload.as<ListPayload>())
+            return validate_list(type.specialization(), *pld);
+        else
+            return false;
 
     case Kind::Set:
-        // TODO
-        break;
-        //return payload.holds<SetPayload>();
+        if (auto* pld = payload.as<SetPayload>())
+            return validate_set(type.specialization(), *pld);
+        else
+            return false;
 
     case Kind::Map:
-        // TODO
-        break;
-        //return payload.holds<MapPayload>();
+        if (auto* pld = payload.as<MapPayload>())
+            return validate_map(type.specialization(), *pld);
+        else
+            return false;
 
     case Kind::Struct:
-        return payload.holds<StructPayload>()
-            && gStructRegistry.exists(type.specialization())
-            && validate_struct_fields(type.specialization(), *payload.as<StructPayload>());
+    {
+        if (const auto* pld = payload.as<StructPayload>())
+            return validate_struct(type.specialization(), *pld);
+        else
+            return false;
+    }
 
     case Kind::Joker:
         return payload.holds<JokerPayload>();

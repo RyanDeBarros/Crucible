@@ -1,103 +1,20 @@
 #include <crucible/core/typing/qualified_type.hpp>
 
+#include <crucible/core/typing/intern_registries.hpp>
+#include <crucible/core/typing/nominal_registries.hpp>
+
 namespace crucible::core::typing
 {
 
-QualifiedType::QualifiedType(
-    Kind base_type,
-    std::unique_ptr<QualifiedType> key_type,
-    std::unique_ptr<QualifiedType> value_type,
-    Specialization spec)
-    : base_type_(base_type)
-    , key_type_(std::move(key_type))
-    , value_type_(std::move(value_type))
+QualifiedType::QualifiedType(Kind base_type, Specialization spec)
+    : kind_(base_type)
     , spec_(spec)
 {
 }
 
-QualifiedType::QualifiedType(const QualifiedType& o)
-    : base_type_(o.base_type_)
-    , key_type_(o.key_type_ ? o.key_type_->clone() : nullptr)
-    , value_type_(o.value_type_ ? o.value_type_->clone() : nullptr)
-    , spec_(o.spec_)
+Kind QualifiedType::kind() const
 {
-}
-
-QualifiedType::QualifiedType(QualifiedType&& o) noexcept
-    : base_type_(o.base_type_)
-    , key_type_(std::move(o.key_type_))
-    , value_type_(std::move(o.value_type_))
-    , spec_(o.spec_)
-{
-}
-
-QualifiedType& QualifiedType::operator=(const QualifiedType& o)
-{
-    if (this != &o)
-    {
-        base_type_ = o.base_type_;
-        key_type_ = o.key_type_ ? o.key_type_->clone() : nullptr;
-        value_type_ = o.value_type_ ? o.value_type_->clone() : nullptr;
-        spec_ = o.spec_;
-    }
-
-    return *this;
-}
-
-QualifiedType& QualifiedType::operator=(QualifiedType&& o) noexcept
-{
-    if (this != &o)
-    {
-        base_type_ = o.base_type_;
-        key_type_ = std::move(o.key_type_);
-        value_type_ = std::move(o.value_type_);
-        spec_ = o.spec_;
-    }
-
-    return *this;
-}
-
-template<typename T>
-static bool equal_ptrs(const std::unique_ptr<T>& a, const std::unique_ptr<T>& b)
-{
-    return (a && b) ? (*a == *b) : (!a && !b);
-}
-
-template<typename T>
-static bool not_equal_ptrs(const std::unique_ptr<T>& a, const std::unique_ptr<T>& b)
-{
-    return (a && b) ? (*a != *b) : (a || b);
-}
-
-bool QualifiedType::operator==(const QualifiedType& o) const
-{
-    return base_type_ == o.base_type_
-        && spec_ == o.spec_
-        && equal_ptrs(key_type_, o.key_type_)
-        && equal_ptrs(value_type_, o.value_type_);
-}
-
-bool QualifiedType::operator!=(const QualifiedType& o) const
-{
-    return base_type_ != o.base_type_
-        || spec_ != o.spec_
-        || not_equal_ptrs(key_type_, o.key_type_)
-        || not_equal_ptrs(value_type_, o.value_type_);
-}
-
-Kind QualifiedType::base_type() const
-{
-    return base_type_;
-}
-
-const QualifiedType* QualifiedType::key_type() const
-{
-    return key_type_ ? key_type_.get() : nullptr;
-}
-
-const QualifiedType* QualifiedType::value_type() const
-{
-    return value_type_ ? value_type_.get() : nullptr;
+    return kind_;
 }
 
 Specialization QualifiedType::specialization() const
@@ -105,77 +22,72 @@ Specialization QualifiedType::specialization() const
     return spec_;
 }
 
-std::unique_ptr<QualifiedType> QualifiedType::clone() const
+size_t QualifiedType::hash() const
 {
-    return std::unique_ptr<QualifiedType>(new QualifiedType(
-        base_type_,
-        key_type_ ? key_type_->clone() : nullptr,
-        value_type_ ? value_type_->clone() : nullptr,
-        spec_));
-}
-
-std::unique_ptr<QualifiedType> QualifiedType::to_ptr() &&
-{
-    return std::unique_ptr<QualifiedType>(new QualifiedType(
-        base_type_,
-        std::move(key_type_),
-        std::move(value_type_),
-        spec_));
+    return std::hash<Kind>{}(kind_) ^ std::hash<Specialization>{}(spec_);
 }
 
 QualifiedType QualifiedType::make_bool()
 {
-    return QualifiedType(Kind::Bool, nullptr, nullptr, 0);
+    return QualifiedType(Kind::Bool, 0);
 }
 
 QualifiedType QualifiedType::make_int()
 {
-    return QualifiedType(Kind::Int, nullptr, nullptr, 0);
+    return QualifiedType(Kind::Int, 0);
 }
 
 QualifiedType QualifiedType::make_float()
 {
-    return QualifiedType(Kind::Float, nullptr, nullptr, 0);
+    return QualifiedType(Kind::Float, 0);
 }
 
 QualifiedType QualifiedType::make_string()
 {
-    return QualifiedType(Kind::String, nullptr, nullptr, 0);
+    return QualifiedType(Kind::String, 0);
 }
 
-QualifiedType QualifiedType::make_pointer(QualifiedType pointer_type)
+QualifiedType QualifiedType::make_pointer(QualifiedType underlying_type)
 {
-    return QualifiedType(Kind::Pointer, std::move(pointer_type).to_ptr(), nullptr, 0);
+    return QualifiedType(
+        Kind::Pointer,
+        gPointerRegistry.intern({ .underlying_type = underlying_type }));
 }
 
-QualifiedType QualifiedType::make_enum(Specialization instance)
+QualifiedType QualifiedType::make_enum(Specialization spec)
 {
-    return QualifiedType(Kind::Enum, nullptr, nullptr, instance);
+    return QualifiedType(Kind::Enum, spec);
 }
 
 QualifiedType QualifiedType::make_list(QualifiedType elem_type)
 {
-    return QualifiedType(Kind::List, std::move(elem_type).to_ptr(), nullptr, 0);
+    return QualifiedType(
+        Kind::List,
+        gListRegistry.intern({ .element_type = std::move(elem_type) }));
 }
 
 QualifiedType QualifiedType::make_set(QualifiedType elem_type)
 {
-    return QualifiedType(Kind::Set, std::move(elem_type).to_ptr(), nullptr, 0);
+    return QualifiedType(
+        Kind::Set,
+        gSetRegistry.intern({ .element_type = std::move(elem_type) }));
 }
 
-QualifiedType QualifiedType::make_map(QualifiedType key_type, QualifiedType map_type)
+QualifiedType QualifiedType::make_map(QualifiedType key_type, QualifiedType value_type)
 {
-    return QualifiedType(Kind::Map, std::move(key_type).to_ptr(), std::move(map_type).to_ptr(), 0);
+    return QualifiedType(
+        Kind::Map,
+        gMapRegistry.intern({ .key_type = std::move(key_type), .value_type = std::move(value_type) }));
 }
 
-QualifiedType QualifiedType::make_struct(Specialization instance)
+QualifiedType QualifiedType::make_struct(Specialization spec)
 {
-    return QualifiedType(Kind::Struct, nullptr, nullptr, instance);
+    return QualifiedType(Kind::Struct, spec);
 }
 
 QualifiedType QualifiedType::make_joker()
 {
-    return QualifiedType(Kind::Joker, nullptr, nullptr, 0);
+    return QualifiedType(Kind::Joker, 0);
 }
 
 } // crucible::core::typing

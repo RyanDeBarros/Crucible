@@ -5,7 +5,7 @@
 namespace crucible::core::typing
 {
 
-// /++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\
+class QualifiedType;
 
 struct EnumTemplate
 {
@@ -22,12 +22,7 @@ public:
     std::uint64_t enum_count(Specialization spec) const;
 };
 
-inline EnumRegistry gEnumRegistry{};
-
-// \++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++/
-
-
-// /++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\
+extern EnumRegistry gEnumRegistry;
 
 struct StructTemplate
 {
@@ -52,9 +47,6 @@ protected:
     void assert_valid(const StructTemplate& tmpl) const override;
 };
 
-inline StructRegistry gStructRegistry{};
-
-// \++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++/
-
+extern StructRegistry gStructRegistry;
 
 } // namespace crucible::core::typing

@@ -18,7 +18,7 @@ class Box
 
     struct Ops
     {
-        TypeErasure type; // TODO do similar thing in imp
+        TypeErasure type; // TODO flesh out imp::box with type and hasher in Ops
         Dtor dtor = nullptr;
         Copier copy = nullptr;
         CopyAssign copy_assign = nullptr;
