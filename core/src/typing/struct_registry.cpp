@@ -6,10 +6,6 @@
 namespace crucible::core::typing
 {
 
-std::vector<StructRegistry::Slot> StructRegistry::slots_{ 1 }; // reserve 0 for invalid kind
-KindInstance StructRegistry::free_head_ = 0;
-std::mutex StructRegistry::mutex_;
-
 bool StructTemplate::valid() const
 {
     std::unordered_set<std::string> names;
@@ -28,86 +24,37 @@ void StructTemplate::assert_valid() const
         throw std::logic_error("Struct template has duplicate field names");
 }
 
-KindInstance StructRegistry::new_struct(StructTemplate tmpl)
+std::string StructRegistry::struct_title(KindInstance kind) const
 {
-    tmpl.assert_valid();
-
-    std::unique_lock lock(mutex_);
-
-    KindInstance kind;
-
-    if (free_head_ != 0)
-    {
-        kind = free_head_;
-        free_head_ = slots_[kind].next_free;
-    }
-    else
-    {
-        kind = static_cast<KindInstance>(slots_.size());
-        slots_.emplace_back();
-    }
-
-    slots_[kind].definition.emplace(std::move(tmpl));
-    slots_[kind].next_free = 0;
-
-    return kind;
+    return get(kind).title;
 }
 
-bool StructRegistry::delete_struct(KindInstance kind)
+size_t StructRegistry::struct_field_count(KindInstance kind) const
 {
-    std::unique_lock lock(mutex_);
-
-    if (auto* slot = try_get_slot_unsafe(kind))
-    {
-        slot->definition.reset();
-        slot->next_free = free_head_;
-        free_head_ = kind;
-
-        return true;
-    }
-    else
-        return false;
+    return get(kind).fields.size();
 }
 
-bool StructRegistry::struct_exists(KindInstance kind)
+std::string StructRegistry::struct_field_name(KindInstance kind, std::uint64_t index) const
 {
-    std::unique_lock lock(mutex_);
-    return try_get_slot_unsafe(kind) != nullptr;
-}
-
-std::string StructRegistry::struct_title(KindInstance kind)
-{
-    std::unique_lock lock(mutex_);
-    return get_slot_unsafe(kind).definition->title;
-}
-
-std::string StructRegistry::struct_field_name(KindInstance kind, std::uint64_t index)
-{
-    std::unique_lock lock(mutex_);
-
-    const auto& fields = get_slot_unsafe(kind).definition->fields;
+    const auto& fields = get(kind).fields;
     if (index >= fields.size())
         throw std::out_of_range("Struct field index out of range");
 
     return fields[index].first;
 }
 
-QualifiedType StructRegistry::struct_field_type(KindInstance kind, std::uint64_t index)
+QualifiedType StructRegistry::struct_field_type(KindInstance kind, std::uint64_t index) const
 {
-    std::unique_lock lock(mutex_);
-
-    const auto& fields = get_slot_unsafe(kind).definition->fields;
+    const auto& fields = get(kind).fields;
     if (index >= fields.size())
         throw std::out_of_range("Struct field index out of range");
 
     return fields[index].second;
 }
 
-QualifiedType StructRegistry::struct_field_type(KindInstance kind, const std::string_view name)
+QualifiedType StructRegistry::struct_field_type(KindInstance kind, const std::string_view name) const
 {
-    std::unique_lock lock(mutex_);
-
-    const auto& fields = get_slot_unsafe(kind).definition->fields;
+    const auto& fields = get(kind).fields;
     for (const auto& [fname, ftype] : fields)
     {
         if (fname == name)
@@ -117,20 +64,9 @@ QualifiedType StructRegistry::struct_field_type(KindInstance kind, const std::st
     throw std::logic_error("Struct field does not exist");
 }
 
-StructRegistry::Slot* StructRegistry::try_get_slot_unsafe(KindInstance kind)
+void StructRegistry::assert_valid(const StructTemplate& tmpl) const
 {
-    if (kind == 0 || kind >= slots_.size() || !slots_[kind].definition)
-        return nullptr;
-    else
-        return &slots_[kind];
-}
-
-StructRegistry::Slot& StructRegistry::get_slot_unsafe(KindInstance kind)
-{
-    if (auto* slot = try_get_slot_unsafe(kind))
-        return *slot;
-    else
-        throw std::out_of_range("Struct does not exist");
+    tmpl.assert_valid();
 }
 
 } // namespace crucible::core::typing

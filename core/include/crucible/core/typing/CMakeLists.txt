@@ -3,6 +3,7 @@ target_sources(crucible_core
         box.hpp
         enum_registry.hpp
         qualified_type.hpp
+        nominal_registry.hpp
         storage.hpp
         struct_registry.hpp
         type_erasure.hpp
