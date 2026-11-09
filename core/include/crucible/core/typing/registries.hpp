@@ -17,9 +17,9 @@ class EnumRegistry final
     : public NominalRegistry<EnumTemplate>
 {
 public:
-    std::string enum_title(KindInstance kind) const;
-    std::string enum_name(KindInstance kind, std::uint64_t index) const;
-    std::uint64_t enum_count(KindInstance kind) const;
+    std::string enum_title(Specialization spec) const;
+    std::string enum_name(Specialization spec, std::uint64_t index) const;
+    std::uint64_t enum_count(Specialization spec) const;
 };
 
 inline EnumRegistry gEnumRegistry{};
@@ -42,11 +42,11 @@ class StructRegistry final
     : public NominalRegistry<StructTemplate>
 {
 public:
-    std::string struct_title(KindInstance kind) const;
-    size_t struct_field_count(KindInstance kind) const;
-    std::string struct_field_name(KindInstance kind, std::uint64_t index) const;
-    QualifiedType struct_field_type(KindInstance kind, std::uint64_t index) const;
-    QualifiedType struct_field_type(KindInstance kind, const std::string_view name) const;
+    std::string struct_title(Specialization spec) const;
+    size_t struct_field_count(Specialization spec) const;
+    std::string struct_field_name(Specialization spec, std::uint64_t index) const;
+    QualifiedType struct_field_type(Specialization spec, std::uint64_t index) const;
+    QualifiedType struct_field_type(Specialization spec, const std::string_view name) const;
 
 protected:
     void assert_valid(const StructTemplate& tmpl) const override;

@@ -16,48 +16,48 @@ class NominalRegistry
     struct Slot
     {
         std::optional<Template> tmpl;
-        KindInstance next_free = 0;
+        Specialization next_free = 0;
     };
 
-    std::vector<Slot> slots_{ 1 }; // reserve 0 for invalid kind
-    KindInstance free_head_ = 0;
+    std::vector<Slot> slots_{ 1 }; // reserve 0 for invalid specialization
+    Specialization free_head_ = 0;
     mutable std::mutex mutex_;
 
 public:
-    KindInstance add(Template tmpl)
+    Specialization add(Template tmpl)
     {
         assert_valid(tmpl);
 
         std::unique_lock lock(mutex_);
 
-        KindInstance kind;
+        Specialization spec;
 
         if (free_head_ != 0)
         {
-            kind = free_head_;
-            free_head_ = slots_[kind].next_free;
+            spec = free_head_;
+            free_head_ = slots_[spec].next_free;
         }
         else
         {
-            kind = static_cast<KindInstance>(slots_.size());
+            spec = static_cast<Specialization>(slots_.size());
             slots_.emplace_back();
         }
 
-        slots_[kind].tmpl.emplace(std::move(tmpl));
-        slots_[kind].next_free = 0;
+        slots_[spec].tmpl.emplace(std::move(tmpl));
+        slots_[spec].next_free = 0;
 
-        return kind;
+        return spec;
     }
 
-    bool remove(KindInstance kind)
+    bool remove(Specialization spec)
     {
         std::unique_lock lock(mutex_);
 
-        if (auto* slot = try_get_slot_unsafe(kind))
+        if (auto* slot = try_get_slot_unsafe(spec))
         {
             slot->tmpl.reset();
             slot->next_free = free_head_;
-            free_head_ = kind;
+            free_head_ = spec;
 
             return true;
         }
@@ -65,16 +65,16 @@ public:
             return false;
     }
 
-    bool exists(KindInstance kind) const
+    bool exists(Specialization spec) const
     {
         std::unique_lock lock(mutex_);
-        return try_get_slot_unsafe(kind) != nullptr;
+        return try_get_slot_unsafe(spec) != nullptr;
     }
 
-    const Template& get(KindInstance kind) const
+    const Template& get(Specialization spec) const
     {
         std::unique_lock lock(mutex_);
-        return *get_slot_unsafe(kind).tmpl;
+        return *get_slot_unsafe(spec).tmpl;
     }
 
 protected:
@@ -83,25 +83,25 @@ protected:
     }
 
 private:
-    const Slot* try_get_slot_unsafe(KindInstance kind) const
+    const Slot* try_get_slot_unsafe(Specialization spec) const
     {
-        if (kind == 0 || kind >= slots_.size() || !slots_[kind].tmpl)
+        if (spec == 0 || spec >= slots_.size() || !slots_[spec].tmpl)
             return nullptr;
         else
-            return &slots_[kind];
+            return &slots_[spec];
     }
 
-    Slot* try_get_slot_unsafe(KindInstance kind)
+    Slot* try_get_slot_unsafe(Specialization spec)
     {
-        if (kind == 0 || kind >= slots_.size() || !slots_[kind].tmpl)
+        if (spec == 0 || spec >= slots_.size() || !slots_[spec].tmpl)
             return nullptr;
         else
-            return &slots_[kind];
+            return &slots_[spec];
     }
 
-    const Slot& get_slot_unsafe(KindInstance kind) const
+    const Slot& get_slot_unsafe(Specialization spec) const
     {
-        if (auto* slot = try_get_slot_unsafe(kind))
+        if (auto* slot = try_get_slot_unsafe(spec))
             return *slot;
         else
             throw std::logic_error("Specialization does not exist");

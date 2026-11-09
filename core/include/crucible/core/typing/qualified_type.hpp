@@ -22,22 +22,21 @@ enum class Kind
     Joker
 };
 
-// TODO rename to something like Specialization
-using KindInstance = size_t;
+using Specialization = size_t;
 
 class QualifiedType
 {
     Kind base_type_;
     std::unique_ptr<QualifiedType> key_type_; // pointer, list, set, map
     std::unique_ptr<QualifiedType> value_type_; // map
-    KindInstance instance_; // enum, struct
+    Specialization spec_; // enum, struct
 
 private:
     QualifiedType(
         Kind base_type,
         std::unique_ptr<QualifiedType> key_type,
         std::unique_ptr<QualifiedType> value_type,
-        KindInstance instance);
+        Specialization spec);
 
 public:
     QualifiedType(const QualifiedType&);
@@ -52,7 +51,7 @@ public:
     Kind base_type() const;
     const QualifiedType* key_type() const;
     const QualifiedType* value_type() const;
-    KindInstance instance() const;
+    Specialization specialization() const;
 
     std::unique_ptr<QualifiedType> clone() const;
     std::unique_ptr<QualifiedType> to_ptr() &&;
@@ -62,11 +61,11 @@ public:
     static QualifiedType make_float();
     static QualifiedType make_string();
     static QualifiedType make_pointer(QualifiedType pointer_type);
-    static QualifiedType make_enum(KindInstance instance);
+    static QualifiedType make_enum(Specialization spec);
     static QualifiedType make_list(QualifiedType elem_type);
     static QualifiedType make_set(QualifiedType elem_type);
     static QualifiedType make_map(QualifiedType key_type, QualifiedType map_type);
-    static QualifiedType make_struct(KindInstance instance);
+    static QualifiedType make_struct(Specialization spec);
     static QualifiedType make_joker();
 };
 

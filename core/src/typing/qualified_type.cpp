@@ -7,11 +7,11 @@ QualifiedType::QualifiedType(
     Kind base_type,
     std::unique_ptr<QualifiedType> key_type,
     std::unique_ptr<QualifiedType> value_type,
-    KindInstance instance)
+    Specialization spec)
     : base_type_(base_type)
     , key_type_(std::move(key_type))
     , value_type_(std::move(value_type))
-    , instance_(instance)
+    , spec_(spec)
 {
 }
 
@@ -19,7 +19,7 @@ QualifiedType::QualifiedType(const QualifiedType& o)
     : base_type_(o.base_type_)
     , key_type_(o.key_type_ ? o.key_type_->clone() : nullptr)
     , value_type_(o.value_type_ ? o.value_type_->clone() : nullptr)
-    , instance_(o.instance_)
+    , spec_(o.spec_)
 {
 }
 
@@ -27,7 +27,7 @@ QualifiedType::QualifiedType(QualifiedType&& o) noexcept
     : base_type_(o.base_type_)
     , key_type_(std::move(o.key_type_))
     , value_type_(std::move(o.value_type_))
-    , instance_(o.instance_)
+    , spec_(o.spec_)
 {
 }
 
@@ -38,7 +38,7 @@ QualifiedType& QualifiedType::operator=(const QualifiedType& o)
         base_type_ = o.base_type_;
         key_type_ = o.key_type_ ? o.key_type_->clone() : nullptr;
         value_type_ = o.value_type_ ? o.value_type_->clone() : nullptr;
-        instance_ = o.instance_;
+        spec_ = o.spec_;
     }
 
     return *this;
@@ -51,7 +51,7 @@ QualifiedType& QualifiedType::operator=(QualifiedType&& o) noexcept
         base_type_ = o.base_type_;
         key_type_ = std::move(o.key_type_);
         value_type_ = std::move(o.value_type_);
-        instance_ = o.instance_;
+        spec_ = o.spec_;
     }
 
     return *this;
@@ -72,7 +72,7 @@ static bool not_equal_ptrs(const std::unique_ptr<T>& a, const std::unique_ptr<T>
 bool QualifiedType::operator==(const QualifiedType& o) const
 {
     return base_type_ == o.base_type_
-        && instance_ == o.instance_
+        && spec_ == o.spec_
         && equal_ptrs(key_type_, o.key_type_)
         && equal_ptrs(value_type_, o.value_type_);
 }
@@ -80,7 +80,7 @@ bool QualifiedType::operator==(const QualifiedType& o) const
 bool QualifiedType::operator!=(const QualifiedType& o) const
 {
     return base_type_ != o.base_type_
-        || instance_ != o.instance_
+        || spec_ != o.spec_
         || not_equal_ptrs(key_type_, o.key_type_)
         || not_equal_ptrs(value_type_, o.value_type_);
 }
@@ -100,9 +100,9 @@ const QualifiedType* QualifiedType::value_type() const
     return value_type_ ? value_type_.get() : nullptr;
 }
 
-KindInstance QualifiedType::instance() const
+Specialization QualifiedType::specialization() const
 {
-    return instance_;
+    return spec_;
 }
 
 std::unique_ptr<QualifiedType> QualifiedType::clone() const
@@ -111,7 +111,7 @@ std::unique_ptr<QualifiedType> QualifiedType::clone() const
         base_type_,
         key_type_ ? key_type_->clone() : nullptr,
         value_type_ ? value_type_->clone() : nullptr,
-        instance_));
+        spec_));
 }
 
 std::unique_ptr<QualifiedType> QualifiedType::to_ptr() &&
@@ -120,7 +120,7 @@ std::unique_ptr<QualifiedType> QualifiedType::to_ptr() &&
         base_type_,
         std::move(key_type_),
         std::move(value_type_),
-        instance_));
+        spec_));
 }
 
 QualifiedType QualifiedType::make_bool()
@@ -148,7 +148,7 @@ QualifiedType QualifiedType::make_pointer(QualifiedType pointer_type)
     return QualifiedType(Kind::Pointer, std::move(pointer_type).to_ptr(), nullptr, 0);
 }
 
-QualifiedType QualifiedType::make_enum(KindInstance instance)
+QualifiedType QualifiedType::make_enum(Specialization instance)
 {
     return QualifiedType(Kind::Enum, nullptr, nullptr, instance);
 }
@@ -168,7 +168,7 @@ QualifiedType QualifiedType::make_map(QualifiedType key_type, QualifiedType map_
     return QualifiedType(Kind::Map, std::move(key_type).to_ptr(), std::move(map_type).to_ptr(), 0);
 }
 
-QualifiedType QualifiedType::make_struct(KindInstance instance)
+QualifiedType QualifiedType::make_struct(Specialization instance)
 {
     return QualifiedType(Kind::Struct, nullptr, nullptr, instance);
 }

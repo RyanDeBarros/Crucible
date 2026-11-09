@@ -93,6 +93,8 @@ public:
     static Storage make_initialized(QualifiedType type, Box payload);
     static Storage make_null(QualifiedType type);
 
+    static bool is_valid_payload(const QualifiedType& type, const Box& payload);
+
     const Box* get(const QualifiedType& type) const;
     Box* get(const QualifiedType& type);
     bool set(Storage other);

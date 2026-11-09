@@ -6,23 +6,23 @@
 namespace crucible::core::typing
 {
 
-std::string EnumRegistry::enum_title(KindInstance kind) const
+std::string EnumRegistry::enum_title(Specialization spec) const
 {
-    return get(kind).title;
+    return get(spec).title;
 }
 
-std::string EnumRegistry::enum_name(KindInstance kind, std::uint64_t index) const
+std::string EnumRegistry::enum_name(Specialization spec, std::uint64_t index) const
 {
-    const auto& names = get(kind).names;
+    const auto& names = get(spec).names;
     if (index >= names.size())
         throw std::out_of_range("Enum name index out of range");
 
     return names[index];
 }
 
-std::uint64_t EnumRegistry::enum_count(KindInstance kind) const
+std::uint64_t EnumRegistry::enum_count(Specialization spec) const
 {
-    return get(kind).names.size();
+    return get(spec).names.size();
 }
 
 bool StructTemplate::valid() const
@@ -43,37 +43,37 @@ void StructTemplate::assert_valid() const
         throw std::logic_error("Struct template has duplicate field names");
 }
 
-std::string StructRegistry::struct_title(KindInstance kind) const
+std::string StructRegistry::struct_title(Specialization spec) const
 {
-    return get(kind).title;
+    return get(spec).title;
 }
 
-size_t StructRegistry::struct_field_count(KindInstance kind) const
+size_t StructRegistry::struct_field_count(Specialization spec) const
 {
-    return get(kind).fields.size();
+    return get(spec).fields.size();
 }
 
-std::string StructRegistry::struct_field_name(KindInstance kind, std::uint64_t index) const
+std::string StructRegistry::struct_field_name(Specialization spec, std::uint64_t index) const
 {
-    const auto& fields = get(kind).fields;
+    const auto& fields = get(spec).fields;
     if (index >= fields.size())
         throw std::out_of_range("Struct field index out of range");
 
     return fields[index].first;
 }
 
-QualifiedType StructRegistry::struct_field_type(KindInstance kind, std::uint64_t index) const
+QualifiedType StructRegistry::struct_field_type(Specialization spec, std::uint64_t index) const
 {
-    const auto& fields = get(kind).fields;
+    const auto& fields = get(spec).fields;
     if (index >= fields.size())
         throw std::out_of_range("Struct field index out of range");
 
     return fields[index].second;
 }
 
-QualifiedType StructRegistry::struct_field_type(KindInstance kind, const std::string_view name) const
+QualifiedType StructRegistry::struct_field_type(Specialization spec, const std::string_view name) const
 {
-    const auto& fields = get(kind).fields;
+    const auto& fields = get(spec).fields;
     for (const auto& [fname, ftype] : fields)
     {
         if (fname == name)
