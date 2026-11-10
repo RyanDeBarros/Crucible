@@ -6,6 +6,5 @@ target_sources(crucible_core
         nominal_registries.hpp
         nominal_registry.hpp
         qualified_type.hpp
-        reflector.hpp
         storage.hpp
 )

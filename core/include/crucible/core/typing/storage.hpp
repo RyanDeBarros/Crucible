@@ -2,8 +2,9 @@
 
 #include <crucible/core/modules/module_id.hpp>
 
-#include <crucible/core/typing/reflector.hpp>
 #include <crucible/core/typing/qualified_type.hpp>
+
+#include <external/reflector.hpp>
 
 #include <vector>
 #include <unordered_set>

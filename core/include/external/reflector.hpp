@@ -1,6 +1,30 @@
+/*
+Reflector - a lightweight C++ reflection library
+
+Copyright (c) 2026 Ryan de Barros
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
 #pragma once
 
-// TODO move to own repo so it can be dropped in imperious. Put license and README at top of file.
+// TODO move to own repo so it can be dropped in imperious.
 // TODO put test suite in macro section at bottom of file
 
 #include <cstddef>
@@ -62,9 +86,9 @@ box forward_to_box(ty&& obj);
 template<typename ty>
 void forward_into_box(box& b, ty&& obj);
 
-// ================================= INTERNAL =================================
+// ================================== DETAIL ==================================
 
-namespace internal
+namespace detail
 {
 
 constexpr std::string_view extract_type_name(std::string_view signature) noexcept
@@ -164,12 +188,12 @@ constexpr std::string_view compiler_type_name_impl() noexcept
     return compiler_type_name_storage<ty>.view();
 }
 
-} // internal
+} // detail
 
 template<typename ty>
 constexpr std::string_view compiler_type_name() noexcept
 {
-    return internal::compiler_type_name_impl<ty>();
+    return detail::compiler_type_name_impl<ty>();
 }
 
 struct template_node
@@ -185,7 +209,7 @@ struct template_node
     }
 };
 
-namespace internal
+namespace detail
 {
 
 constexpr bool is_whitespace(char c)
@@ -273,15 +297,15 @@ constexpr template_node parse_template_tree(std::string_view input) noexcept
 template<typename ty>
 inline const auto compiler_type_tree_storage = parse_template_tree(compiler_type_name<ty>());
 
-} // internal
+} // detail
 
 template<typename ty>
 const template_node& compiler_type_tree() noexcept
 {
-    return internal::compiler_type_tree_storage<ty>;
+    return detail::compiler_type_tree_storage<ty>;
 }
 
-namespace internal
+namespace detail
 {
 
 constexpr std::uint64_t fnv1a_hash(std::string_view str) noexcept
@@ -295,7 +319,7 @@ constexpr std::uint64_t fnv1a_hash(std::string_view str) noexcept
     return hash;
 }
 
-} // internal
+} // detail
 
 struct type_erasure
 {
@@ -355,7 +379,7 @@ private:
         []() -> const template_node& {
             return compiler_type_tree<ty>();
         },
-        internal::fnv1a_hash(compiler_type_name<ty>()),
+        detail::fnv1a_hash(compiler_type_name<ty>()),
         []() {
             if constexpr (!std::is_void_v<ty>)
             {
