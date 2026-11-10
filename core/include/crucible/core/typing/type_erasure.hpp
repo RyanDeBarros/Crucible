@@ -1,10 +1,11 @@
 #pragma once
 
+#include <crucible/core/typing/compiler_type_name.hpp>
+
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <string_view>
 #include <type_traits>
 #include <utility>
 
@@ -20,22 +21,6 @@ constexpr std::uint64_t fnv1a_hash(std::string_view str) noexcept
         hash *= 0x00000100000001B3ULL;
     }
     return hash;
-}
-
-template<typename T>
-constexpr std::string_view compiler_type_name() noexcept
-{
-#if defined(_MSC_VER)
-    return __FUNCSIG__;
-#else
-    return __PRETTY_FUNCTION__;
-#endif
-}
-
-template<typename T>
-constexpr std::uint64_t type_id() noexcept
-{
-    return fnv1a_hash(compiler_type_name<std::remove_cvref_t<T>>());
 }
 
 class Box;
@@ -145,7 +130,7 @@ private:
                 return nullptr;
         }(),
         []() {
-            if constexpr (!std::is_void_v<T> && requires(const T & a, const T & b)
+            if constexpr (!std::is_void_v<T> && requires(const T& a, const T& b)
                 { { a == b } -> std::convertible_to<bool>; })
             {
                 return +[](const void* lhs, const void* rhs) -> bool {
@@ -156,7 +141,7 @@ private:
                 return nullptr;
         }(),
         []() {
-            if constexpr (!std::is_void_v<T> && requires(const T & a, const T & b)
+            if constexpr (!std::is_void_v<T> && requires(const T& a, const T& b)
                 { { a != b } -> std::convertible_to<bool>; })
             {
                 return +[](const void* lhs, const void* rhs) -> bool {

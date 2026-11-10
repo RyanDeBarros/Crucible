@@ -15,56 +15,78 @@ namespace crucible::core::typing
 struct BoolPayload
 {
     bool value;
+
+    bool operator==(const BoolPayload&) const = default;
 };
 
 struct IntPayload
 {
     std::int64_t value;
+
+    bool operator==(const IntPayload&) const = default;
 };
 
 struct FloatPayload
 {
     double value;
+
+    bool operator==(const FloatPayload&) const = default;
 };
 
 struct StringPayload
 {
     std::string value;
+
+    bool operator==(const StringPayload&) const = default;
 };
 
 struct PointerPayload
 {
     modules::ModuleId value;
+
+    bool operator==(const PointerPayload&) const = default;
 };
 
 struct EnumPayload
 {
     std::uint64_t value;
+
+    bool operator==(const EnumPayload&) const = default;
 };
 
 struct ListPayload
 {
     std::vector<Box> value; // must contain payloads
+
+    bool operator==(const ListPayload&) const = default;
 };
 
 struct SetPayload
 {
     std::unordered_set<Box> value; // must contain payloads
+
+    bool operator==(const SetPayload&) const = default;
 };
 
 struct MapPayload
 {
     std::unordered_map<Box, Box> value; // must contain payloads
+
+    bool operator==(const MapPayload&) const = default;
 };
 
 struct StructPayload
 {
     std::vector<Box> value; // must contain payloads
+
+    bool operator==(const StructPayload&) const = default;
 };
 
 struct JokerPayload
 {
     Box value; // must contain a payload
+
+    bool operator==(const JokerPayload&) const = default;
 };
 
 enum class StorageState
