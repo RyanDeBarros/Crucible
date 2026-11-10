@@ -1,6 +1,14 @@
 /*
 Reflector - a lightweight C++ reflection library
 
+
+# Usage
+
+To run test suite, define REFLECTOR_ENABLE_TESTS macro and call reflector::run_test_suite().
+
+
+# License
+
 Copyright (c) 2026 Ryan de Barros
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,10 +30,8 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#pragma once
-
-// TODO move to own repo so it can be dropped in imperious.
-// TODO put test suite in macro section at bottom of file
+#ifndef REFLECTOR_INCLUDED
+#define REFLECTOR_INCLUDED
 
 #include <cstddef>
 #include <cstdint>
@@ -803,3 +809,22 @@ struct std::hash<reflector::box>
         return box.hash();
     }
 };
+
+#endif  // REFLECTOR_INCLUDED
+
+// ================================ TEST SUITE ================================
+
+#if defined(REFLECTOR_ENABLE_TESTS) && !defined(REFLECTOR_TESTS_INCLUDED)
+#define REFLECTOR_TESTS_INCLUDED
+
+namespace reflector
+{
+
+inline void run_test_suite()
+{
+    // TODO
+}
+
+} // reflector
+
+#endif // REFLECTOR_TESTS_INCLUDED
