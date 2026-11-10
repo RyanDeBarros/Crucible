@@ -54,37 +54,38 @@ struct EnumPayload
     bool operator==(const EnumPayload&) const = default;
 };
 
+// TODO use templates again
 struct ListPayload
 {
-    std::vector<reflector::Box> value; // must contain payloads
+    std::vector<reflector::box> value; // must contain payloads
 
     bool operator==(const ListPayload&) const = default;
 };
 
 struct SetPayload
 {
-    std::unordered_set<reflector::Box> value; // must contain payloads
+    std::unordered_set<reflector::box> value; // must contain payloads
 
     bool operator==(const SetPayload&) const = default;
 };
 
 struct MapPayload
 {
-    std::unordered_map<reflector::Box, reflector::Box> value; // must contain payloads
+    std::unordered_map<reflector::box, reflector::box> value; // must contain payloads
 
     bool operator==(const MapPayload&) const = default;
 };
 
 struct StructPayload
 {
-    std::vector<reflector::Box> value; // must contain payloads
+    std::vector<reflector::box> value; // must contain payloads
 
     bool operator==(const StructPayload&) const = default;
 };
 
 struct JokerPayload
 {
-    reflector::Box value; // must contain a payload
+    reflector::box value; // must contain a payload
 
     bool operator==(const JokerPayload&) const = default;
 };
@@ -99,23 +100,23 @@ enum class StorageState
 class Storage
 {
     QualifiedType type_;
-    reflector::Box payload_;
+    reflector::box payload_;
     StorageState state_;
 
-    Storage(QualifiedType type, reflector::Box payload, StorageState state);
+    Storage(QualifiedType type, reflector::box payload, StorageState state);
 
 public:
     const QualifiedType& type() const;
     StorageState state() const;
 
     static Storage make_uninitialized(QualifiedType type);
-    static Storage make_initialized(QualifiedType type, reflector::Box payload);
+    static Storage make_initialized(QualifiedType type, reflector::box payload);
     static Storage make_null(QualifiedType type);
 
-    static bool is_valid_payload(const QualifiedType& type, const reflector::Box& payload);
+    static bool is_valid_payload(const QualifiedType& type, const reflector::box& payload);
 
-    const reflector::Box* get(const QualifiedType& type) const;
-    reflector::Box* get(const QualifiedType& type);
+    const reflector::box* get(const QualifiedType& type) const;
+    reflector::box* get(const QualifiedType& type);
     bool set(Storage other);
 };
 

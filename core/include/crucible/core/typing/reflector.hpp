@@ -1,6 +1,7 @@
 #pragma once
 
-// TODO move to own repo so it can be dropped in imperious. Put license and README at top of file. In the repo, also define a main file for tests (test templates, different namespaces, etc.).
+// TODO move to own repo so it can be dropped in imperious. Put license and README at top of file.
+// TODO put test suite in macro section at bottom of file
 
 #include <cstddef>
 #include <cstdint>
@@ -19,47 +20,47 @@ namespace reflector
 
 // ================================ PUBLIC API ================================
 
-template<typename T>
+template<typename ty>
 constexpr std::string_view compiler_type_name() noexcept;
 
-struct TemplateNode;
+struct template_node;
 
-template<typename T>
-const TemplateNode& compiler_type_tree() noexcept;
+template<typename ty>
+const template_node& compiler_type_tree() noexcept;
 
-struct TypeErasure;
+struct type_erasure;
 
-template<typename T>
-constexpr TypeErasure erase_type() noexcept;
+template<typename ty>
+constexpr type_erasure erase_type() noexcept;
 
-template<typename T, typename U>
+template<typename ty, typename U>
 constexpr bool erases_to() noexcept;
 
-template<typename T>
-constexpr const T* resolve_type(TypeErasure erasure, const void* ptr) noexcept;
+template<typename ty>
+constexpr const ty* resolve_type(type_erasure erasure, const void* ptr) noexcept;
 
-template<typename T>
-constexpr T* resolve_type(TypeErasure erasure, void* ptr) noexcept;
+template<typename ty>
+constexpr ty* resolve_type(type_erasure erasure, void* ptr) noexcept;
 
-template<typename T>
-constexpr const T* resolve_type(TypeErasure erasure, const T* ptr) noexcept;
+template<typename ty>
+constexpr const ty* resolve_type(type_erasure erasure, const ty* ptr) noexcept;
 
-template<typename T>
-constexpr T* resolve_type(TypeErasure erasure, T* ptr) noexcept;
+template<typename ty>
+constexpr ty* resolve_type(type_erasure erasure, ty* ptr) noexcept;
 
-class Box;
+class box;
 
-template<typename T, typename... Args> requires (!std::is_void_v<T>)
-Box make_box(Args&&... args);
+template<typename ty, typename... Args> requires (!std::is_void_v<ty>)
+box make_box(Args&&... args);
 
-template<typename T, typename... Args> requires (!std::is_void_v<T>)
-void copy_box(Box& b, Args&&... args);
+template<typename ty, typename... Args> requires (!std::is_void_v<ty>)
+void copy_box(box& b, Args&&... args);
 
-template<typename T>
-Box forward_to_box(T&& obj);
+template<typename ty>
+box forward_to_box(ty&& obj);
 
-template<typename T>
-void forward_into_box(Box& b, T&& obj);
+template<typename ty>
+void forward_into_box(box& b, ty&& obj);
 
 // ================================= INTERNAL =================================
 
@@ -69,8 +70,10 @@ namespace internal
 constexpr std::string_view extract_type_name(std::string_view signature) noexcept
 {
 #if defined(_MSC_VER)
-
     constexpr std::string_view prefix = "raw_compiler_type_name<";
+#else
+#pragma error("Compiler not supported")
+#endif
 
     const auto begin = signature.find(prefix);
     if (begin == std::string_view::npos)
@@ -78,43 +81,19 @@ constexpr std::string_view extract_type_name(std::string_view signature) noexcep
 
     const auto start = begin + prefix.size();
     const auto end = signature.find(">(", start);
-
     if (end == std::string_view::npos)
         return {};
-
-    auto result = signature.substr(start, end - start);
-
-#else
-
-    constexpr std::string_view prefix = "T = ";
-
-    const auto begin = signature.find(prefix);
-    if (begin == std::string_view::npos)
-        return {};
-
-    const auto start = begin + prefix.size();
-
-    auto end = signature.find(';', start);
-    if (end == std::string_view::npos)
-        end = signature.find(']', start);
-
-    if (end == std::string_view::npos)
-        return {};
-
-    auto result = signature.substr(start, end - start);
-
-#endif
-
-    return result;
+    
+    return signature.substr(start, end - start);
 }
 
-template<typename T>
+template<typename ty>
 constexpr std::string_view raw_compiler_type_name()
 {
 #if defined(_MSC_VER)
     return extract_type_name(__FUNCSIG__);
 #else
-    return extract_type_name(__PRETTY_FUNCTION__);
+#pragma error("Compiler not supported")
 #endif
 }
 
@@ -175,28 +154,30 @@ constexpr static_string<N> normalize_type_name(std::string_view input) noexcept
     return result;
 }
 
-template<typename T>
-constexpr auto compiler_type_name_storage = normalize_type_name<raw_compiler_type_name<T>().size()>(
-    raw_compiler_type_name<T>());
+template<typename ty>
+constexpr auto compiler_type_name_storage = normalize_type_name<raw_compiler_type_name<ty>().size()>(
+    raw_compiler_type_name<ty>());
 
-template<typename T>
+template<typename ty>
 constexpr std::string_view compiler_type_name_impl() noexcept
 {
-    return compiler_type_name_storage<T>.view();
+    return compiler_type_name_storage<ty>.view();
 }
 
 } // internal
 
-template<typename T>
+template<typename ty>
 constexpr std::string_view compiler_type_name() noexcept
 {
-    return internal::compiler_type_name_impl<T>();
+    return internal::compiler_type_name_impl<ty>();
 }
 
-struct TemplateNode
+struct template_node
 {
     std::string name;
-    std::vector<TemplateNode> parameters;
+    std::vector<template_node> parameters;
+
+    constexpr template_node() = default;
 
     constexpr bool is_template() const noexcept
     {
@@ -234,21 +215,18 @@ constexpr size_t find_matching_template_end(std::string_view input, size_t openi
     {
         if (input[i] == '<')
             ++depth;
-        else if (input[i] == '>')
-        {
-            if (--depth == 0)
-                return i;
-        }
+        else if (input[i] == '>' && (--depth == 0))
+            return i;
     }
 
     return std::string_view::npos;
 }
 
-constexpr TemplateNode parse_template_tree(std::string_view input) noexcept
+constexpr template_node parse_template_tree(std::string_view input) noexcept
 {
     input = trim(input);
 
-    TemplateNode result;
+    template_node result;
 
     const auto opening = input.find('<');
 
@@ -292,15 +270,15 @@ constexpr TemplateNode parse_template_tree(std::string_view input) noexcept
     return result;
 }
 
-template<typename T>
-inline const auto compiler_type_tree_storage = parse_template_tree(compiler_type_name<T>());
+template<typename ty>
+inline const auto compiler_type_tree_storage = parse_template_tree(compiler_type_name<ty>());
 
 } // internal
 
-template<typename T>
-const TemplateNode& compiler_type_tree() noexcept
+template<typename ty>
+const template_node& compiler_type_tree() noexcept
 {
-    return internal::compiler_type_tree_storage<T>;
+    return internal::compiler_type_tree_storage<ty>;
 }
 
 namespace internal
@@ -319,18 +297,19 @@ constexpr std::uint64_t fnv1a_hash(std::string_view str) noexcept
 
 } // internal
 
-struct TypeErasure
+struct type_erasure
 {
-    template<typename T>
-    friend constexpr TypeErasure erase_type() noexcept;
+    template<typename ty>
+    friend constexpr type_erasure erase_type() noexcept;
 
-    struct Descriptor
+    struct descriptor
     {
-        friend class Box;
-        friend class TypeErasure;
+        friend class box;
+        friend class type_erasure;
 
     public:
         std::string_view name;
+        const template_node& (*template_tree)();
         size_t type_hash;
 
     private:
@@ -343,8 +322,9 @@ struct TypeErasure
         bool (*not_equal_op_)(const void*, const void*);
 
     private:
-        constexpr Descriptor(
+        constexpr descriptor(
             std::string_view name,
+            const template_node& (*template_tree)(),
             size_t type_hash,
             void (*dtor_op)(void*),
             void* (*copy_op)(const void*),
@@ -354,130 +334,134 @@ struct TypeErasure
             bool (*equal_op)(const void*, const void*),
             bool (*not_equal_op)(const void*, const void*)
         ) noexcept
-            : name(name),
-            type_hash(type_hash),
-            dtor_op_(dtor_op),
-            copy_op_(copy_op),
-            copy_assign_op_(copy_assign_op),
-            move_assign_op_(move_assign_op),
-            hasher_op_(hasher_op),
-            equal_op_(equal_op),
-            not_equal_op_(not_equal_op)
+            : name(name)
+            , template_tree(template_tree)
+            , type_hash(type_hash)
+            , dtor_op_(dtor_op)
+            , copy_op_(copy_op)
+            , copy_assign_op_(copy_assign_op)
+            , move_assign_op_(move_assign_op)
+            , hasher_op_(hasher_op)
+            , equal_op_(equal_op)
+            , not_equal_op_(not_equal_op)
         {
         }
     };
 
 private:
-    template<typename T>
-    static constexpr Descriptor kDescriptor = Descriptor(
-        compiler_type_name<T>(),
-        internal::fnv1a_hash(compiler_type_name<T>()),
+    template<typename ty>
+    static constexpr descriptor type_desc = descriptor(
+        compiler_type_name<ty>(),
+        []() -> const template_node& {
+            return compiler_type_tree<ty>();
+        },
+        internal::fnv1a_hash(compiler_type_name<ty>()),
         []() {
-        if constexpr (!std::is_void_v<T>)
-        {
-            return +[](void* ptr) {
-                delete static_cast<T*>(ptr);
-            };
-        }
-        else
-            return nullptr;
-    }(),
-        []() {
-        if constexpr (!std::is_void_v<T> && std::is_copy_constructible_v<T>)
-        {
-            return +[](const void* ptr) -> void* {
-                return ptr ? new T(*static_cast<const T*>(ptr)) : nullptr;
-            };
-        }
-        else
-            return nullptr;
-    }(),
-        []() {
-        if constexpr (!std::is_void_v<T> && std::is_copy_assignable_v<T>)
-        {
-            return +[](void* to, const void* from) {
-                *static_cast<T*>(to) = *static_cast<const T*>(from);
-            };
-        }
-        else
-            return nullptr;
-    }(),
-        []() {
-        if constexpr (!std::is_void_v<T> && std::is_move_assignable_v<T>)
-        {
-            return +[](void* to, void* from) {
-                *static_cast<T*>(to) = std::move(*static_cast<T*>(from));
-            };
-        }
-        else
-            return nullptr;
-    }(),
-        []() {
-        if constexpr (!std::is_void_v<T> && requires(const T & value)
-        {
+            if constexpr (!std::is_void_v<ty>)
             {
-                std::hash<T>{}(value)
-            } -> std::convertible_to<size_t>;
-        })
-        {
-            return +[](const void* ptr) {
-                return std::hash<T>{}(*static_cast<const T*>(ptr));
-            };
-        }
-        else
-            return nullptr;
-    }(),
+                return +[](void* ptr) {
+                    delete static_cast<ty*>(ptr);
+                };
+            }
+            else
+                return nullptr;
+        }(),
         []() {
-        if constexpr (!std::is_void_v<T> && requires(const T & a, const T & b)
-        {
+            if constexpr (!std::is_void_v<ty> && std::is_copy_constructible_v<ty>)
             {
-                a == b
-            } -> std::convertible_to<bool>;
-        })
-        {
-            return +[](const void* lhs, const void* rhs) -> bool {
-                return *static_cast<const T*>(lhs) == *static_cast<const T*>(rhs);
-            };
-        }
-        else
-            return nullptr;
-    }(),
+                return +[](const void* ptr) -> void* {
+                    return ptr ? new ty(*static_cast<const ty*>(ptr)) : nullptr;
+                };
+            }
+            else
+                return nullptr;
+        }(),
         []() {
-        if constexpr (!std::is_void_v<T> && requires(const T & a, const T & b)
-        {
+            if constexpr (!std::is_void_v<ty> && std::is_copy_assignable_v<ty>)
             {
-                a != b
-            } -> std::convertible_to<bool>;
-        })
-        {
-            return +[](const void* lhs, const void* rhs) -> bool {
-                return *static_cast<const T*>(lhs) != *static_cast<const T*>(rhs);
-            };
-        }
-        else
-            return nullptr;
-    }()
+                return +[](void* to, const void* from) {
+                    *static_cast<ty*>(to) = *static_cast<const ty*>(from);
+                };
+            }
+            else
+                return nullptr;
+        }(),
+        []() {
+            if constexpr (!std::is_void_v<ty> && std::is_move_assignable_v<ty>)
+            {
+                return +[](void* to, void* from) {
+                    *static_cast<ty*>(to) = std::move(*static_cast<ty*>(from));
+                };
+            }
+            else
+                return nullptr;
+        }(),
+        []() {
+            if constexpr (!std::is_void_v<ty> && requires(const ty & value)
+            {
+                {
+                    std::hash<ty>{}(value)
+                } -> std::convertible_to<size_t>;
+            })
+            {
+                return +[](const void* ptr) {
+                    return std::hash<ty>{}(*static_cast<const ty*>(ptr));
+                };
+            }
+            else
+                return nullptr;
+        }(),
+        []() {
+            if constexpr (!std::is_void_v<ty> && requires(const ty & a, const ty & b)
+            {
+                {
+                    a == b
+                } -> std::convertible_to<bool>;
+            })
+            {
+                return +[](const void* lhs, const void* rhs) -> bool {
+                    return *static_cast<const ty*>(lhs) == *static_cast<const ty*>(rhs);
+                };
+            }
+            else
+                return nullptr;
+        }(),
+        []() {
+            if constexpr (!std::is_void_v<ty> && requires(const ty & a, const ty & b)
+            {
+                {
+                    a != b
+                } -> std::convertible_to<bool>;
+            })
+            {
+                return +[](const void* lhs, const void* rhs) -> bool {
+                    return *static_cast<const ty*>(lhs) != *static_cast<const ty*>(rhs);
+                };
+            }
+            else
+                return nullptr;
+        }()
         );
 
-    const Descriptor* desc_ = nullptr;
+    const descriptor* desc_ = nullptr;
 
-    constexpr explicit TypeErasure(const Descriptor* desc) noexcept
+    constexpr explicit type_erasure(const descriptor* desc) noexcept
         : desc_(desc)
     {
     }
 
 public:
-    constexpr TypeErasure() noexcept
-        : desc_(&kDescriptor<void>)
+    constexpr type_erasure() noexcept
+        : desc_(&type_desc<void>)
     {
     }
 
-    constexpr bool operator==(const TypeErasure& o) const noexcept
+    constexpr bool operator==(const type_erasure& o) const noexcept
     {
         return desc_ == o.desc_;
     }
 
-    constexpr bool operator!=(const TypeErasure& o) const noexcept
+    constexpr bool operator!=(const type_erasure& o) const noexcept
     {
         return desc_ != o.desc_;
     }
@@ -495,64 +479,64 @@ public:
     }
 
     [[nodiscard]]
-    constexpr const Descriptor& desc() const noexcept
+    constexpr const descriptor& desc() const noexcept
     {
         return *desc_;
     }
 };
 
-template<typename T>
-constexpr TypeErasure erase_type() noexcept
+template<typename ty>
+constexpr type_erasure erase_type() noexcept
 {
-    return TypeErasure(&TypeErasure::kDescriptor<T>);
+    return type_erasure(&type_erasure::type_desc<ty>);
 }
 
-template<typename T, typename U>
+template<typename ty, typename U>
 constexpr bool erases_to() noexcept
 {
-    return erase_type<T>() == erase_type<U>();
+    return erase_type<ty>() == erase_type<U>();
 }
 
-template<typename T>
-constexpr const T* resolve_type(TypeErasure erasure, const void* ptr) noexcept
+template<typename ty>
+constexpr const ty* resolve_type(type_erasure erasure, const void* ptr) noexcept
 {
-    return erase_type<T>() == erasure ? static_cast<const T*>(ptr) : nullptr;
+    return erase_type<ty>() == erasure ? static_cast<const ty*>(ptr) : nullptr;
 }
 
-template<typename T>
-constexpr T* resolve_type(TypeErasure erasure, void* ptr) noexcept
+template<typename ty>
+constexpr ty* resolve_type(type_erasure erasure, void* ptr) noexcept
 {
-    return erase_type<T>() == erasure ? static_cast<T*>(ptr) : nullptr;
+    return erase_type<ty>() == erasure ? static_cast<ty*>(ptr) : nullptr;
 }
 
-template<typename T>
-constexpr const T* resolve_type(TypeErasure erasure, const T* ptr) noexcept
+template<typename ty>
+constexpr const ty* resolve_type(type_erasure erasure, const ty* ptr) noexcept
 {
-    return resolve_type<T>(erasure, static_cast<const void*>(ptr));
+    return resolve_type<ty>(erasure, static_cast<const void*>(ptr));
 }
 
-template<typename T>
-constexpr T* resolve_type(TypeErasure erasure, T* ptr) noexcept
+template<typename ty>
+constexpr ty* resolve_type(type_erasure erasure, ty* ptr) noexcept
 {
-    return resolve_type<T>(erasure, static_cast<void*>(ptr));
+    return resolve_type<ty>(erasure, static_cast<void*>(ptr));
 }
 
-class Box
+class box
 {
     void* raw_ = nullptr;
-    TypeErasure type_;
+    type_erasure type_;
 
 public:
-    Box() = default;
+    box() = default;
 
-    template<typename T>
-    Box(T* raw)
+    template<typename ty>
+    box(ty* raw)
         : raw_(raw)
-        , type_(erase_type<T>())
+        , type_(erase_type<ty>())
     {
     }
 
-    Box(const Box& o)
+    box(const box& o)
         : raw_(o.try_copy(o.raw_))
         , type_(o.type_)
     {
@@ -560,7 +544,7 @@ public:
             throw std::logic_error("Attempted to copy a non-copyable type");
     }
 
-    Box(Box&& o) noexcept
+    box(box&& o) noexcept
         : raw_(o.raw_)
         , type_(o.type_)
     {
@@ -568,12 +552,12 @@ public:
         o.type_ = {};
     }
 
-    ~Box()
+    ~box()
     {
         try_dtor(raw_);
     }
 
-    Box& operator=(const Box& o)
+    box& operator=(const box& o)
     {
         if (this != &o)
         {
@@ -592,7 +576,7 @@ public:
         return *this;
     }
 
-    Box& operator=(Box&& o) noexcept
+    box& operator=(box&& o) noexcept
     {
         if (this != &o)
         {
@@ -611,7 +595,7 @@ public:
         return *this;
     }
 
-    bool operator==(const Box& o) const
+    bool operator==(const box& o) const
     {
         if (raw_ == nullptr || o.raw_ == nullptr)
             return raw_ == o.raw_;
@@ -625,7 +609,7 @@ public:
             throw std::runtime_error("Equality not defined for this type");
     }
 
-    bool operator!=(const Box& o) const
+    bool operator!=(const box& o) const
     {
         if (raw_ == nullptr || o.raw_ == nullptr)
             return raw_ != o.raw_;
@@ -640,18 +624,18 @@ public:
     }
 
 public:
-    template<typename T>
+    template<typename ty>
     bool holds() const
     {
-        return type_ == erase_type<T>();
+        return type_ == erase_type<ty>();
     }
 
-    bool holds(TypeErasure type) const
+    bool holds(type_erasure type) const
     {
         return type_ == type;
     }
 
-    TypeErasure type() const
+    type_erasure type() const
     {
         return type_;
     }
@@ -666,30 +650,30 @@ public:
         return raw_;
     }
 
-    template<typename T>
-    const T* as() const
+    template<typename ty>
+    const ty* as() const
     {
-        if (holds<T>())
-            return static_cast<const T*>(raw_);
+        if (holds<ty>())
+            return static_cast<const ty*>(raw_);
         else
             return nullptr;
     }
 
-    template<typename T>
-    T* as()
+    template<typename ty>
+    ty* as()
     {
-        if (holds<T>())
-            return static_cast<T*>(raw_);
+        if (holds<ty>())
+            return static_cast<ty*>(raw_);
         else
             return nullptr;
     }
 
-    template<typename T>
-    std::unique_ptr<T> consume()
+    template<typename ty>
+    std::unique_ptr<ty> consume()
     {
-        if (holds<T>())
+        if (holds<ty>())
         {
-            std::unique_ptr<T> ptr(static_cast<T*>(raw_));
+            std::unique_ptr<ty> ptr(static_cast<ty*>(raw_));
             raw_ = nullptr;
             return ptr;
         }
@@ -749,48 +733,48 @@ private:
     }
 };
 
-template<typename T, typename... Args> requires (!std::is_void_v<T>)
-Box make_box(Args&&... args)
+template<typename ty, typename... Args> requires (!std::is_void_v<ty>)
+box make_box(Args&&... args)
 {
-    return Box(new T(std::forward<Args>(args)...));
+    return box(new ty(std::forward<Args>(args)...));
 }
 
-template<typename T, typename... Args> requires (!std::is_void_v<T>)
-void copy_box(Box& b, Args&&... args)
+template<typename ty, typename... Args> requires (!std::is_void_v<ty>)
+void copy_box(box& b, Args&&... args)
 {
-    if (T* obj = b.as<T>())
-        *obj = T(std::forward<Args>(args)...);
+    if (ty* obj = b.as<ty>())
+        *obj = ty(std::forward<Args>(args)...);
     else
-        b = make_box<T>(std::forward<Args>(args)...);
+        b = make_box<ty>(std::forward<Args>(args)...);
 }
 
-template<typename T>
-Box forward_to_box(T&& obj)
+template<typename ty>
+box forward_to_box(ty&& obj)
 {
-    return make_box<std::remove_cvref_t<T>>(std::forward<T>(obj));
+    return make_box<std::remove_cvref_t<ty>>(std::forward<ty>(obj));
 }
 
-template<typename T>
-void forward_into_box(Box& b, T&& obj)
+template<typename ty>
+void forward_into_box(box& b, ty&& obj)
 {
-    copy_box<std::remove_cvref_t<T>>(b, std::forward<T>(obj));
+    copy_box<std::remove_cvref_t<ty>>(b, std::forward<ty>(obj));
 }
 
 } // reflector
 
 template<>
-struct std::hash<reflector::TypeErasure>
+struct std::hash<reflector::type_erasure>
 {
-    size_t operator()(reflector::TypeErasure te) const
+    size_t operator()(reflector::type_erasure te) const
     {
         return te.hash();
     }
 };
 
 template<>
-struct std::hash<reflector::Box>
+struct std::hash<reflector::box>
 {
-    size_t operator()(const reflector::Box& box) const
+    size_t operator()(const reflector::box& box) const
     {
         return box.hash();
     }

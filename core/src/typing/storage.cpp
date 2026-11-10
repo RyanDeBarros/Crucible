@@ -6,7 +6,7 @@
 namespace crucible::core::typing
 {
 
-Storage::Storage(QualifiedType type, reflector::Box payload, StorageState state)
+Storage::Storage(QualifiedType type, reflector::box payload, StorageState state)
     : type_(std::move(type))
     , payload_(std::move(payload))
     , state_(state)
@@ -25,10 +25,10 @@ StorageState Storage::state() const
 
 Storage Storage::make_uninitialized(QualifiedType type)
 {
-    return Storage(std::move(type), reflector::Box{}, StorageState::Uninitialized);
+    return Storage(std::move(type), reflector::box{}, StorageState::Uninitialized);
 }
 
-Storage Storage::make_initialized(QualifiedType type, reflector::Box payload)
+Storage Storage::make_initialized(QualifiedType type, reflector::box payload)
 {
     if (!is_valid_payload(type, payload))
         throw std::logic_error("Cannot initialize storage with invalid payload");
@@ -38,7 +38,7 @@ Storage Storage::make_initialized(QualifiedType type, reflector::Box payload)
 
 Storage Storage::make_null(QualifiedType type)
 {
-    return Storage(std::move(type), reflector::Box{}, StorageState::Null);
+    return Storage(std::move(type), reflector::box{}, StorageState::Null);
 }
 
 static bool validate_pointer(Specialization spec, const PointerPayload& payload)
@@ -130,7 +130,8 @@ static bool validate_struct(Specialization spec, const StructPayload& payload)
     return true;
 }
 
-bool Storage::is_valid_payload(const QualifiedType& type, const reflector::Box& payload)
+// TODO validation check is long and should already be done in GUI - don't call in ctor/setter
+bool Storage::is_valid_payload(const QualifiedType& type, const reflector::box& payload)
 {
     switch (type.kind())
     {
@@ -190,7 +191,7 @@ bool Storage::is_valid_payload(const QualifiedType& type, const reflector::Box& 
     return false;
 }
 
-const reflector::Box* Storage::get(const QualifiedType& type) const
+const reflector::box* Storage::get(const QualifiedType& type) const
 {
     if (state_ != StorageState::Initialized)
         return nullptr;
@@ -201,7 +202,7 @@ const reflector::Box* Storage::get(const QualifiedType& type) const
     return &payload_;
 }
 
-reflector::Box* Storage::get(const QualifiedType& type)
+reflector::box* Storage::get(const QualifiedType& type)
 {
     if (state_ != StorageState::Initialized)
         return nullptr;
