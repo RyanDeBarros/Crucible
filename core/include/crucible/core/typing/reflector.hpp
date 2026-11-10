@@ -1,6 +1,6 @@
 #pragma once
 
-// TODO move to own repo so it can be dropped in imperious
+// TODO move to own repo so it can be dropped in imperious. Put license and README at top of file. In the repo, also define a main file for tests (test templates, different namespaces, etc.).
 
 #include <cstddef>
 #include <cstdint>
