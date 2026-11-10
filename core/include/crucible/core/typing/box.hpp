@@ -4,66 +4,14 @@
 
 #include <concepts>
 #include <memory>
-#include <stdexcept>
 
 namespace crucible::core::typing
 {
 
 class Box
 {
-    using Dtor = void (*)(void*);
-    using Copier = void* (*)(const void*);
-    using CopyAssign = bool (*)(void*, const void*);
-    using MoveAssign = bool (*)(void*, void*);
-    using Hasher = size_t (*)(const void*);
-
-    struct Ops
-    {
-        // TODO flesh out imp::box with type and hasher in Ops
-        TypeErasure type;
-        Dtor dtor = nullptr;
-        Copier copy = nullptr;
-        CopyAssign copy_assign = nullptr;
-        MoveAssign move_assign = nullptr;
-        Hasher hasher = nullptr;
-    };
-
-private:
-    template<typename T>
-    static constexpr Ops kOps = {
-        .type = erase_type<T>(),
-        .dtor = [](void* ptr) { delete static_cast<T*>(ptr); },
-        .copy = [](const void* ptr) -> void* {
-            if constexpr (std::is_copy_constructible_v<T>)
-                return ptr ? new T(*static_cast<const T*>(ptr)) : nullptr;
-            else
-                return nullptr;
-        },
-        .copy_assign = [](void* to, const void* from) {
-            if constexpr (std::is_copy_assignable_v<T>)
-            {
-                *static_cast<T*>(to) = *static_cast<const T*>(from);
-                return true;
-            }
-            else
-                return false;
-        },
-        .move_assign = [](void* to, void* from) {
-            if constexpr (std::is_move_assignable_v<T>)
-            {
-                *static_cast<T*>(to) = std::move(*static_cast<T*>(from));
-                return true;
-            }
-            else
-                return false;
-        },
-        .hasher = [](const void* ptr) -> size_t {
-            std::hash<T>{}(*static_cast<const T*>(ptr));
-        }
-    };
-
     void* raw_ = nullptr;
-    const Ops* ops_ = nullptr;
+    TypeErasure type_;
 
 public:
     Box() = default;
@@ -71,96 +19,31 @@ public:
     template<typename T>
     Box(T* raw)
         : raw_(raw)
-        , ops_(&kOps<T>)
+        , type_(erase_type<T>())
     {
     }
 
-    Box(const Box& o)
-        : raw_(o.try_copy(o.raw_))
-        , ops_(o.ops_)
-    {
-        if (o.raw_ && !raw_)
-            throw std::logic_error("Attempted to copy a non-copyable type");
-    }
+    Box(const Box&);
+    Box(Box&&) noexcept;
+    ~Box();
 
-    Box(Box&& o) noexcept
-        : raw_(o.raw_)
-        , ops_(o.ops_)
-    {
-        o.raw_ = nullptr;
-        o.ops_ = nullptr;
-    }
+    Box& operator=(const Box&);
+    Box& operator=(Box&&) noexcept;
 
-    ~Box()
-    {
-        try_dtor(raw_);
-    }
-
-    Box& operator=(const Box& o)
-    {
-        if (this != &o)
-        {
-            if (type() != o.type() || !try_copy_assign(raw_, o.raw_))
-            {
-                try_dtor(raw_);
-                raw_ = o.try_copy(o.raw_);
-            }
-
-            type() = o.type();
-            ops_ = o.ops_;
-
-            if (o.raw_ && !raw_)
-                throw std::logic_error("Attempted to copy a non-copyable type");
-        }
-
-        return *this;
-    }
-
-    Box& operator=(Box&& o) noexcept
-    {
-        if (this != &o)
-        {
-            if (type() != o.type() || !try_move_assign(raw_, o.raw_))
-            {
-                try_dtor(raw_);
-                raw_ = o.raw_;
-            }
-
-            ops_ = o.ops_;
-
-            o.raw_ = nullptr;
-            o.ops_ = nullptr;
-        }
-
-        return *this;
-    }
+    bool operator==(const Box&) const;
+    bool operator!=(const Box&) const;
 
 public:
     template<typename T>
     bool holds() const
     {
-        return type() == erase_type<T>();
+        return holds(erase_type<T>());
     }
 
-    bool holds(TypeErasure type) const
-    {
-        return this->type() == type;
-    }
-
-    TypeErasure type() const
-    {
-        return ops_ ? ops_->type : TypeErasure();
-    }
-
-    const void* unsafe_raw() const
-    {
-        return raw_;
-    }
-
-    void* unsafe_raw()
-    {
-        return raw_;
-    }
+    bool holds(TypeErasure type) const;
+    TypeErasure type() const;
+    const void* unsafe_raw() const;
+    void* unsafe_raw();
 
     template<typename T>
     const T* as() const
@@ -193,47 +76,13 @@ public:
             return nullptr;
     }
 
-    size_t hash() const
-    {
-        return ops_ ? ops_->hasher(raw_) : throw std::runtime_error("Hasher not defined");
-    }
+    size_t hash() const;
 
 private:
-    void try_dtor(void* ptr) const
-    {
-        if (ops_)
-            ops_->dtor(ptr);
-    }
-
-    void* try_copy(const void* ptr) const
-    {
-        if (ops_)
-            return ops_->copy(ptr);
-        else
-            return nullptr;
-    }
-
-    bool try_copy_assign(void* to, const void* from)
-    {
-        if (to && from)
-        {
-            if (ops_)
-                return ops_->copy_assign(to, from);
-        }
-
-        return false;
-    }
-
-    bool try_move_assign(void* to, void* from)
-    {
-        if (to && from)
-        {
-            if (ops_)
-                return ops_->move_assign(to, from);
-        }
-
-        return false;
-    }
+    void try_dtor(void* ptr) const;
+    void* try_copy(const void* ptr) const;
+    bool try_copy_assign(void* to, const void* from);
+    bool try_move_assign(void* to, void* from);
 };
 
 template<typename T, typename... Args>
@@ -270,8 +119,5 @@ void forward_into_box(Box& b, T&& obj)
 template<>
 struct std::hash<crucible::core::typing::Box>
 {
-    size_t operator()(const crucible::core::typing::Box& box) const
-    {
-        return box.hash();
-    }
+    size_t operator()(const crucible::core::typing::Box& box) const;
 };

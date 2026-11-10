@@ -1,7 +1,8 @@
 target_sources(crucible_core
     PRIVATE
-        qualified_type.cpp
+        box.cpp
         intern_registries.cpp
         nominal_registries.cpp
+        qualified_type.cpp
         storage.cpp
 )
