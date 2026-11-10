@@ -2,7 +2,7 @@
 
 #include <crucible/core/modules/module_id.hpp>
 
-#include <crucible/core/typing/box.hpp>
+#include <crucible/core/typing/reflector.hpp>
 #include <crucible/core/typing/qualified_type.hpp>
 
 #include <vector>
@@ -56,35 +56,35 @@ struct EnumPayload
 
 struct ListPayload
 {
-    std::vector<Box> value; // must contain payloads
+    std::vector<reflector::Box> value; // must contain payloads
 
     bool operator==(const ListPayload&) const = default;
 };
 
 struct SetPayload
 {
-    std::unordered_set<Box> value; // must contain payloads
+    std::unordered_set<reflector::Box> value; // must contain payloads
 
     bool operator==(const SetPayload&) const = default;
 };
 
 struct MapPayload
 {
-    std::unordered_map<Box, Box> value; // must contain payloads
+    std::unordered_map<reflector::Box, reflector::Box> value; // must contain payloads
 
     bool operator==(const MapPayload&) const = default;
 };
 
 struct StructPayload
 {
-    std::vector<Box> value; // must contain payloads
+    std::vector<reflector::Box> value; // must contain payloads
 
     bool operator==(const StructPayload&) const = default;
 };
 
 struct JokerPayload
 {
-    Box value; // must contain a payload
+    reflector::Box value; // must contain a payload
 
     bool operator==(const JokerPayload&) const = default;
 };
@@ -99,23 +99,23 @@ enum class StorageState
 class Storage
 {
     QualifiedType type_;
-    Box payload_;
+    reflector::Box payload_;
     StorageState state_;
 
-    Storage(QualifiedType type, Box payload, StorageState state);
+    Storage(QualifiedType type, reflector::Box payload, StorageState state);
 
 public:
     const QualifiedType& type() const;
     StorageState state() const;
 
     static Storage make_uninitialized(QualifiedType type);
-    static Storage make_initialized(QualifiedType type, Box payload);
+    static Storage make_initialized(QualifiedType type, reflector::Box payload);
     static Storage make_null(QualifiedType type);
 
-    static bool is_valid_payload(const QualifiedType& type, const Box& payload);
+    static bool is_valid_payload(const QualifiedType& type, const reflector::Box& payload);
 
-    const Box* get(const QualifiedType& type) const;
-    Box* get(const QualifiedType& type);
+    const reflector::Box* get(const QualifiedType& type) const;
+    reflector::Box* get(const QualifiedType& type);
     bool set(Storage other);
 };
 

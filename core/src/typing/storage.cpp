@@ -6,7 +6,7 @@
 namespace crucible::core::typing
 {
 
-Storage::Storage(QualifiedType type, Box payload, StorageState state)
+Storage::Storage(QualifiedType type, reflector::Box payload, StorageState state)
     : type_(std::move(type))
     , payload_(std::move(payload))
     , state_(state)
@@ -25,10 +25,10 @@ StorageState Storage::state() const
 
 Storage Storage::make_uninitialized(QualifiedType type)
 {
-    return Storage(std::move(type), Box{}, StorageState::Uninitialized);
+    return Storage(std::move(type), reflector::Box{}, StorageState::Uninitialized);
 }
 
-Storage Storage::make_initialized(QualifiedType type, Box payload)
+Storage Storage::make_initialized(QualifiedType type, reflector::Box payload)
 {
     if (!is_valid_payload(type, payload))
         throw std::logic_error("Cannot initialize storage with invalid payload");
@@ -38,7 +38,7 @@ Storage Storage::make_initialized(QualifiedType type, Box payload)
 
 Storage Storage::make_null(QualifiedType type)
 {
-    return Storage(std::move(type), Box{}, StorageState::Null);
+    return Storage(std::move(type), reflector::Box{}, StorageState::Null);
 }
 
 static bool validate_pointer(Specialization spec, const PointerPayload& payload)
@@ -130,7 +130,7 @@ static bool validate_struct(Specialization spec, const StructPayload& payload)
     return true;
 }
 
-bool Storage::is_valid_payload(const QualifiedType& type, const Box& payload)
+bool Storage::is_valid_payload(const QualifiedType& type, const reflector::Box& payload)
 {
     switch (type.kind())
     {
@@ -190,7 +190,7 @@ bool Storage::is_valid_payload(const QualifiedType& type, const Box& payload)
     return false;
 }
 
-const Box* Storage::get(const QualifiedType& type) const
+const reflector::Box* Storage::get(const QualifiedType& type) const
 {
     if (state_ != StorageState::Initialized)
         return nullptr;
@@ -201,7 +201,7 @@ const Box* Storage::get(const QualifiedType& type) const
     return &payload_;
 }
 
-Box* Storage::get(const QualifiedType& type)
+reflector::Box* Storage::get(const QualifiedType& type)
 {
     if (state_ != StorageState::Initialized)
         return nullptr;

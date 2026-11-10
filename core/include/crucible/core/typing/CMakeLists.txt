@@ -1,14 +1,11 @@
 target_sources(crucible_core
     PRIVATE
-        box.hpp
-        compiler_type_name.hpp
         intern_registries.hpp
         intern_registry.hpp
         kind.hpp
         nominal_registries.hpp
         nominal_registry.hpp
         qualified_type.hpp
+        reflector.hpp
         storage.hpp
-        template_parser.hpp
-        type_erasure.hpp
 )
