@@ -30,6 +30,8 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+// TODO macro to include/not include template tree
+
 #ifndef REFLECTOR_INCLUDED
 #define REFLECTOR_INCLUDED
 
@@ -524,18 +526,21 @@ constexpr type_erasure erase_type() noexcept
 template<typename ty, typename U>
 constexpr bool erases_to() noexcept
 {
+    // TODO don't use erase_type()
     return erase_type<ty>() == erase_type<U>();
 }
 
 template<typename ty>
 constexpr const ty* resolve_type(type_erasure erasure, const void* ptr) noexcept
 {
+    // TODO don't use erase_type()
     return erase_type<ty>() == erasure ? static_cast<const ty*>(ptr) : nullptr;
 }
 
 template<typename ty>
 constexpr ty* resolve_type(type_erasure erasure, void* ptr) noexcept
 {
+    // TODO don't use erase_type()
     return erase_type<ty>() == erasure ? static_cast<ty*>(ptr) : nullptr;
 }
 
@@ -659,7 +664,8 @@ public:
     template<typename ty>
     bool holds() const
     {
-        return type_ == erase_type<ty>();
+        // TODO performance is improved if using pointer comparison instead of string_view equality check
+        return type_.name() == compiler_type_name<ty>();
     }
 
     bool holds(type_erasure type) const

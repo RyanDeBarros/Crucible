@@ -143,10 +143,6 @@ static bool validate_list(Specialization spec, const ListPayload& payload)
     if (!gListRegistry.exists(spec))
         return false;
 
-    const auto& vector_tree = payload.value.type().desc().template_tree();
-    if (vector_tree.name != reflector::compiler_type_tree<std::vector<int>>().name)
-        return false;
-
     const auto expected_element_type = gListRegistry.element_type(spec);
     VALIDATE_ITERABLE(std::vector);
     return false;
@@ -155,10 +151,6 @@ static bool validate_list(Specialization spec, const ListPayload& payload)
 static bool validate_set(Specialization spec, const SetPayload& payload)
 {
     if (!gSetRegistry.exists(spec))
-        return false;
-
-    const auto& unordered_set_tree = payload.value.type().desc().template_tree();
-    if (unordered_set_tree.name != reflector::compiler_type_tree<std::unordered_set<int>>().name)
         return false;
 
     const auto expected_element_type = gSetRegistry.element_type(spec);
@@ -247,10 +239,6 @@ bool map_itercheck(
 static bool validate_map(Specialization spec, const MapPayload& payload)
 {
     if (!gMapRegistry.exists(spec))
-        return false;
-
-    const auto& unordered_set_tree = payload.value.type().desc().template_tree();
-    if (unordered_set_tree.name != reflector::compiler_type_tree<std::unordered_map<int, int>>().name)
         return false;
 
     const auto expected_key_type = gMapRegistry.key_type(spec);

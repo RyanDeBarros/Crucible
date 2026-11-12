@@ -10,22 +10,11 @@
 
 #include <QApplication>
 
-
-
-
-
-#include <crucible/core/typing/storage.hpp>
-
 namespace crucible::gui
 {
 
 static int run(int argc, char* argv[])
 {
-    LOG.info(kApp) << reflector::erase_type<core::typing::IntPayload>().name();
-    LOG.info(kApp) << reflector::erase_type<std::vector<core::typing::IntPayload>>().name();
-
-    const auto& tree = reflector::compiler_type_tree<std::vector<core::typing::IntPayload>>();
-
     LOG.debug(kApp) << "Initializing Crucible application...";
 
     QApplication app(argc, argv);
