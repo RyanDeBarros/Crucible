@@ -30,8 +30,6 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-// TODO macro to include/not include template tree
-
 #ifndef REFLECTOR_INCLUDED
 #define REFLECTOR_INCLUDED
 
@@ -55,6 +53,16 @@ namespace reflector
 template<typename ty>
 constexpr std::string_view compiler_type_name() noexcept;
 
+namespace detail
+{
+
+constexpr std::uint64_t fnv1a_hash(std::string_view str) noexcept;
+
+} // detail
+
+template<typename ty>
+constexpr std::uint64_t kTypeHash = detail::fnv1a_hash(compiler_type_name<ty>());
+
 struct template_node;
 
 template<typename ty>
@@ -65,7 +73,7 @@ struct type_erasure;
 template<typename ty>
 constexpr type_erasure erase_type() noexcept;
 
-template<typename ty, typename U>
+template<typename ty, typename uy>
 constexpr bool erases_to() noexcept;
 
 template<typename ty>
@@ -204,6 +212,22 @@ constexpr std::string_view compiler_type_name() noexcept
     return detail::compiler_type_name_impl<ty>();
 }
 
+namespace detail
+{
+
+constexpr std::uint64_t fnv1a_hash(std::string_view str) noexcept
+{
+    std::uint64_t hash = 0xcbf29ce484222325ULL;
+    for (char c : str)
+    {
+        hash ^= static_cast<std::uint64_t>(static_cast<unsigned char>(c));
+        hash *= 0x00000100000001B3ULL;
+    }
+    return hash;
+}
+
+} // detail
+
 struct template_node
 {
     std::string name;
@@ -313,22 +337,6 @@ const template_node& compiler_type_tree() noexcept
     return detail::compiler_type_tree_storage<ty>;
 }
 
-namespace detail
-{
-
-constexpr std::uint64_t fnv1a_hash(std::string_view str) noexcept
-{
-    std::uint64_t hash = 0xcbf29ce484222325ULL;
-    for (char c : str)
-    {
-        hash ^= static_cast<std::uint64_t>(static_cast<unsigned char>(c));
-        hash *= 0x00000100000001B3ULL;
-    }
-    return hash;
-}
-
-} // detail
-
 struct type_erasure
 {
     template<typename ty>
@@ -342,7 +350,7 @@ struct type_erasure
     public:
         std::string_view name;
         const template_node& (*template_tree)();
-        size_t type_hash;
+        std::uint64_t type_hash;
 
     private:
         void (*dtor_op_)(void*);
@@ -357,7 +365,7 @@ struct type_erasure
         constexpr descriptor(
             std::string_view name,
             const template_node& (*template_tree)(),
-            size_t type_hash,
+            std::uint64_t type_hash,
             void (*dtor_op)(void*),
             void* (*copy_op)(const void*),
             void (*copy_assign_op)(void*, const void*),
@@ -387,7 +395,7 @@ private:
         []() -> const template_node& {
             return compiler_type_tree<ty>();
         },
-        detail::fnv1a_hash(compiler_type_name<ty>()),
+        kTypeHash<ty>,
         []() {
             if constexpr (!std::is_void_v<ty>)
             {
@@ -511,9 +519,21 @@ public:
     }
 
     [[nodiscard]]
+    const template_node& template_tree() const noexcept
+    {
+        return (*desc_->template_tree)();
+    }
+
+    [[nodiscard]]
     constexpr const descriptor& desc() const noexcept
     {
         return *desc_;
+    }
+
+    template<typename ty>
+    constexpr bool holds() const noexcept
+    {
+        return hash() == kTypeHash<ty> && name() == compiler_type_name<ty>();
     }
 };
 
@@ -523,25 +543,22 @@ constexpr type_erasure erase_type() noexcept
     return type_erasure(&type_erasure::type_desc<ty>);
 }
 
-template<typename ty, typename U>
+template<typename ty, typename uy>
 constexpr bool erases_to() noexcept
 {
-    // TODO don't use erase_type()
-    return erase_type<ty>() == erase_type<U>();
+    return kTypeHash<ty> == kTypeHash<uy> && compiler_type_name<ty>() == compiler_type_name<uy>();
 }
 
 template<typename ty>
 constexpr const ty* resolve_type(type_erasure erasure, const void* ptr) noexcept
 {
-    // TODO don't use erase_type()
-    return erase_type<ty>() == erasure ? static_cast<const ty*>(ptr) : nullptr;
+    return erasure.holds<ty>() ? static_cast<const ty*>(ptr) : nullptr;
 }
 
 template<typename ty>
 constexpr ty* resolve_type(type_erasure erasure, void* ptr) noexcept
 {
-    // TODO don't use erase_type()
-    return erase_type<ty>() == erasure ? static_cast<ty*>(ptr) : nullptr;
+    return erasure.holds<ty>() ? static_cast<ty*>(ptr) : nullptr;
 }
 
 template<typename ty>
@@ -664,8 +681,7 @@ public:
     template<typename ty>
     bool holds() const
     {
-        // TODO performance is improved if using pointer comparison instead of string_view equality check
-        return type_.name() == compiler_type_name<ty>();
+        return type_.holds<ty>();
     }
 
     bool holds(type_erasure type) const

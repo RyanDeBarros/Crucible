@@ -3,6 +3,8 @@
 #include <crucible/core/typing/intern_registries.hpp>
 #include <crucible/core/typing/nominal_registries.hpp>
 
+#include <crucible/core/utility.hpp>
+
 namespace crucible::core::typing
 {
 
@@ -41,17 +43,12 @@ Storage Storage::make_null(QualifiedType type)
     return Storage(std::move(type), reflector::box{}, StorageState::Null);
 }
 
-// TODO move validation to separate file/folder, since it takes a while to compile to 64MB
-
 static bool validate_pointer(Specialization spec, const PointerPayload& payload);
 static bool validate_enum(Specialization spec, const EnumPayload& payload);
 static bool validate_list(Specialization spec, const ListPayload& payload);
 static bool validate_set(Specialization spec, const SetPayload& payload);
 static bool validate_map(Specialization spec, const MapPayload& payload);
 static bool validate_struct(Specialization spec, const StructPayload& payload);
-
-template<auto>
-constexpr bool kFalse = false; // TODO move to utility
 
 template<typename PayloadType>
 constexpr bool kShouldItercheck =
@@ -425,10 +422,9 @@ size_t std::hash<crucible::core::typing::MapPayload>::operator()(
 size_t std::hash<crucible::core::typing::StructPayload>::operator()(
     const crucible::core::typing::StructPayload& pld) const
 {
-    // TODO better algorithm
     size_t h = 0;
     for (const auto& field : pld.value)
-        h = h ^ std::hash<reflector::box>{}(field);
+        h ^= std::hash<reflector::box>{}(field)+ 0x9e3779b9 + (h << 6) + (h >> 2);
     return h;
 }
 
