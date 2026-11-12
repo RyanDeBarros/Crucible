@@ -34,9 +34,6 @@ Storage Storage::make_uninitialized(QualifiedType type)
 
 Storage Storage::make_initialized(QualifiedType type, reflector::box payload)
 {
-    if (!is_valid_payload(type, payload))
-        throw std::logic_error("Cannot initialize storage with invalid payload");
-
     return Storage(std::move(type), std::move(payload), StorageState::Initialized);
 }
 
@@ -103,21 +100,30 @@ static bool validate_enum(Specialization spec, const EnumPayload& payload)
     return payload.value < gEnumRegistry.enum_count(spec);
 }
 
+template<typename ElementPayloadType, typename PayloadContainer>
+bool std_itercheck(const auto& payload, const QualifiedType& expected_element_type)
+{
+    if (const auto* pld = payload.value.as<PayloadContainer>())
+    {
+        if constexpr (kShouldItercheck<ElementPayloadType>)
+        {
+            for (const auto& el : *pld)
+            {
+                if (!validate_element(expected_element_type.specialization(), el))
+                    return false;
+            }
+        }
+        
+        return true;
+    }
+    else
+        return false;
+}
+
 #define ITERCHECK(Container, PayloadType) \
-        if (const auto* pld = payload.value.as<Container<PayloadType>>()) \
-        { \
-            if constexpr (kShouldItercheck<PayloadType>) \
-            { \
-                for (const auto& el : *pld) \
-                { \
-                    if (!validate_element(expected_element_type.specialization(), el)) \
-                        return false; \
-                } \
-            } \
-            return true; \
-        } \
-        else \
-            return false;
+        return std_itercheck<PayloadType, Container<PayloadType>>( \
+            payload, \
+            expected_element_type);
 
 #define VALIDATE_ITERABLE(Container) \
         switch (expected_element_type.kind()) \
@@ -269,7 +275,6 @@ static bool validate_struct(Specialization spec, const StructPayload& payload)
     return true;
 }
 
-// TODO validation check is long and should already be done in GUI - don't call in ctor/setter - except for when loading from serialized data
 bool Storage::is_valid_payload(const QualifiedType& type, const reflector::box& payload)
 {
     switch (type.kind())

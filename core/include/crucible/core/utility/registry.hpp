@@ -2,7 +2,8 @@
 
 #include <crucible/core/utility/utility.hpp>
 
-#include <deque>
+#include <array>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <vector>
@@ -13,22 +14,33 @@ namespace crucible::core
 template<typename Element, typename Handle = size_t>
 class Registry
 {
-    // TODO use paged storage for stable addresses instead of std::deque to reduce allocations. For instance, each page can have 256 modules/templates, then store them in std::vector<std::unique_ptr<Page>>.
-
     struct Slot
     {
         std::optional<Element> el;
         Handle next_free = 0;
     };
 
+    struct Page
+    {
+        constexpr static inline size_t kSize = 256;
+
+        std::array<Slot, kSize> slots;
+        size_t filled = 0;
+    };
+
 private:
-    std::deque<Slot> slots_{ 1 }; // reserve 0 for invalid handle
+    std::vector<std::unique_ptr<Page>> pages_;
     Handle free_head_ = 0;
 
 protected:
     mutable std::mutex mutex_;
 
 public:
+    Registry()
+    {
+        pages_.emplace_back(std::make_unique<Page>());
+    }
+
     Handle add(Element el)
     {
         std::unique_lock lock(mutex_);
@@ -61,16 +73,26 @@ protected:
         if (free_head_ != 0)
         {
             handle = free_head_;
-            free_head_ = slots_[handle].next_free;
+            size_t page_index, slot_index;
+            get_indexes(handle, page_index, slot_index);
+            free_head_ = pages_[page_index]->slots[slot_index].next_free;
         }
         else
         {
-            handle = static_cast<Handle>(slots_.size());
-            slots_.emplace_back();
+            const size_t page_index = pages_.size() - 1;
+            if (pages_.back()->filled == Page::kSize)
+                pages_.emplace_back(std::make_unique<Page>());
+
+            Page& page = *pages_.back();
+            handle = static_cast<Handle>((pages_.size() - 1) * Page::kSize + pages_.back()->filled + 1);
+            ++page.filled;
         }
 
-        slots_[handle].el.emplace(std::move(el));
-        slots_[handle].next_free = 0;
+        size_t page_index, slot_index;
+        get_indexes(handle, page_index, slot_index);
+        Slot& slot = pages_[page_index]->slots[slot_index];
+        slot.el.emplace(std::move(el));
+        slot.next_free = 0;
 
         return handle;
     }
@@ -100,20 +122,41 @@ protected:
     }
 
 private:
+    bool get_indexes(Handle handle, size_t& page_index, size_t& slot_index) const
+    {
+        if (handle == 0)
+            return false;
+
+        --handle;
+        page_index = static_cast<size_t>(handle / Page::kSize);
+        slot_index = handle - page_index * Page::kSize;
+        return true;
+    }
+
     const Slot* try_get_slot_unsafe(Handle handle) const
     {
-        if (handle == 0 || handle >= slots_.size() || !slots_[handle].el)
+        size_t page_index, slot_index;
+        if (!get_indexes(handle, page_index, slot_index))
             return nullptr;
-        else
-            return &slots_[handle];
+
+        if (page_index >= pages_.size())
+            return nullptr;
+
+        const Slot& slot = pages_[page_index]->slots[slot_index];
+        return slot.el ? &slot : nullptr;
     }
 
     Slot* try_get_slot_unsafe(Handle handle)
     {
-        if (handle == 0 || handle >= slots_.size() || !slots_[handle].el)
+        size_t page_index, slot_index;
+        if (!get_indexes(handle, page_index, slot_index))
             return nullptr;
-        else
-            return &slots_[handle];
+
+        if (page_index >= pages_.size())
+            return nullptr;
+
+        const Slot& slot = pages_[page_index]->slots[slot_index];
+        return slot.el ? &slot : nullptr;
     }
 
     const Slot& get_slot_unsafe(Handle handle) const
