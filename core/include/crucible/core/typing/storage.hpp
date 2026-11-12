@@ -55,24 +55,41 @@ struct EnumPayload
     bool operator==(const EnumPayload&) const = default;
 };
 
-// TODO use templates again
 struct ListPayload
 {
-    std::vector<reflector::box> value; // must contain payloads
+    reflector::box value;
+
+    template<typename T> // must be payload
+    ListPayload(std::vector<T> value)
+        : value(reflector::forward_to_box(std::move(value)))
+    {
+    }
 
     bool operator==(const ListPayload&) const = default;
 };
 
 struct SetPayload
 {
-    std::unordered_set<reflector::box> value; // must contain payloads
+    reflector::box value;
+
+    template<typename T> // must be payload
+    SetPayload(std::unordered_set<T> value)
+        : value(reflector::forward_to_box(std::move(value)))
+    {
+    }
 
     bool operator==(const SetPayload&) const = default;
 };
 
 struct MapPayload
 {
-    std::unordered_map<reflector::box, reflector::box> value; // must contain payloads
+    reflector::box value;
+
+    template<typename K, typename V> // must be payloads
+    MapPayload(std::unordered_map<K, V> value)
+        : value(reflector::forward_to_box(std::move(value)))
+    {
+    }
 
     bool operator==(const MapPayload&) const = default;
 };
@@ -122,3 +139,69 @@ public:
 };
 
 } // crucible::core::typing
+
+template<>
+struct std::hash<crucible::core::typing::BoolPayload>
+{
+    size_t operator()(const crucible::core::typing::BoolPayload&) const;
+};
+
+template<>
+struct std::hash<crucible::core::typing::IntPayload>
+{
+    size_t operator()(const crucible::core::typing::IntPayload&) const;
+};
+
+template<>
+struct std::hash<crucible::core::typing::FloatPayload>
+{
+    size_t operator()(const crucible::core::typing::FloatPayload&) const;
+};
+
+template<>
+struct std::hash<crucible::core::typing::StringPayload>
+{
+    size_t operator()(const crucible::core::typing::StringPayload&) const;
+};
+
+template<>
+struct std::hash<crucible::core::typing::PointerPayload>
+{
+    size_t operator()(const crucible::core::typing::PointerPayload&) const;
+};
+
+template<>
+struct std::hash<crucible::core::typing::EnumPayload>
+{
+    size_t operator()(const crucible::core::typing::EnumPayload&) const;
+};
+
+template<>
+struct std::hash<crucible::core::typing::ListPayload>
+{
+    size_t operator()(const crucible::core::typing::ListPayload&) const;
+};
+
+template<>
+struct std::hash<crucible::core::typing::SetPayload>
+{
+    size_t operator()(const crucible::core::typing::SetPayload&) const;
+};
+
+template<>
+struct std::hash<crucible::core::typing::MapPayload>
+{
+    size_t operator()(const crucible::core::typing::MapPayload&) const;
+};
+
+template<>
+struct std::hash<crucible::core::typing::StructPayload>
+{
+    size_t operator()(const crucible::core::typing::StructPayload&) const;
+};
+
+template<>
+struct std::hash<crucible::core::typing::JokerPayload>
+{
+    size_t operator()(const crucible::core::typing::JokerPayload&) const;
+};

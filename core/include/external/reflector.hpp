@@ -593,14 +593,16 @@ public:
         {
             if (type_ != o.type_ || !try_copy_assign(raw_, o.raw_))
             {
+                void* dupl = o.try_copy(o.raw_);
+                if (o.raw_ && !dupl)
+                    throw std::logic_error("Attempted to copy a non-copyable type");
+
+
                 try_dtor(raw_);
-                raw_ = o.try_copy(o.raw_);
+                raw_ = dupl;
+                type_ = o.type_;
+
             }
-
-            type_ = o.type_;
-
-            if (o.raw_ && !raw_)
-                throw std::logic_error("Attempted to copy a non-copyable type");
         }
 
         return *this;
@@ -713,6 +715,9 @@ public:
 
     size_t hash() const
     {
+        if (!raw_)
+            return 0;
+
         if (auto* hasher = type_.desc().hasher_op_)
             return (*hasher)(raw_);
         else
