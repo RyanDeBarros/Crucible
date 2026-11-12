@@ -1,10 +1,8 @@
 target_sources(crucible_core
     PRIVATE
         intern_registries.hpp
-        intern_registry.hpp
         kind.hpp
         nominal_registries.hpp
-        nominal_registry.hpp
         qualified_type.hpp
         storage.hpp
 )

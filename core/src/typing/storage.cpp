@@ -5,7 +5,7 @@
 
 #include <crucible/core/modules/module_registry.hpp>
 
-#include <crucible/core/utility.hpp>
+#include <crucible/core/utility/utility.hpp>
 
 namespace crucible::core::typing
 {
@@ -92,7 +92,7 @@ static bool validate_pointer(Specialization spec, const PointerPayload& payload)
         return false;
 
     const auto expected_underlying_type = gPointerRegistry.underlying_type(spec);
-    return modules::gModuleRegistry.type(payload.value) == expected_underlying_type;
+    return modules::gModuleRegistry.module_type(payload.value) == expected_underlying_type;
 }
 
 static bool validate_enum(Specialization spec, const EnumPayload& payload)

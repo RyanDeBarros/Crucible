@@ -48,6 +48,12 @@ void StructTemplate::assert_valid() const
         throw std::logic_error("Struct template has duplicate field names");
 }
 
+Specialization StructRegistry::add(StructTemplate tmpl)
+{
+    tmpl.assert_valid();
+    return Super::add(std::move(tmpl));
+}
+
 std::string StructRegistry::struct_title(Specialization spec) const
 {
     return get(spec).title;
@@ -86,11 +92,6 @@ QualifiedType StructRegistry::struct_field_type(Specialization spec, const std::
     }
 
     throw std::logic_error("Struct field does not exist");
-}
-
-void StructRegistry::assert_valid(const StructTemplate& tmpl) const
-{
-    tmpl.assert_valid();
 }
 
 } // namespace crucible::core::typing
