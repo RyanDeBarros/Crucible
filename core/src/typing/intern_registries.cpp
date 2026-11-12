@@ -31,33 +31,33 @@ PointerRegistry gPointerRegistry{};
 
 QualifiedType PointerRegistry::underlying_type(Specialization spec) const
 {
-    return get(spec).underlying_type;
+    return get(spec)->underlying_type;
 }
 
 ListRegistry gListRegistry{};
 
 QualifiedType ListRegistry::element_type(Specialization spec) const
 {
-    return get(spec).element_type;
+    return get(spec)->element_type;
 }
 
 SetRegistry gSetRegistry{};
 
 QualifiedType SetRegistry::element_type(Specialization spec) const
 {
-    return get(spec).element_type;
+    return get(spec)->element_type;
 }
 
 MapRegistry gMapRegistry{};
 
 QualifiedType MapRegistry::key_type(Specialization spec) const
 {
-    return get(spec).key_type;
+    return get(spec)->key_type;
 }
 
 QualifiedType MapRegistry::value_type(Specialization spec) const
 {
-    return get(spec).value_type;
+    return get(spec)->value_type;
 }
 
 } // namespace crucible::core::typing

@@ -7,9 +7,9 @@ namespace crucible::core::modules
 
 ModuleRegistry gModuleRegistry{};
 
-const typing::QualifiedType& ModuleRegistry::module_type(ModuleId id) const
+typing::QualifiedType ModuleRegistry::module_type(ModuleId id) const
 {
-    return get(id).storage.type();
+    return get(id)->storage.type();
 }
 
 } // crucible::core::modules

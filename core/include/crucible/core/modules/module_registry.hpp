@@ -18,7 +18,7 @@ public:
     using Super::exists;
     using Super::get;
 
-    const typing::QualifiedType& module_type(ModuleId id) const;
+    typing::QualifiedType module_type(ModuleId id) const;
 };
 
 extern ModuleRegistry gModuleRegistry;

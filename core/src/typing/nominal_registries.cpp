@@ -11,12 +11,12 @@ EnumRegistry gEnumRegistry{};
 
 std::string EnumRegistry::enum_title(Specialization spec) const
 {
-    return get(spec).title;
+    return get(spec)->title;
 }
 
 std::string EnumRegistry::enum_name(Specialization spec, std::uint64_t index) const
 {
-    const auto& names = get(spec).names;
+    const auto& names = get(spec)->names;
     if (index >= names.size())
         throw std::out_of_range("Enum name index out of range");
 
@@ -25,7 +25,7 @@ std::string EnumRegistry::enum_name(Specialization spec, std::uint64_t index) co
 
 std::uint64_t EnumRegistry::enum_count(Specialization spec) const
 {
-    return get(spec).names.size();
+    return get(spec)->names.size();
 }
 
 StructRegistry gStructRegistry{};
@@ -56,17 +56,17 @@ Specialization StructRegistry::add(StructTemplate tmpl)
 
 std::string StructRegistry::struct_title(Specialization spec) const
 {
-    return get(spec).title;
+    return get(spec)->title;
 }
 
 size_t StructRegistry::struct_field_count(Specialization spec) const
 {
-    return get(spec).fields.size();
+    return get(spec)->fields.size();
 }
 
 std::string StructRegistry::struct_field_name(Specialization spec, std::uint64_t index) const
 {
-    const auto& fields = get(spec).fields;
+    const auto& fields = get(spec)->fields;
     if (index >= fields.size())
         throw std::out_of_range("Struct field index out of range");
 
@@ -75,7 +75,7 @@ std::string StructRegistry::struct_field_name(Specialization spec, std::uint64_t
 
 QualifiedType StructRegistry::struct_field_type(Specialization spec, std::uint64_t index) const
 {
-    const auto& fields = get(spec).fields;
+    const auto& fields = get(spec)->fields;
     if (index >= fields.size())
         throw std::out_of_range("Struct field index out of range");
 
@@ -84,7 +84,7 @@ QualifiedType StructRegistry::struct_field_type(Specialization spec, std::uint64
 
 QualifiedType StructRegistry::struct_field_type(Specialization spec, const std::string_view name) const
 {
-    const auto& fields = get(spec).fields;
+    const auto& fields = get(spec)->fields;
     for (const auto& [fname, ftype] : fields)
     {
         if (fname == name)

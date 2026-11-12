@@ -1,7 +1,8 @@
 #pragma once
 
+#include <crucible/core/utility/utility.hpp>
+
 #include <deque>
-#include <mutex>
 #include <optional>
 #include <stdexcept>
 #include <vector>
@@ -46,11 +47,10 @@ public:
         return exists_unsafe(handle);
     }
 
-    // TODO returning element reference is not thread-safe. return wrapper with lock on mutex.
-    const Element& get(Handle handle) const
+    ThreadSafeReference<Element> get(Handle handle) const
     {
         std::unique_lock lock(mutex_);
-        return get_unsafe(handle);
+        return ThreadSafeReference<Element>(std::move(lock), get_unsafe(handle));
     }
 
 protected:
