@@ -3,6 +3,8 @@
 #include <crucible/core/typing/intern_registries.hpp>
 #include <crucible/core/typing/nominal_registries.hpp>
 
+#include <crucible/core/modules/module_registry.hpp>
+
 #include <crucible/core/utility.hpp>
 
 namespace crucible::core::typing
@@ -90,9 +92,7 @@ static bool validate_pointer(Specialization spec, const PointerPayload& payload)
         return false;
 
     const auto expected_underlying_type = gPointerRegistry.underlying_type(spec);
-
-    // TODO return gModuleRegistry.type(payload.value) == expected_underlying_type;
-    return true;
+    return modules::gModuleRegistry.type(payload.value) == expected_underlying_type;
 }
 
 static bool validate_enum(Specialization spec, const EnumPayload& payload)

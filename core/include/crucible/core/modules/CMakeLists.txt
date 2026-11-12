@@ -3,4 +3,5 @@ target_sources(crucible_core
         metadata.hpp
         module.hpp
         module_id.hpp
+        module_registry.hpp
 )
