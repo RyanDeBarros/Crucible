@@ -35,7 +35,11 @@ private:
 
     void connectPanels() const;
 
-    void createNewModule();
+    void newModule();
+    void newStruct();
+    void editStruct();
+    void newEnum();
+    void editEnum();
 };
 
 } // crucible::gui

@@ -126,7 +126,23 @@ void MainWindow::createEditMenu()
         tr("New Module"),
         QKeySequence(Qt::ControlModifier | Qt::Key_M));
 
-    connect(new_module_action, &QAction::triggered, this, &MainWindow::createNewModule);
+    connect(new_module_action, &QAction::triggered, this, &MainWindow::newModule);
+
+    edit_menu->addSeparator();
+    
+    auto* new_struct_action = edit_menu->addAction(tr("New Struct"));
+    connect(new_struct_action, &QAction::triggered, this, &MainWindow::newStruct);
+    
+    auto* edit_struct_action = edit_menu->addAction(tr("Edit Struct"));
+    connect(edit_struct_action, &QAction::triggered, this, &MainWindow::editStruct);
+
+    edit_menu->addSeparator();
+
+    auto* new_enum_action = edit_menu->addAction(tr("New Enum"));
+    connect(new_enum_action, &QAction::triggered, this, &MainWindow::newEnum);
+
+    auto* edit_enum_action = edit_menu->addAction(tr("Edit Enum"));
+    connect(edit_enum_action, &QAction::triggered, this, &MainWindow::editEnum);
 
     edit_menu->addSeparator();
 
@@ -165,12 +181,35 @@ QDockWidget* MainWindow::createPanelDock(
 
 void MainWindow::connectPanels() const
 {
-    connect(ram_panel_, &RamPanel::createNewModule, this, &MainWindow::createNewModule);
+    connect(module_inspector_panel_, &ModuleInspectorPanel::newStruct, this, &MainWindow::newStruct);
+    connect(module_inspector_panel_, &ModuleInspectorPanel::editStruct, this, &MainWindow::editStruct);
+    connect(module_inspector_panel_, &ModuleInspectorPanel::newEnum, this, &MainWindow::newEnum);
+    connect(module_inspector_panel_, &ModuleInspectorPanel::editEnum, this, &MainWindow::editEnum);
 }
 
-void MainWindow::createNewModule()
+void MainWindow::newModule()
 {
     module_inspector_panel_->newModule();
+}
+
+void MainWindow::newStruct()
+{
+    LOG.info(kApp) << "New struct!";
+}
+
+void MainWindow::editStruct()
+{
+    LOG.info(kApp) << "Edit struct!";
+}
+
+void MainWindow::newEnum()
+{
+    LOG.info(kApp) << "New enum!";
+}
+
+void MainWindow::editEnum()
+{
+    LOG.info(kApp) << "Edit enum!";
 }
 
 } // crucible::gui

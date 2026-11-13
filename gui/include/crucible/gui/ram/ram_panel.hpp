@@ -18,9 +18,6 @@ private:
 public:
     RamPanel(QWidget* parent = nullptr);
 
-signals:
-    void createNewModule();
-
 private:
     void createLayout();
 };

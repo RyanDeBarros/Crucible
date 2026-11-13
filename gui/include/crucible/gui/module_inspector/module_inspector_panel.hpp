@@ -20,6 +20,13 @@ private:
 public:
     ModuleInspectorPanel(QWidget* parent = nullptr);
 
+signals:
+    void newStruct();
+    void editStruct();
+    void newEnum();
+    void editEnum();
+
+public:
     void newModule();
 
 private:

@@ -36,6 +36,10 @@ void ModuleInspectorPanel::createLayout()
     layout->addStretch();
 
     connect(controls_, &ModuleInspectorControls::newModule, this, &ModuleInspectorPanel::newModule);
+    connect(controls_, &ModuleInspectorControls::newStruct, this, &ModuleInspectorPanel::newStruct);
+    connect(controls_, &ModuleInspectorControls::editStruct, this, &ModuleInspectorPanel::editStruct);
+    connect(controls_, &ModuleInspectorControls::newEnum, this, &ModuleInspectorPanel::newEnum);
+    connect(controls_, &ModuleInspectorControls::editEnum, this, &ModuleInspectorPanel::editEnum);
 }
 
 } // crucible::gui

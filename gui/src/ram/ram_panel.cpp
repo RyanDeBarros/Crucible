@@ -28,8 +28,6 @@ void RamPanel::createLayout()
     addSeparator(*this, *layout);
     
     layout->addStretch();
-
-    connect(controls_, &RamControls::newModule, this, &RamPanel::createNewModule);
 }
 
 } // crucible::gui

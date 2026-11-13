@@ -10,8 +10,12 @@ namespace crucible::gui
 enum class Icon
 {
     ClearLog,
+    EditEnum,
+    EditStruct,
     Filter,
+    NewEnum,
     NewModule,
+    NewStruct,
     WordWrap,
 };
 

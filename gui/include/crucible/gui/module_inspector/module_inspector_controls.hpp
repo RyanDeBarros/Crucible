@@ -2,8 +2,6 @@
 
 #include <QWidget>
 
-class QToolButton;
-
 namespace crucible::gui
 {
 
@@ -12,17 +10,15 @@ class ModuleInspectorControls
 {
     Q_OBJECT;
 
-private:
-    QToolButton* new_module_button_ = nullptr;
-
 public:
     ModuleInspectorControls(QWidget* parent = nullptr);
 
 signals:
     void newModule();
-
-private:
-    void createNewModuleButton();
+    void newStruct();
+    void editStruct();
+    void newEnum();
+    void editEnum();
 };
 
 } // crucible::gui
