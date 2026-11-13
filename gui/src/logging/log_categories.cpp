@@ -7,6 +7,7 @@ namespace crucible::gui
 
 const core::LogCategory kApp = { "App" };
 const core::LogCategory kLog = { "Log" };
+const core::LogCategory kModules = { "Modules" };
 const core::LogCategory kOpGraph = { "Op Graph" };
 
 QColor logCategoryColor(const core::LogCategory& category)
@@ -19,6 +20,8 @@ QColor logCategoryColor(const core::LogCategory& category)
         return QColor(0xD5, 0xA6, 0x6F);
     else if (category == kLog)
         return QColor(0xA0, 0xA0, 0xA0);
+    else if (category == kModules)
+        return QColor(0xA3, 0xB8, 0x8C);
     else if (category == kOpGraph)
         return QColor(0xB3, 0x9D, 0xDB);
     else

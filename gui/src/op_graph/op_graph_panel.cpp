@@ -4,9 +4,7 @@
 #include <crucible/gui/op_graph/op_graph_scene.hpp>
 #include <crucible/gui/op_graph/op_graph_view.hpp>
 
-#include <crucible/gui/logging/log_categories.hpp>
-
-#include <crucible/core/logging/logger.hpp>
+#include <crucible/gui/logging/logger_include.hpp>
 
 #include <QVBoxLayout>
 

@@ -1,6 +1,6 @@
 #include <crucible/gui/main_window.hpp>
 
-#include <crucible/gui/logging/log_categories.hpp>
+#include <crucible/gui/logging/logger_include.hpp>
 #include <crucible/gui/logging/log_panel.hpp>
 
 #include <crucible/gui/module_inspector/module_inspector_panel.hpp>
@@ -10,8 +10,6 @@
 #include <crucible/gui/preferences/preferences_dialog.hpp>
 
 #include <crucible/gui/ram/ram_panel.hpp>
-
-#include <crucible/core/logging/logger.hpp>
 
 #include <QDockWidget>
 #include <QMenuBar>
@@ -109,19 +107,36 @@ void MainWindow::createPanels()
 
 void MainWindow::createMenuBar()
 {
-    auto* edit_menu = menuBar()->addMenu(tr("Edit"));
-    auto* preferences_action = edit_menu->addAction(
-        tr("Preferences..."),
-        QKeySequence(Qt::ControlModifier | Qt::Key_Comma));
-    connect(preferences_action, &QAction::triggered, this, [this]() {
-        PreferencesDialog dialog(this);
-        dialog.exec();
-    });
+    createEditMenu();
 
     auto* window_menu = menuBar()->addMenu(tr("Window"));
 
     for (auto* dock : panel_docks_)
         window_menu->addAction(dock->toggleViewAction());
+}
+
+void MainWindow::createEditMenu()
+{
+    auto* edit_menu = menuBar()->addMenu(tr("Edit"));
+
+    auto* new_module_action = edit_menu->addAction(
+        tr("New Module"),
+        QKeySequence(Qt::ControlModifier | Qt::Key_M));
+
+    connect(new_module_action, &QAction::triggered, this, []() {
+        gModuleInspectorPanel->newModule();
+    });
+
+    edit_menu->addSeparator();
+
+    auto* preferences_action = edit_menu->addAction(
+        tr("Preferences..."),
+        QKeySequence(Qt::ControlModifier | Qt::Key_Comma));
+    
+    connect(preferences_action, &QAction::triggered, this, [this]() {
+        PreferencesDialog dialog(this);
+        dialog.exec();
+    });
 }
 
 QDockWidget* MainWindow::createPanelDock(

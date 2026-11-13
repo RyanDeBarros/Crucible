@@ -19,6 +19,8 @@ private:
     void createPanels();
     void createMenuBar();
 
+    void createEditMenu();
+
     QDockWidget* createPanelDock(
         const QString& title,
         const QString& object_name,

@@ -1,5 +1,6 @@
 target_sources(crucible_gui
     PRIVATE
+        logger_include.hpp
         log_categories.hpp
         log_column.hpp
         log_controls.hpp

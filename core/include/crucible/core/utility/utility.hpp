@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mutex>
+#include <stdexcept>
 
 namespace crucible::core
 {
@@ -8,27 +9,78 @@ namespace crucible::core
 template<auto>
 constexpr bool kFalse = false;
 
-template<typename Element>
+template<typename T>
 class ThreadSafeReference
 {
     std::unique_lock<std::mutex> lock_;
-    const Element& element_;
+    const T& ref_;
 
 public:
-    ThreadSafeReference(std::unique_lock<std::mutex>&& lock, const Element& element)
+    ThreadSafeReference(std::unique_lock<std::mutex>&& lock, const T& ref)
         : lock_(std::move(lock))
-        , element_(element)
+        , ref_(ref)
     {
     }
 
-    const Element& operator*() const
+    const T& operator*() const
     {
-        return element_;
+        return ref_;
     }
 
-    const Element* operator->() const
+    const T* operator->() const
     {
-        return &element_;
+        return &ref_;
+    }
+};
+
+template<typename T>
+class SafePointer
+{
+    T* ptr_ = nullptr;
+
+public:
+    SafePointer() = default;
+    SafePointer(const SafePointer&) = default;
+    SafePointer(SafePointer&&) noexcept = default;
+
+    SafePointer(T* ptr)
+        : ptr_(ptr)
+    {
+    }
+
+    SafePointer& operator=(const SafePointer&) = default;
+    SafePointer& operator=(SafePointer&&) noexcept = default;
+
+    SafePointer& operator=(T* ptr)
+    {
+        ptr_ = ptr;
+        return *this;
+    }
+
+    operator T* () const
+    {
+        return ptr_;
+    }
+
+    operator bool() const
+    {
+        return ptr_ != nullptr;
+    }
+
+    T& operator*() const
+    {
+        if (ptr_)
+            return *ptr_;
+        else
+            throw std::runtime_error("Tried to dereference null pointer");
+    }
+
+    T* operator->() const
+    {
+        if (ptr_)
+            return ptr_;
+        else
+            throw std::runtime_error("Tried to dereference null pointer");
     }
 };
 

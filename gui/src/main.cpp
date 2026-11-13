@@ -1,12 +1,10 @@
 #include <crucible/gui/main_window.hpp>
 
-#include <crucible/gui/logging/log_categories.hpp>
+#include <crucible/gui/logging/logger_include.hpp>
 
 #include <crucible/gui/preferences/preferences.hpp>
 
 #include <crucible/gui/util/stylesheet.hpp>
-
-#include <crucible/core/logging/logger.hpp>
 
 #include <QApplication>
 
