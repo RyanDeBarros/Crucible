@@ -11,5 +11,6 @@ target_compile_features(crucible_core
         cxx_std_23
 )
 
+add_subdirectory(include/external)
 add_subdirectory(include/crucible/core)
 add_subdirectory(src)
