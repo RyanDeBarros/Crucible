@@ -1,5 +1,7 @@
 #include <crucible/gui/logging/log_filter_popup.hpp>
 
+#include <crucible/gui/util/layout_helpers.hpp>
+
 #include <QCheckBox>
 #include <QVBoxLayout>
 
@@ -27,10 +29,7 @@ LogFilterPopup::LogFilterPopup(QWidget* parent)
     for (auto* button : level_buttons_)
         layout->addWidget(button);
 
-    auto* line = new QFrame(this);
-    line->setFrameShape(QFrame::HLine);
-
-    layout->addWidget(line);
+    addSeparator(*this, *layout);
 
     for (auto* button : column_buttons_)
     {

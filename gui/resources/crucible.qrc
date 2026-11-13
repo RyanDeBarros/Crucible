@@ -1,7 +1,8 @@
 <RCC>
     <qresource prefix="/style">
-        <file alias="dark.qss">style/dark.qss</file>
         <file alias="dark.vars">style/dark.vars</file>
+        <file alias="main_window.qss">style/main_window.qss</file>
+        <file alias="separator.qss">style/separator.qss</file>
         <file alias="toggle_icon.qss">style/toggle_icon.qss</file>
     </qresource>
     <qresource prefix="/icons">

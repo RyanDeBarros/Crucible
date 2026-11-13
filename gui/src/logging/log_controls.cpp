@@ -71,7 +71,7 @@ void LogControls::createWordWrapButton()
     word_wrap_button_->setIcon(loadIcon(Icon::WordWrap));
     word_wrap_button_->setToolTip(tr("Toggle word wrap"));
     word_wrap_button_->setCheckable(true);
-    word_wrap_button_->setStyleSheet(loadStylesheet(Stylesheet::ToggleIcon));
+    word_wrap_button_->setStyleSheet(loadStyleSheet(StyleSheet::ToggleIcon));
     word_wrap_button_->setChecked(*GuiState{}.logging.word_wrap());
     connect(word_wrap_button_, &QToolButton::toggled, this, [this]() {
         const bool on = word_wrap_button_->isChecked();

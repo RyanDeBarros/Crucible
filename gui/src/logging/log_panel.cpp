@@ -8,6 +8,7 @@
 
 #include <crucible/gui/preferences/settings/logging_settings.hpp>
 
+#include <crucible/gui/util/layout_helpers.hpp>
 #include <crucible/gui/util/scrollbar_preserver.hpp>
 
 #include <QApplication>
@@ -81,6 +82,7 @@ void LogPanel::createLayout()
     createTable();
 
     layout->addWidget(controls_);
+    addSeparator(*this, *layout);
     layout->addWidget(table_);
 
     connect(controls_, &LogControls::levelFilterChanged, this, &LogPanel::setLevelFilter);

@@ -8,9 +8,9 @@
 namespace crucible::gui
 {
 
-static std::unordered_map<Stylesheet, std::unique_ptr<QString>> cached_stylesheets;
+static std::unordered_map<StyleSheet, std::unique_ptr<QString>> cached_stylesheets;
 
-static QString loadStylesheet(const QString& stylesheet_path)
+static QString loadStyleSheet(const QString& stylesheet_path)
 {
     QFile stylesheet_file(stylesheet_path);
 
@@ -20,7 +20,7 @@ static QString loadStylesheet(const QString& stylesheet_path)
     return QString::fromUtf8(stylesheet_file.readAll());
 }
 
-static QString loadStylesheet(const QString& stylesheet_path, const QString& variables_path)
+static QString loadStyleSheet(const QString& stylesheet_path, const QString& variables_path)
 {
     QFile stylesheet_file(stylesheet_path);
     QFile variables_file(variables_path);
@@ -60,24 +60,31 @@ static QString loadStylesheet(const QString& stylesheet_path, const QString& var
     return stylesheet;
 }
 
-static QString loadStylesheetImpl(Stylesheet stylesheet)
+static QString loadStyleSheetImpl(StyleSheet stylesheet)
 {
     switch (stylesheet)
     {
-    case Stylesheet::Dark:
-        return loadStylesheet(
-            QStringLiteral(":/style/dark.qss"),
+    case StyleSheet::MainWindow:
+        return loadStyleSheet(
+            QStringLiteral(":/style/main_window.qss"),
             QStringLiteral(":/style/dark.vars"));
 
-    case Stylesheet::ToggleIcon:
-        return loadStylesheet(QStringLiteral(":/style/toggle_icon.qss"));
+    case StyleSheet::Separator:
+        return loadStyleSheet(
+            QStringLiteral(":/style/separator.qss"),
+            QStringLiteral(":/style/dark.vars"));
+
+    case StyleSheet::ToggleIcon:
+        return loadStyleSheet(
+            QStringLiteral(":/style/toggle_icon.qss"),
+            QStringLiteral(":/style/dark.vars"));
 
     default:
         return {};
     }
 }
 
-const QString& loadStylesheet(Stylesheet stylesheet)
+const QString& loadStyleSheet(StyleSheet stylesheet)
 {
     auto it = cached_stylesheets.find(stylesheet);
     if (it != cached_stylesheets.end())
@@ -86,7 +93,7 @@ const QString& loadStylesheet(Stylesheet stylesheet)
     {
         return *cached_stylesheets.emplace(
             stylesheet,
-            std::make_unique<QString>(loadStylesheetImpl(stylesheet))).first->second;
+            std::make_unique<QString>(loadStyleSheetImpl(stylesheet))).first->second;
     }
 }
 

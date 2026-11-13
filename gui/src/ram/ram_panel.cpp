@@ -2,6 +2,8 @@
 
 #include <crucible/gui/ram/ram_controls.hpp>
 
+#include <crucible/gui/util/layout_helpers.hpp>
+
 #include <QFrame>
 #include <QVBoxLayout>
 
@@ -23,10 +25,7 @@ void RamPanel::createLayout()
     controls_ = new RamControls(this);
 
     layout->addWidget(controls_);
-
-    auto* line = new QFrame(this); // TODO easy utility method to call addSeparator(layout) - determines H vs V
-    line->setFrameShape(QFrame::HLine);
-    layout->addWidget(line);
+    addSeparator(*this, *layout);
     
     layout->addStretch();
 
