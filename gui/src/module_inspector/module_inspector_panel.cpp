@@ -5,12 +5,6 @@
 namespace crucible::gui
 {
 
-ModuleInspectorPanel::ModuleInspectorPanel(QWidget* parent)
-    : QWidget(parent)
-{
-    gModuleInspectorPanel = this;
-}
-
 void ModuleInspectorPanel::newModule()
 {
     LOG.info(kModules) << "New module";

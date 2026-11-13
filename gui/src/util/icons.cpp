@@ -1,5 +1,7 @@
 #include <crucible/gui/util/icons.hpp>
 
+#include <crucible/gui/logging/logger_include.hpp>
+
 #include <QIcon>
 
 #include <stdexcept>
@@ -8,6 +10,27 @@ namespace crucible::gui
 {
 
 static std::unordered_map<Icon, std::unique_ptr<QIcon>> cached_icons;
+
+std::ostream& operator<<(std::ostream& os, Icon icon)
+{
+    switch (icon)
+    {
+    case Icon::ClearLog:
+        return os << "Clear Log";
+
+    case Icon::Filter:
+        return os << "Filter";
+
+    case Icon::NewModule:
+        return os << "New Module";
+
+    case Icon::WordWrap:
+        return os << "Word Wrap";
+
+    default:
+        return os << "<unknown>";
+    }
+}
 
 static QIcon loadIconImpl(Icon icon)
 {
@@ -19,11 +42,17 @@ static QIcon loadIconImpl(Icon icon)
     case Icon::Filter:
         return QIcon(QStringLiteral(":/icons/filter"));
 
+    case Icon::NewModule:
+        return QIcon(QStringLiteral(":/icons/new_module"));
+
     case Icon::WordWrap:
         return QIcon(QStringLiteral(":/icons/word_wrap"));
 
     default:
-        throw std::runtime_error("Unsupported icon");
+    {
+        LOG.warning(kApp) << "Unsupported icon \"" << icon << "\"";
+        return {};
+    }
     }
 }
 

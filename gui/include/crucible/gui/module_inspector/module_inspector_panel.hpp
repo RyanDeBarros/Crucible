@@ -13,11 +13,7 @@ class ModuleInspectorPanel
     Q_OBJECT;
 
 public:
-    ModuleInspectorPanel(QWidget* parent = nullptr);
-
     void newModule();
 };
-
-inline core::SafePointer<ModuleInspectorPanel> gModuleInspectorPanel;
 
 } // crucible::gui

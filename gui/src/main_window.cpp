@@ -31,6 +31,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     createPanels();
     createMenuBar();
+    connectPanels();
 
     statusBar()->showMessage(tr("Ready"));
 }
@@ -39,10 +40,11 @@ void MainWindow::createPanels()
 {
     LOG.debug(kApp) << "Creating panels...";
 
+    ram_panel_ = new RamPanel();
     auto* ram_dock = createPanelDock(
         tr("RAM"),
         QStringLiteral("ram_dock"),
-        new RamPanel(),
+        ram_panel_,
         Qt::LeftDockWidgetArea);
 
     auto* log_dock = createPanelDock(
@@ -84,10 +86,11 @@ void MainWindow::createPanels()
 
     splitDockWidget(op_graph_dock, op_output_dock, Qt::Vertical);
 
+    module_inspector_panel_ = new ModuleInspectorPanel();
     auto* module_inspector_dock = createPanelDock(
         tr("Module Inspector"),
         QStringLiteral("module_inspector_dock"),
-        new ModuleInspectorPanel(),
+        module_inspector_panel_,
         Qt::RightDockWidgetArea);
 
     tabifyDockWidget(op_graph_dock, module_inspector_dock);
@@ -123,9 +126,7 @@ void MainWindow::createEditMenu()
         tr("New Module"),
         QKeySequence(Qt::ControlModifier | Qt::Key_M));
 
-    connect(new_module_action, &QAction::triggered, this, []() {
-        gModuleInspectorPanel->newModule();
-    });
+    connect(new_module_action, &QAction::triggered, this, &MainWindow::createNewModule);
 
     edit_menu->addSeparator();
 
@@ -160,6 +161,16 @@ QDockWidget* MainWindow::createPanelDock(
     panel_docks_.push_back(dock);
 
     return dock;
+}
+
+void MainWindow::connectPanels() const
+{
+    connect(ram_panel_, &RamPanel::createNewModule, this, &MainWindow::createNewModule);
+}
+
+void MainWindow::createNewModule()
+{
+    module_inspector_panel_->newModule();
 }
 
 } // crucible::gui

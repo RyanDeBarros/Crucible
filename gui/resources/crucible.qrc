@@ -7,6 +7,7 @@
     <qresource prefix="/icons">
         <file alias="filter">icons/filter.svg</file>
         <file alias="clear_log">icons/clear_log.svg</file>
+        <file alias="new_module">icons/new_module.svg</file>
         <file alias="word_wrap">icons/word_wrap.svg</file>
     </qresource>
 </RCC>
