@@ -7,13 +7,23 @@
 namespace crucible::gui
 {
 
+class ModuleInspectorControls;
+
 class ModuleInspectorPanel
     : public QWidget
 {
     Q_OBJECT;
 
+private:
+    ModuleInspectorControls* controls_ = nullptr;
+
 public:
+    ModuleInspectorPanel(QWidget* parent = nullptr);
+
     void newModule();
+
+private:
+    void createLayout();
 };
 
 } // crucible::gui
