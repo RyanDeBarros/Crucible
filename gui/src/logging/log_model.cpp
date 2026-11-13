@@ -1,7 +1,7 @@
-#include <crucible/gui/log_panel/log_model.hpp>
+#include <crucible/gui/logging/log_model.hpp>
 
-#include <crucible/gui/log_panel/log_categories.hpp>
-#include <crucible/gui/log_panel/log_column.hpp>
+#include <crucible/gui/logging/log_categories.hpp>
+#include <crucible/gui/logging/log_column.hpp>
 
 #include <QBrush>
 #include <QDateTime>

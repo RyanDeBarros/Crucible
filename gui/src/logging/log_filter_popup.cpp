@@ -1,4 +1,4 @@
-#include <crucible/gui/log_panel/log_filter_popup.hpp>
+#include <crucible/gui/logging/log_filter_popup.hpp>
 
 #include <QCheckBox>
 #include <QVBoxLayout>

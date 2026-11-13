@@ -4,7 +4,9 @@ target_sources(crucible_gui
         main_window.hpp
 )
 
-add_subdirectory(log_panel)
+add_subdirectory(logging)
+add_subdirectory(module_inspector)
 add_subdirectory(op_graph)
 add_subdirectory(preferences)
+add_subdirectory(ram)
 add_subdirectory(util)

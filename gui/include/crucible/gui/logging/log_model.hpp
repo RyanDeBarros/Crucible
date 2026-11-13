@@ -2,7 +2,7 @@
 
 #include <crucible/core/logging/logger.hpp>
 
-#include <crucible/gui/log_panel/log_column.hpp>
+#include <crucible/gui/logging/log_column.hpp>
 
 #include <QAbstractTableModel>
 

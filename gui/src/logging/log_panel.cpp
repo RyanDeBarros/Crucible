@@ -1,8 +1,8 @@
-#include <crucible/gui/log_panel/log_panel.hpp>
+#include <crucible/gui/logging/log_panel.hpp>
 
-#include <crucible/gui/log_panel/log_categories.hpp>
-#include <crucible/gui/log_panel/log_controls.hpp>
-#include <crucible/gui/log_panel/log_model.hpp>
+#include <crucible/gui/logging/log_categories.hpp>
+#include <crucible/gui/logging/log_controls.hpp>
+#include <crucible/gui/logging/log_model.hpp>
 
 #include <crucible/gui/preferences/preferences.hpp>
 
@@ -105,8 +105,8 @@ void LogPanel::createTable()
     table_->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     table_->verticalHeader()->hide();
     table_->horizontalHeader()->setStretchLastSection(true);
+    table_->horizontalHeader()->hide();
 
-    table_->setShowGrid(false);
     table_->setAlternatingRowColors(true);
 
     table_->horizontalHeader()->setSectionResizeMode(

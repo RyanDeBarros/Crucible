@@ -1,6 +1,6 @@
 #include <crucible/gui/main_window.hpp>
 
-#include <crucible/gui/log_panel/log_categories.hpp>
+#include <crucible/gui/logging/log_categories.hpp>
 
 #include <crucible/gui/preferences/preferences.hpp>
 

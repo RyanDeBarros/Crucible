@@ -1,11 +1,15 @@
 #include <crucible/gui/main_window.hpp>
 
-#include <crucible/gui/log_panel/log_categories.hpp>
-#include <crucible/gui/log_panel/log_panel.hpp>
+#include <crucible/gui/logging/log_categories.hpp>
+#include <crucible/gui/logging/log_panel.hpp>
+
+#include <crucible/gui/module_inspector/module_inspector_panel.hpp>
 
 #include <crucible/gui/op_graph/op_graph_panel.hpp>
 
 #include <crucible/gui/preferences/preferences_dialog.hpp>
+
+#include <crucible/gui/ram/ram_panel.hpp>
 
 #include <crucible/core/logging/logger.hpp>
 
@@ -40,14 +44,13 @@ void MainWindow::createPanels()
     auto* ram_dock = createPanelDock(
         tr("RAM"),
         QStringLiteral("ram_dock"),
-        new QWidget(),
+        new RamPanel(),
         Qt::LeftDockWidgetArea);
 
-    auto* log_panel = new LogPanel(LOG);
     auto* log_dock = createPanelDock(
         tr("Log"),
         QStringLiteral("log_dock"),
-        log_panel,
+        new LogPanel(LOG),
         Qt::LeftDockWidgetArea);
 
     splitDockWidget(ram_dock, log_dock, Qt::Vertical);
@@ -69,11 +72,10 @@ void MainWindow::createPanels()
 
     ram_dock->raise();
 
-    auto* op_graph_panel = new OpGraphPanel();
     auto* op_graph_dock = createPanelDock(
         tr("Operation Graph"),
         QStringLiteral("op_graph_dock"),
-        op_graph_panel,
+        new OpGraphPanel(),
         Qt::RightDockWidgetArea);
 
     auto* op_output_dock = createPanelDock(
@@ -84,11 +86,25 @@ void MainWindow::createPanels()
 
     splitDockWidget(op_graph_dock, op_output_dock, Qt::Vertical);
 
+    auto* module_inspector_dock = createPanelDock(
+        tr("Module Inspector"),
+        QStringLiteral("module_inspector_dock"),
+        new ModuleInspectorPanel(),
+        Qt::RightDockWidgetArea);
+
+    tabifyDockWidget(op_graph_dock, module_inspector_dock);
+
+    op_graph_dock->raise();
+
     resizeDocks({ ram_dock, op_graph_dock }, { 480, 1440 }, Qt::Horizontal);
     resizeDocks({ ram_dock, log_dock }, { 700, 300 }, Qt::Vertical);
     resizeDocks({ op_graph_dock, op_output_dock }, { 750, 250 }, Qt::Vertical);
 
     LOG.debug(kApp) << "...panels created";
+
+
+    // TODO remove debug
+    module_inspector_dock->raise();
 }
 
 void MainWindow::createMenuBar()

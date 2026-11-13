@@ -1,4 +1,4 @@
-#include <crucible/gui/log_panel/log_categories.hpp>
+#include <crucible/gui/logging/log_categories.hpp>
 
 #include <utility>
 

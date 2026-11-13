@@ -1,8 +1,8 @@
-#include <crucible/gui/log_panel/log_controls.hpp>
+#include <crucible/gui/logging/log_controls.hpp>
 
 #include <crucible/gui/gui_state.hpp>
 
-#include <crucible/gui/log_panel/log_filter_popup.hpp>
+#include <crucible/gui/logging/log_filter_popup.hpp>
 
 #include <crucible/gui/util/icons.hpp>
 #include <crucible/gui/util/stylesheet.hpp>
