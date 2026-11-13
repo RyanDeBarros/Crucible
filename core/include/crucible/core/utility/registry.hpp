@@ -121,6 +121,11 @@ protected:
         return *get_slot_unsafe(handle).el;
     }
 
+    Element& get_unsafe(Handle handle)
+    {
+        return *get_slot_unsafe(handle).el;
+    }
+
 private:
     bool get_indexes(Handle handle, size_t& page_index, size_t& slot_index) const
     {
@@ -155,11 +160,19 @@ private:
         if (page_index >= pages_.size())
             return nullptr;
 
-        const Slot& slot = pages_[page_index]->slots[slot_index];
+        Slot& slot = pages_[page_index]->slots[slot_index];
         return slot.el ? &slot : nullptr;
     }
 
     const Slot& get_slot_unsafe(Handle handle) const
+    {
+        if (auto* slot = try_get_slot_unsafe(handle))
+            return *slot;
+        else
+            throw std::logic_error("Handle does not exist");
+    }
+
+    Slot& get_slot_unsafe(Handle handle)
     {
         if (auto* slot = try_get_slot_unsafe(handle))
             return *slot;
