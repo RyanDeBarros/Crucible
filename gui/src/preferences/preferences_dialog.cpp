@@ -5,8 +5,6 @@
 #include <crucible/gui/preferences/tabs/general_preferences.hpp>
 #include <crucible/gui/preferences/tabs/logging_preferences.hpp>
 
-#include <crucible/gui/util/dialog_underlay.hpp>
-
 #include <QDialogButtonBox>
 #include <QEvent>
 #include <QKeyEvent>

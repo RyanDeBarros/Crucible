@@ -9,24 +9,48 @@ template<auto>
 constexpr bool kFalse = false;
 
 template<typename T>
-class ThreadSafeReference
+class ThreadSafeValue
 {
     std::unique_lock<std::mutex> lock_;
-    const T& ref_;
+    T value_;
 
 public:
-    ThreadSafeReference(std::unique_lock<std::mutex>&& lock, const T& ref)
+    ThreadSafeValue(std::unique_lock<std::mutex>&& lock, T value)
         : lock_(std::move(lock))
-        , ref_(ref)
+        , value_(std::move(value))
     {
     }
 
     const T& operator*() const
     {
-        return ref_;
+        return value_;
     }
 
     const T* operator->() const
+    {
+        return &value_;
+    }
+};
+
+template<typename T>
+class ThreadSafeReference
+{
+    std::unique_lock<std::mutex> lock_;
+    T& ref_;
+
+public:
+    ThreadSafeReference(std::unique_lock<std::mutex>&& lock, T& ref)
+        : lock_(std::move(lock))
+        , ref_(ref)
+    {
+    }
+
+    T& operator*() const
+    {
+        return ref_;
+    }
+
+    T* operator->() const
     {
         return &ref_;
     }

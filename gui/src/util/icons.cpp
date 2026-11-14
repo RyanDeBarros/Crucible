@@ -18,6 +18,9 @@ std::ostream& operator<<(std::ostream& os, Icon icon)
     case Icon::ClearLog:
         return os << "Clear Log";
 
+    case Icon::Edit:
+        return os << "Edit";
+
     case Icon::EditEnum:
         return os << "Edit Enum";
 
@@ -27,20 +30,14 @@ std::ostream& operator<<(std::ostream& os, Icon icon)
     case Icon::Filter:
         return os << "Filter";
 
-    case Icon::NewEnum:
-        return os << "New Enum";
-
     case Icon::NewModule:
         return os << "New Module";
-
-    case Icon::NewStruct:
-        return os << "New Struct";
 
     case Icon::WordWrap:
         return os << "Word Wrap";
 
     default:
-        return os << "<unknown>";
+        return os << "<unknown #" << static_cast<int>(icon) << ">";
     }
 }
 
@@ -51,6 +48,9 @@ static QIcon loadIconImpl(Icon icon)
     case Icon::ClearLog:
         return QIcon(QStringLiteral(":/icons/clear_log"));
 
+    case Icon::Edit:
+        return QIcon(QStringLiteral(":/icons/edit"));
+
     case Icon::EditEnum:
         return QIcon(QStringLiteral(":/icons/edit_enum"));
 
@@ -60,14 +60,8 @@ static QIcon loadIconImpl(Icon icon)
     case Icon::Filter:
         return QIcon(QStringLiteral(":/icons/filter"));
 
-    case Icon::NewEnum:
-        return QIcon(QStringLiteral(":/icons/new_enum"));
-
     case Icon::NewModule:
         return QIcon(QStringLiteral(":/icons/new_module"));
-
-    case Icon::NewStruct:
-        return QIcon(QStringLiteral(":/icons/new_struct"));
 
     case Icon::WordWrap:
         return QIcon(QStringLiteral(":/icons/word_wrap"));

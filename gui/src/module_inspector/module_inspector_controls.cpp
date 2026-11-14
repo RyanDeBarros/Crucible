@@ -23,30 +23,16 @@ ModuleInspectorControls::ModuleInspectorControls(QWidget* parent)
 
     addSeparator(*this, *controls_layout);
 
-    auto* new_struct_button = new QToolButton(this);
-    new_struct_button->setIcon(loadIcon(Icon::NewStruct));
-    new_struct_button->setToolTip(tr("New struct"));
-    connect(new_struct_button, &QToolButton::clicked, this, &ModuleInspectorControls::newStruct);
-    controls_layout->addWidget(new_struct_button);
-
     auto* edit_struct_button = new QToolButton(this);
     edit_struct_button->setIcon(loadIcon(Icon::EditStruct));
-    edit_struct_button->setToolTip(tr("Edit struct"));
-    connect(edit_struct_button, &QToolButton::clicked, this, &ModuleInspectorControls::editStruct);
+    edit_struct_button->setToolTip(tr("Edit structs"));
+    connect(edit_struct_button, &QToolButton::clicked, this, &ModuleInspectorControls::editStructs);
     controls_layout->addWidget(edit_struct_button);
-
-    addSeparator(*this, *controls_layout);
-
-    auto* new_enum_button = new QToolButton(this);
-    new_enum_button->setIcon(loadIcon(Icon::NewEnum));
-    new_enum_button->setToolTip(tr("New enum"));
-    connect(new_enum_button, &QToolButton::clicked, this, &ModuleInspectorControls::newEnum);
-    controls_layout->addWidget(new_enum_button);
 
     auto* edit_enum_button = new QToolButton(this);
     edit_enum_button->setIcon(loadIcon(Icon::EditEnum));
-    edit_enum_button->setToolTip(tr("Edit enum"));
-    connect(edit_enum_button, &QToolButton::clicked, this, &ModuleInspectorControls::editEnum);
+    edit_enum_button->setToolTip(tr("Edit enums"));
+    connect(edit_enum_button, &QToolButton::clicked, this, &ModuleInspectorControls::editEnums);
     controls_layout->addWidget(edit_enum_button);
 
     controls_layout->addStretch();

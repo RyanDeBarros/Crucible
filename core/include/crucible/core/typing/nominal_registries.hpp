@@ -20,6 +20,8 @@ public:
     using Super::remove;
     using Super::exists;
     using Super::get;
+    using Super::range;
+    using Super::peek_next_handle;
 };
 
 struct EnumTemplate
@@ -37,6 +39,8 @@ public:
     using Super::add;
     using Super::remove;
     using Super::exists;
+    using Super::range;
+    using Super::peek_next_handle;
 
     std::string enum_title(Specialization spec) const;
     std::string enum_name(Specialization spec, std::uint64_t index) const;
@@ -63,6 +67,8 @@ public:
     Specialization add(StructTemplate tmpl);
     using Super::remove;
     using Super::exists;
+    using Super::range;
+    using Super::peek_next_handle;
 
     std::string struct_title(Specialization spec) const;
     size_t struct_field_count(Specialization spec) const;

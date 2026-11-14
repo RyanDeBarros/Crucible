@@ -2,6 +2,8 @@
 
 #include <crucible/gui/util/dialog_underlay.hpp>
 
+#include <crucible/gui/main_window.hpp>
+
 #include <QEvent>
 #include <QKeyEvent>
 
@@ -16,8 +18,7 @@ ModalDialog::ModalDialog(const QString& title, QSize size, QWidget* parent)
     resize(size.width(), size.height());
     installEventFilter(this);
 
-    if (parent)
-        attachUnderlay(*this, *parent);
+    attachUnderlay(*this, MainWindow::instance());
 }
 
 bool ModalDialog::eventFilter(QObject* watched, QEvent* event)

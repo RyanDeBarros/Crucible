@@ -5,6 +5,8 @@ target_sources(crucible_gui
         icons.cpp
         layout_helpers.cpp
         modal_dialog.cpp
+        outlines.cpp
+        repr.cpp
         scrollbar_preserver.cpp
         stylesheet.cpp
 )

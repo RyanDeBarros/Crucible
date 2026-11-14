@@ -1,7 +1,7 @@
 #include <crucible/gui/module_inspector/module_inspector_panel.hpp>
 
 #include <crucible/gui/module_inspector/module_inspector_controls.hpp>
-#include <crucible/gui/module_inspector/new_enum_dialog.hpp>
+#include <crucible/gui/module_inspector/edit_enums_dialog.hpp>
 
 #include <crucible/gui/logging/logger_include.hpp>
 
@@ -27,10 +27,8 @@ ModuleInspectorPanel::ModuleInspectorPanel(QWidget* parent)
     layout->addStretch();
 
     connect(controls_, &ModuleInspectorControls::newModule, this, &ModuleInspectorPanel::newModule);
-    connect(controls_, &ModuleInspectorControls::newStruct, this, &ModuleInspectorPanel::newStruct);
-    connect(controls_, &ModuleInspectorControls::editStruct, this, &ModuleInspectorPanel::editStruct);
-    connect(controls_, &ModuleInspectorControls::newEnum, this, &ModuleInspectorPanel::newEnum);
-    connect(controls_, &ModuleInspectorControls::editEnum, this, &ModuleInspectorPanel::editEnum);
+    connect(controls_, &ModuleInspectorControls::editStructs, this, &ModuleInspectorPanel::editStructs);
+    connect(controls_, &ModuleInspectorControls::editEnums, this, &ModuleInspectorPanel::editEnums);
 }
 
 void ModuleInspectorPanel::newModule()
@@ -38,25 +36,15 @@ void ModuleInspectorPanel::newModule()
     LOG.info(kModules) << "New module";
 }
 
-void ModuleInspectorPanel::newStruct()
+void ModuleInspectorPanel::editStructs()
 {
-    LOG.info(kModules) << "New struct!";
+    LOG.info(kModules) << "Edit structs!";
 }
 
-void ModuleInspectorPanel::editStruct()
+void ModuleInspectorPanel::editEnums()
 {
-    LOG.info(kModules) << "Edit struct!";
-}
-
-void ModuleInspectorPanel::newEnum()
-{
-    NewEnumDialog dialog(this);
+    EditEnumsDialog dialog(this);
     dialog.exec();
-}
-
-void ModuleInspectorPanel::editEnum()
-{
-    LOG.info(kModules) << "Edit enum!";
 }
 
 } // crucible::gui

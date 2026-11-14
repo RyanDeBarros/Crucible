@@ -19,9 +19,13 @@
 namespace crucible::gui
 {
 
+static MainWindow* gInstance = nullptr;
+
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
+    gInstance = this;
+
     setWindowTitle("Crucible");
     resize(1920, 1080);
     move(screen()->geometry().center() - frameGeometry().center());
@@ -34,6 +38,19 @@ MainWindow::MainWindow(QWidget* parent)
     connectPanels();
 
     statusBar()->showMessage(tr("Ready"));
+}
+
+MainWindow::~MainWindow()
+{
+    gInstance = nullptr;
+}
+
+MainWindow& MainWindow::instance()
+{
+    if (gInstance)
+        return *gInstance;
+    else
+        throw std::runtime_error("No instance of main window");
 }
 
 void MainWindow::createPanels()
@@ -130,19 +147,11 @@ void MainWindow::createEditMenu()
 
     edit_menu->addSeparator();
     
-    auto* new_struct_action = edit_menu->addAction(tr("New Struct"));
-    connect(new_struct_action, &QAction::triggered, this, &MainWindow::newStruct);
-    
-    auto* edit_struct_action = edit_menu->addAction(tr("Edit Struct"));
-    connect(edit_struct_action, &QAction::triggered, this, &MainWindow::editStruct);
+    auto* edit_struct_action = edit_menu->addAction(tr("Edit Structs"));
+    connect(edit_struct_action, &QAction::triggered, this, &MainWindow::editStructs);
 
-    edit_menu->addSeparator();
-
-    auto* new_enum_action = edit_menu->addAction(tr("New Enum"));
-    connect(new_enum_action, &QAction::triggered, this, &MainWindow::newEnum);
-
-    auto* edit_enum_action = edit_menu->addAction(tr("Edit Enum"));
-    connect(edit_enum_action, &QAction::triggered, this, &MainWindow::editEnum);
+    auto* edit_enum_action = edit_menu->addAction(tr("Edit Enums"));
+    connect(edit_enum_action, &QAction::triggered, this, &MainWindow::editEnums);
 
     edit_menu->addSeparator();
 
@@ -188,24 +197,14 @@ void MainWindow::newModule()
     module_inspector_panel_->newModule();
 }
 
-void MainWindow::newStruct()
+void MainWindow::editStructs()
 {
-    module_inspector_panel_->newStruct();
+    module_inspector_panel_->editStructs();
 }
 
-void MainWindow::editStruct()
+void MainWindow::editEnums()
 {
-    module_inspector_panel_->editStruct();
-}
-
-void MainWindow::newEnum()
-{
-    module_inspector_panel_->newEnum();
-}
-
-void MainWindow::editEnum()
-{
-    module_inspector_panel_->editEnum();
+    module_inspector_panel_->editEnums();
 }
 
 } // crucible::gui

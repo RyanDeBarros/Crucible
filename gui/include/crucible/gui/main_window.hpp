@@ -20,6 +20,9 @@ class MainWindow
 
 public:
     explicit MainWindow(QWidget* parent = nullptr);
+    ~MainWindow();
+
+    static MainWindow& instance();
 
 private:
     void createPanels();
@@ -36,10 +39,8 @@ private:
     void connectPanels() const;
 
     void newModule();
-    void newStruct();
-    void editStruct();
-    void newEnum();
-    void editEnum();
+    void editStructs();
+    void editEnums();
 };
 
 } // crucible::gui

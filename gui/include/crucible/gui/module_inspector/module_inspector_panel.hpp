@@ -22,10 +22,8 @@ public:
 
 public:
     void newModule();
-    void newStruct();
-    void editStruct();
-    void newEnum();
-    void editEnum();
+    void editStructs();
+    void editEnums();
 };
 
 } // crucible::gui

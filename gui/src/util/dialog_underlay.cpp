@@ -8,7 +8,7 @@ namespace crucible::gui
 void attachUnderlay(QDialog& dialog, QWidget& dialog_parent)
 {
     auto* bkg_overlay = new QWidget(&dialog_parent);
-    bkg_overlay->setStyleSheet("background-color: rgba(0, 0, 0, 200);");
+    bkg_overlay->setStyleSheet(QStringLiteral("background-color: rgba(0, 0, 0, 150);"));
     bkg_overlay->setGeometry(dialog_parent.rect());
     bkg_overlay->raise();
     bkg_overlay->show();

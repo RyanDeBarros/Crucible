@@ -50,6 +50,8 @@ public:
 
     using Super::exists;
     using Super::get;
+    using Super::range;
+    using Super::peek_next_handle;
 };
 
 struct PointerTemplate
@@ -119,6 +121,8 @@ public:
     using Super::intern;
     using Super::invalidate;
     using Super::exists;
+    using Super::range;
+    using Super::peek_next_handle;
 
     QualifiedType underlying_type(Specialization spec) const;
 };
@@ -134,6 +138,8 @@ public:
     using Super::intern;
     using Super::invalidate;
     using Super::exists;
+    using Super::range;
+    using Super::peek_next_handle;
 
     QualifiedType element_type(Specialization spec) const;
 };
@@ -149,6 +155,8 @@ public:
     using Super::intern;
     using Super::invalidate;
     using Super::exists;
+    using Super::range;
+    using Super::peek_next_handle;
 
     QualifiedType element_type(Specialization spec) const;
 };
@@ -164,6 +172,8 @@ public:
     using Super::intern;
     using Super::invalidate;
     using Super::exists;
+    using Super::range;
+    using Super::peek_next_handle;
 
     QualifiedType key_type(Specialization spec) const;
     QualifiedType value_type(Specialization spec) const;
