@@ -18,19 +18,14 @@ private:
     ModuleInspectorControls* controls_ = nullptr;
 
 public:
-    ModuleInspectorPanel(QWidget* parent = nullptr);
+    explicit ModuleInspectorPanel(QWidget* parent = nullptr);
 
-signals:
+public:
+    void newModule();
     void newStruct();
     void editStruct();
     void newEnum();
     void editEnum();
-
-public:
-    void newModule();
-
-private:
-    void createLayout();
 };
 
 } // crucible::gui

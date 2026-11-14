@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QDialog>
+#include <crucible/gui/util/modal_dialog.hpp>
 
 class QDialogButtonBox;
 class QSettings;
@@ -13,7 +13,7 @@ class GeneralPreferences;
 class LoggingPreferences;
 
 class PreferencesDialog
-    : public QDialog
+    : public ModalDialog
 {
     Q_OBJECT;
 
@@ -27,12 +27,7 @@ private:
 public:
     explicit PreferencesDialog(QWidget* parent = nullptr);
 
-protected:
-    bool eventFilter(QObject* watched, QEvent* event) override;
-
 private:
-    void createLayout();
-
     void modified();
     void saveSettings();
     void resetToDefaults();

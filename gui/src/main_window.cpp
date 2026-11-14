@@ -181,10 +181,6 @@ QDockWidget* MainWindow::createPanelDock(
 
 void MainWindow::connectPanels() const
 {
-    connect(module_inspector_panel_, &ModuleInspectorPanel::newStruct, this, &MainWindow::newStruct);
-    connect(module_inspector_panel_, &ModuleInspectorPanel::editStruct, this, &MainWindow::editStruct);
-    connect(module_inspector_panel_, &ModuleInspectorPanel::newEnum, this, &MainWindow::newEnum);
-    connect(module_inspector_panel_, &ModuleInspectorPanel::editEnum, this, &MainWindow::editEnum);
 }
 
 void MainWindow::newModule()
@@ -194,22 +190,22 @@ void MainWindow::newModule()
 
 void MainWindow::newStruct()
 {
-    LOG.info(kApp) << "New struct!";
+    module_inspector_panel_->newStruct();
 }
 
 void MainWindow::editStruct()
 {
-    LOG.info(kApp) << "Edit struct!";
+    module_inspector_panel_->editStruct();
 }
 
 void MainWindow::newEnum()
 {
-    LOG.info(kApp) << "New enum!";
+    module_inspector_panel_->newEnum();
 }
 
 void MainWindow::editEnum()
 {
-    LOG.info(kApp) << "Edit enum!";
+    module_inspector_panel_->editEnum();
 }
 
 } // crucible::gui

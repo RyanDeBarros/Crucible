@@ -11,7 +11,7 @@ class ModuleInspectorControls
     Q_OBJECT;
 
 public:
-    ModuleInspectorControls(QWidget* parent = nullptr);
+    explicit ModuleInspectorControls(QWidget* parent = nullptr);
 
 signals:
     void newModule();

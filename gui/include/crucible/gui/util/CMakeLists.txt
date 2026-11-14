@@ -1,8 +1,10 @@
 target_sources(crucible_gui
     PRIVATE
         block_signals.hpp
+        dialog_underlay.hpp
         icons.hpp
         layout_helpers.hpp
+        modal_dialog.hpp
         scrollbar_preserver.hpp
         signal_property.hpp
         stylesheet.hpp

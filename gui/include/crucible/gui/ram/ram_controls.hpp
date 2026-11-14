@@ -11,7 +11,7 @@ class RamControls
     Q_OBJECT;
 
 public:
-    RamControls(QWidget* parent = nullptr);
+    explicit RamControls(QWidget* parent = nullptr);
 };
 
 } // crucible::gui

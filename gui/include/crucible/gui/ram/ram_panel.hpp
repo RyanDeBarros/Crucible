@@ -16,7 +16,7 @@ private:
     RamControls* controls_ = nullptr;
 
 public:
-    RamPanel(QWidget* parent = nullptr);
+    explicit RamPanel(QWidget* parent = nullptr);
 
 private:
     void createLayout();
