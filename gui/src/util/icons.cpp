@@ -15,8 +15,20 @@ std::ostream& operator<<(std::ostream& os, Icon icon)
 {
     switch (icon)
     {
+    case Icon::BackArrow:
+        return os << "Back Arrow";
+
     case Icon::ClearLog:
         return os << "Clear Log";
+
+    case Icon::Close:
+        return os << "Close";
+
+    case Icon::Delete:
+        return os << "Delete";
+
+    case Icon::DeleteAll:
+        return os << "Delete All";
 
     case Icon::Edit:
         return os << "Edit";
@@ -33,6 +45,9 @@ std::ostream& operator<<(std::ostream& os, Icon icon)
     case Icon::NewModule:
         return os << "New Module";
 
+    case Icon::Plus:
+        return os << "Plus";
+
     case Icon::WordWrap:
         return os << "Word Wrap";
 
@@ -45,8 +60,20 @@ static QIcon loadIconImpl(Icon icon)
 {
     switch (icon)
     {
+    case Icon::BackArrow:
+        return QIcon(QStringLiteral(":/icons/back_arrow"));
+
     case Icon::ClearLog:
         return QIcon(QStringLiteral(":/icons/clear_log"));
+
+    case Icon::Close:
+        return QIcon(QStringLiteral(":/icons/close"));
+
+    case Icon::Delete:
+        return QIcon(QStringLiteral(":/icons/delete"));
+
+    case Icon::DeleteAll:
+        return QIcon(QStringLiteral(":/icons/delete_all"));
 
     case Icon::Edit:
         return QIcon(QStringLiteral(":/icons/edit"));
@@ -62,6 +89,9 @@ static QIcon loadIconImpl(Icon icon)
 
     case Icon::NewModule:
         return QIcon(QStringLiteral(":/icons/new_module"));
+
+    case Icon::Plus:
+        return QIcon(QStringLiteral(":/icons/plus"));
 
     case Icon::WordWrap:
         return QIcon(QStringLiteral(":/icons/word_wrap"));

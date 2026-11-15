@@ -1,12 +1,12 @@
 target_sources(crucible_gui
     PRIVATE
         block_signals.cpp
+        button_delegate.cpp
         dialog_underlay.cpp
         icons.cpp
         layout_helpers.cpp
         modal_dialog.cpp
         outlines.cpp
-        repr.cpp
         scrollbar_preserver.cpp
         stylesheet.cpp
 )
