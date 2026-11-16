@@ -5,6 +5,7 @@ class QObject;
 namespace crucible::gui
 {
 
+// TODO replace with QSignalBlocker
 class BlockSignals
 {
     QObject& object_;

@@ -1,5 +1,6 @@
 #include <crucible/gui/module_inspector/edit_enums_dialog.hpp>
 
+#include <crucible/gui/util/block_signals.hpp>
 #include <crucible/gui/util/item_delegates.hpp>
 #include <crucible/gui/util/layout_helpers.hpp>
 
@@ -7,12 +8,14 @@
 
 #include <crucible/core/typing/nominal_registries.hpp>
 
+#include <QCloseEvent>
 #include <QDataStream>
 #include <QFormLayout>
 #include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QMessageBox>
 #include <QMimeData>
 #include <QPushButton>
 #include <QStackedWidget>
@@ -262,6 +265,9 @@ bool EnumValuesTableModel::setData(const QModelIndex& index, const QVariant& val
     if (index.column() == Value && role == Qt::EditRole)
     {
         values_[index.row()] = value.toString();
+
+        Q_EMIT dataChanged(index, index, { Qt::DisplayRole, Qt::EditRole });
+
         return true;
     }
 
@@ -311,10 +317,7 @@ bool EnumValuesTableModel::dropMimeData(
     int source_row;
     stream >> source_row;
 
-    if (stream.status() != QDataStream::Ok)
-        return false;
-
-    if (source_row < 0 || source_row >= values_.size())
+    if (stream.status() != QDataStream::Ok || source_row < 0 || source_row >= values_.size())
         return false;
 
     if (row < 0)
@@ -362,6 +365,12 @@ void EnumValuesTableModel::openPersistentEditors(int first, int last)
     }
 }
 
+void EnumValuesTableModel::externalReset()
+{
+    beginResetModel();
+    endResetModel();
+}
+
 void EnumValuesTableModel::setValues(const std::vector<std::string>& values)
 {
     beginResetModel();
@@ -380,6 +389,20 @@ std::vector<std::string> EnumValuesTableModel::getValues() const
     for (size_t i = 0; i < values_.size(); ++i)
         values[i] = values_[i].toStdString();
     return values;
+}
+
+bool EnumValuesTableModel::valuesDiffer(const std::vector<std::string>& values) const
+{
+    if (values_.size() != values.size())
+        return true;
+
+    for (size_t i = 0; i < values_.size(); ++i)
+    {
+        if (values_[i] != values[i])
+            return true;
+    }
+
+    return false;
 }
 
 void EnumValuesTableModel::newValue()
@@ -411,12 +434,60 @@ void EnumEditView::loadEnum(core::typing::Specialization enum_instance)
 {
     enum_instance_ = enum_instance;
 
+    {
+        auto enum_data = core::typing::gEnumRegistry.get(enum_instance_);
+
+        id_label_->setText(repr(enum_instance_));
+        
+        if (auto _ = BlockSignals(*title_edit_))
+            title_edit_->setText(QString::fromStdString(enum_data->title));
+
+        if (auto _ = BlockSignals(*model_))
+            model_->setValues(enum_data->names);
+    }
+
+    Q_EMIT title_edit_->textChanged(title_edit_->text());
+    model_->externalReset();
+
+    title_edit_->setFocus();
+
+    syncDirtyState();
+}
+
+bool EnumEditView::unsavedChanges() const
+{
     auto enum_data = core::typing::gEnumRegistry.get(enum_instance_);
 
-    id_label_->setText(repr(enum_instance_));
-    title_edit_->setText(QString::fromStdString(enum_data->title));
-    title_edit_->setFocus();
-    model_->setValues(enum_data->names);
+    if (enum_data->title != title_edit_->text())
+        return true;
+
+    return model_->valuesDiffer(enum_data->names);
+}
+
+bool EnumEditView::alertUnsavedChanges()
+{
+    if (!unsavedChanges())
+        return true;
+
+    auto reply = QMessageBox::warning(
+        this,
+        tr("Unsaved Changes"),
+        tr("What do you want to do with your unsaved changes?"),
+        { QMessageBox::Save, QMessageBox::Discard, QMessageBox::Cancel },
+        QMessageBox::Cancel);
+
+    if (reply == QMessageBox::Save)
+    {
+        applyChanges();
+        return true;
+    }
+    else if (reply == QMessageBox::Discard)
+    {
+        cancelChanges();
+        return true;
+    }
+    else
+        return false;
 }
 
 QVBoxLayout* EnumEditView::initList()
@@ -431,12 +502,19 @@ QVBoxLayout* EnumEditView::initList()
 
     // TODO sync error
     title_edit_ = new QLineEdit(this);
+    connect(title_edit_, &QLineEdit::textChanged, this, &EnumEditView::syncDirtyState);
     form->addRow(tr("Name"), title_edit_);
 
     layout->addLayout(form);
 
     values_table_ = new QTableView(this);
+
     model_ = new EnumValuesTableModel(*values_table_, this);
+    connect(model_, &QAbstractItemModel::rowsInserted, this, &EnumEditView::syncDirtyState);
+    connect(model_, &QAbstractItemModel::rowsRemoved, this, &EnumEditView::syncDirtyState);
+    connect(model_, &QAbstractItemModel::rowsMoved, this, &EnumEditView::syncDirtyState);
+    connect(model_, &QAbstractItemModel::dataChanged, this, &EnumEditView::syncDirtyState);
+    connect(model_, &QAbstractItemModel::modelReset, this, &EnumEditView::syncDirtyState);
 
     values_table_->setDragEnabled(true);
     values_table_->setAcceptDrops(true);
@@ -477,15 +555,15 @@ QVBoxLayout* EnumEditView::initOptions()
 
     addSeparator(*this, *layout);
 
-    auto* apply_button = new QPushButton(loadIcon(Icon::Apply), tr("Apply"), this);
-    apply_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    connect(apply_button, &QPushButton::clicked, this, &EnumEditView::applyChanges);
-    layout->addWidget(apply_button); // TODO grey out apply/cancel if no changes are made
-
-    auto* cancel_button = new QPushButton(loadIcon(Icon::Cancel), tr("Cancel"), this);
-    cancel_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    connect(cancel_button, &QPushButton::clicked, this, &EnumEditView::cancelChanges);
-    layout->addWidget(cancel_button);
+    apply_button_ = new QPushButton(loadIcon(Icon::Apply), tr("Apply"), this);
+    apply_button_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    connect(apply_button_, &QPushButton::clicked, this, &EnumEditView::applyChanges);
+    layout->addWidget(apply_button_);
+    
+    cancel_button_ = new QPushButton(loadIcon(Icon::Cancel), tr("Cancel"), this);
+    cancel_button_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    connect(cancel_button_, &QPushButton::clicked, this, &EnumEditView::cancelChanges);
+    layout->addWidget(cancel_button_);
 
     addSeparator(*this, *layout);
 
@@ -503,12 +581,25 @@ QVBoxLayout* EnumEditView::initOptions()
     return layout;
 }
 
+void EnumEditView::syncDirtyState()
+{
+    const bool enabled = unsavedChanges();
+
+    apply_button_->setEnabled(enabled);
+    cancel_button_->setEnabled(enabled);
+}
+
 void EnumEditView::applyChanges()
 {
-    // TODO validate no duplicates
-    auto enm = core::typing::gEnumRegistry.get(enum_instance_);
-    enm->title = title_edit_->text().toStdString();
-    enm->names = model_->getValues();
+    {
+        // TODO validate no duplicates
+        auto enum_data = core::typing::gEnumRegistry.get(enum_instance_);
+        enum_data->title = title_edit_->text().toStdString();
+        enum_data->names = model_->getValues();
+    }
+
+    syncDirtyState();
+    title_edit_->setFocus();
 }
 
 void EnumEditView::cancelChanges()
@@ -524,6 +615,14 @@ EditEnumsDialog::EditEnumsDialog(QWidget* parent)
     connect(list_view_, &EnumListView::editRequested, this, &EditEnumsDialog::showEditView);
     connect(list_view_, &EnumListView::deleteRequested, this, &EditEnumsDialog::deleteEnum);
     connect(edit_view_, &EnumEditView::backRequested, this, &EditEnumsDialog::showListView);
+}
+
+void EditEnumsDialog::closeEvent(QCloseEvent* event)
+{
+    if (checkForUnsavedChanges())
+        ModalDialog::closeEvent(event);
+    else
+        event->ignore();
 }
 
 void EditEnumsDialog::initStack()
@@ -545,9 +644,11 @@ void EditEnumsDialog::initStack()
 
 void EditEnumsDialog::showListView()
 {
-    // TODO check for unsaved changes
-    list_view_->loadEnums();
-    stack_->setCurrentWidget(list_view_);
+    if (checkForUnsavedChanges())
+    {
+        list_view_->loadEnums();
+        stack_->setCurrentWidget(list_view_);
+    }
 }
 
 void EditEnumsDialog::showEditView(core::typing::Specialization enum_instance)
@@ -559,6 +660,14 @@ void EditEnumsDialog::showEditView(core::typing::Specialization enum_instance)
 void EditEnumsDialog::deleteEnum(core::typing::Specialization enum_instance)
 {
     core::typing::gEnumRegistry.remove(enum_instance);
+}
+
+bool EditEnumsDialog::checkForUnsavedChanges()
+{
+    if (stack_->currentWidget() == edit_view_)
+        return edit_view_->alertUnsavedChanges();
+
+    return true;
 }
 
 } // crucible::gui

@@ -53,16 +53,8 @@ void LogControls::createFilterButton()
     connect(filter_button_, &QToolButton::clicked, this, &LogControls::toggleFilterPopup);
 
     filter_popup_ = new LogFilterPopup(this);
-    connect(
-        filter_popup_,
-        &LogFilterPopup::levelFilterChanged,
-        this,
-        &LogControls::levelFilterChanged);
-    connect(
-        filter_popup_,
-        &LogFilterPopup::columnFilterChanged,
-        this,
-        &LogControls::columnFilterChanged);
+    connect(filter_popup_, &LogFilterPopup::levelFilterChanged, this, &LogControls::levelFilterChanged);
+    connect(filter_popup_, &LogFilterPopup::columnFilterChanged, this, &LogControls::columnFilterChanged);
 }
 
 void LogControls::createWordWrapButton()

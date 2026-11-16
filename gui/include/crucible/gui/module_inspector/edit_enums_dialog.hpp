@@ -8,6 +8,7 @@
 #include <QAbstractTableModel>
 
 class QLineEdit;
+class QPushButton;
 class QStackedWidget;
 class QTableView;
 class QVBoxLayout;
@@ -124,9 +125,11 @@ public:
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
     void openPersistentEditors(int first, int last);
+    void externalReset();
 
     void setValues(const std::vector<std::string>& values);
     std::vector<std::string> getValues() const;
+    bool valuesDiffer(const std::vector<std::string>& values) const;
 
     void newValue();
     void clearValues();
@@ -145,6 +148,9 @@ private:
     QTableView* values_table_ = nullptr;
     core::typing::Specialization enum_instance_ = {};
 
+    QPushButton* apply_button_ = nullptr;
+    QPushButton* cancel_button_ = nullptr;
+
 public:
     explicit EnumEditView(QWidget* parent = nullptr);
 
@@ -153,10 +159,14 @@ signals:
 
 public:
     void loadEnum(core::typing::Specialization enum_instance);
+    bool unsavedChanges() const;
+    bool alertUnsavedChanges();
 
 private:
     QVBoxLayout* initList();
     QVBoxLayout* initOptions();
+
+    void syncDirtyState();
 
     void applyChanges();
     void cancelChanges();
@@ -176,12 +186,16 @@ private:
 public:
     explicit EditEnumsDialog(QWidget* parent = nullptr);
 
+    void closeEvent(QCloseEvent* event) override;
+
 private:
     void initStack();
 
     void showListView();
     void showEditView(core::typing::Specialization enum_instance);
     void deleteEnum(core::typing::Specialization enum_instance);
+
+    bool checkForUnsavedChanges();
 };
 
 } // crucible::gui

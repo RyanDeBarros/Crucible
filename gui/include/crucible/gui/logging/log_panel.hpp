@@ -51,7 +51,7 @@ private:
 
     void setLevelFilter(core::LogLevelMask mask);
     void setColumnFilter(LogColumnMask mask);
-    void requestClearLog();
+    void clearLog();
 };
 
 } // crucible::gui

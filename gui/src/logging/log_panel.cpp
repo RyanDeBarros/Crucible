@@ -88,7 +88,7 @@ void LogPanel::createLayout()
     connect(controls_, &LogControls::levelFilterChanged, this, &LogPanel::setLevelFilter);
     connect(controls_, &LogControls::columnFilterChanged, this, &LogPanel::setColumnFilter);
     connect(controls_, &LogControls::wordWrapToggled, this, &LogPanel::setWordWrap);
-    connect(controls_, &LogControls::clearRequested, this, &LogPanel::requestClearLog);
+    connect(controls_, &LogControls::clearRequested, this, &LogPanel::clearLog);
 
     setWordWrap(controls_->wordWrap());
 }
@@ -162,12 +162,12 @@ void LogPanel::setColumnFilter(LogColumnMask mask)
         table_->setColumnHidden(i, !(mask & static_cast<LogColumn>(i)));
 }
 
-void LogPanel::requestClearLog()
+void LogPanel::clearLog()
 {
     auto reply = QMessageBox::question(
         this,
-        "Clear log",
-        "Are you sure you want to clear the log? This action cannot be undone.",
+        tr("Clear log"),
+        tr("Are you sure you want to clear the log? This action cannot be undone."),
         { QMessageBox::Yes, QMessageBox::No },
         QMessageBox::No);
 
