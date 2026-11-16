@@ -53,6 +53,8 @@ public:
     int columnCount(const QModelIndex& parent = {}) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
 
+    void openPersistentEditors(int first, int last);
+
     void addEnum(QString name, core::typing::Specialization instance);
     void setEnums(std::vector<std::pair<QString, core::typing::Specialization>> enums);
 };
@@ -97,6 +99,7 @@ public:
     };
 
 private:
+    QTableView& table_;
     QVector<QString> values_;
 
 public:
@@ -119,6 +122,8 @@ public:
 
     Qt::DropActions supportedDropActions() const override;
     Qt::ItemFlags flags(const QModelIndex& index) const override;
+
+    void openPersistentEditors(int first, int last);
 
     void setValues(const std::vector<std::string>& values);
     std::vector<std::string> getValues() const;

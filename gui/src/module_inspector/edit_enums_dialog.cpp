@@ -51,17 +51,13 @@ EnumTableModel::EnumTableModel(QTableView& table, QObject* parent)
         Q_EMIT deleteRequested(enum_instance);
     });
 
-    connect(
-        this,
-        &EnumTableModel::rowsInserted,
-        this,
-        [this](const QModelIndex&, int first, int last) {
-            for (int row = first; row <= last; ++row)
-            {
-                table_.openPersistentEditor(index(row, EnumTableModel::Edit));
-                table_.openPersistentEditor(index(row, EnumTableModel::Delete));
-            }
-        });
+    connect(this, &EnumTableModel::rowsInserted, this, [this](const QModelIndex&, int first, int last) {
+        openPersistentEditors(first, last);
+    });
+
+    connect(this, &EnumTableModel::modelReset, this, [this]() {
+        openPersistentEditors(0, enums_.size() - 1);
+    });
 }
 
 int EnumTableModel::rowCount(const QModelIndex& parent) const
@@ -102,6 +98,15 @@ QVariant EnumTableModel::data(const QModelIndex& index, int role) const
     return {};
 }
 
+void EnumTableModel::openPersistentEditors(int first, int last)
+{
+    for (int row = first; row <= last; ++row)
+    {
+        table_.openPersistentEditor(index(row, EnumTableModel::Edit));
+        table_.openPersistentEditor(index(row, EnumTableModel::Delete));
+    }
+}
+
 void EnumTableModel::addEnum(QString name, core::typing::Specialization instance)
 {
     const int row = static_cast<int>(enums_.size());
@@ -132,12 +137,6 @@ void EnumTableModel::setEnums(std::vector<std::pair<QString, core::typing::Speci
     }
 
     endResetModel();
-
-    for (int row = 0; row <= enums_.size(); ++row)
-    {
-        table_.openPersistentEditor(index(row, EnumTableModel::Edit));
-        table_.openPersistentEditor(index(row, EnumTableModel::Delete));
-    }
 }
 
 EnumListView::EnumListView(QWidget* parent)
@@ -210,31 +209,28 @@ void EnumListView::newEnum()
 
 EnumValuesTableModel::EnumValuesTableModel(QTableView& table, QWidget* parent)
     : QAbstractTableModel(parent)
+    , table_(table)
 {
-    table.setModel(this);
+    table_.setModel(this);
 
     auto* value_edits = new LineEditDelegate({}, this);
-    table.setItemDelegateForColumn(Value, value_edits);
+    table_.setItemDelegateForColumn(Value, value_edits);
 
-    auto* delete_buttons = new ButtonDelegate(table, Icon::Delete, { .tooltip = tr("Delete value") }, this);
-    table.setItemDelegateForColumn(Delete, delete_buttons);
+    auto* delete_buttons = new ButtonDelegate(table_, Icon::Delete, { .tooltip = tr("Delete value") }, this);
+    table_.setItemDelegateForColumn(Delete, delete_buttons);
     connect(delete_buttons, &ButtonDelegate::onClick, this, [this](const QModelIndex& idx) {
         beginRemoveRows({}, idx.row(), idx.row());
         values_.removeAt(idx.row());
         endRemoveRows();
     });
 
-    connect(
-        this,
-        &EnumValuesTableModel::rowsInserted,
-        this,
-        [this, &table](const QModelIndex&, int first, int last) {
-            for (int row = first; row <= last; ++row)
-            {
-                table.openPersistentEditor(index(row, EnumValuesTableModel::Value));
-                table.openPersistentEditor(index(row, EnumValuesTableModel::Delete));
-            }
-        });
+    connect(this, &EnumValuesTableModel::rowsInserted, this, [this](const QModelIndex&, int first, int last) {
+        openPersistentEditors(first, last);
+    });
+
+    connect(this, &EnumValuesTableModel::modelReset, this, [this]() {
+        openPersistentEditors(0, values_.size() - 1);
+    });
 }
 
 int EnumValuesTableModel::rowCount(const QModelIndex& parent) const
@@ -355,6 +351,15 @@ Qt::ItemFlags EnumValuesTableModel::flags(const QModelIndex& index) const
     }
 
     return flags;
+}
+
+void EnumValuesTableModel::openPersistentEditors(int first, int last)
+{
+    for (int row = first; row <= last; ++row)
+    {
+        table_.openPersistentEditor(index(row, EnumValuesTableModel::Value));
+        table_.openPersistentEditor(index(row, EnumValuesTableModel::Delete));
+    }
 }
 
 void EnumValuesTableModel::setValues(const std::vector<std::string>& values)
