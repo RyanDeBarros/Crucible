@@ -4,8 +4,6 @@
 
 #include <crucible/gui/preferences/settings/logging_settings.hpp>
 
-#include <crucible/gui/util/block_signals.hpp>
-
 #include <QFormLayout>
 #include <QSpinBox>
 

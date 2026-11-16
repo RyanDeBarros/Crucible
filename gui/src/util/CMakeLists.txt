@@ -1,6 +1,5 @@
 target_sources(crucible_gui
     PRIVATE
-        block_signals.cpp
         dialog_underlay.cpp
         icons.cpp
         item_delegates.cpp

@@ -1,6 +1,5 @@
 #include <crucible/gui/module_inspector/edit_enums_dialog.hpp>
 
-#include <crucible/gui/util/block_signals.hpp>
 #include <crucible/gui/util/item_delegates.hpp>
 #include <crucible/gui/util/layout_helpers.hpp>
 
@@ -19,6 +18,7 @@
 #include <QMimeData>
 #include <QPushButton>
 #include <QStackedWidget>
+#include <QSignalBlocker>
 #include <QTableView>
 
 #include <charconv>
@@ -435,15 +435,16 @@ void EnumEditView::loadEnum(core::typing::Specialization enum_instance)
     enum_instance_ = enum_instance;
 
     {
+        QSignalBlocker blockers[] = {
+            QSignalBlocker(title_edit_),
+            QSignalBlocker(model_),
+        };
+
         auto enum_data = core::typing::gEnumRegistry.get(enum_instance_);
 
         id_label_->setText(repr(enum_instance_));
-        
-        if (auto _ = BlockSignals(*title_edit_))
-            title_edit_->setText(QString::fromStdString(enum_data->title));
-
-        if (auto _ = BlockSignals(*model_))
-            model_->setValues(enum_data->names);
+        title_edit_->setText(QString::fromStdString(enum_data->title));
+        model_->setValues(enum_data->names);
     }
 
     Q_EMIT title_edit_->textChanged(title_edit_->text());
