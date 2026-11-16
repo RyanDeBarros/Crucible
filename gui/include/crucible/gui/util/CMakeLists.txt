@@ -1,9 +1,9 @@
 target_sources(crucible_gui
     PRIVATE
         block_signals.hpp
-        button_delegate.hpp
         dialog_underlay.hpp
         icons.hpp
+        item_delegates.hpp
         layout_helpers.hpp
         modal_dialog.hpp
         outlines.hpp

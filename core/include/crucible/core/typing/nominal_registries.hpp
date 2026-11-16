@@ -39,6 +39,7 @@ public:
     using Super::add;
     using Super::remove;
     using Super::exists;
+    using Super::get;
     using Super::range;
     using Super::peek_next_handle;
 
@@ -67,6 +68,7 @@ public:
     Specialization add(StructTemplate tmpl);
     using Super::remove;
     using Super::exists;
+    using Super::get;
     using Super::range;
     using Super::peek_next_handle;
 

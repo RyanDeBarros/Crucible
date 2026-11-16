@@ -6,11 +6,14 @@
         <file alias="toggle_icon.qss">style/toggle_icon.qss</file>
     </qresource>
     <qresource prefix="/icons">
+        <file alias="apply">icons/apply.svg</file>
         <file alias="back_arrow">icons/back_arrow.svg</file>
+        <file alias="cancel">icons/cancel.svg</file>
         <file alias="clear_log">icons/clear_log.svg</file>
         <file alias="close">icons/close.svg</file>
         <file alias="delete">icons/delete.svg</file>
         <file alias="delete_all">icons/delete_all.svg</file>
+        <file alias="drag_handle">icons/drag_handle.svg</file>
         <file alias="edit">icons/edit.svg</file>
         <file alias="edit_enum">icons/edit_enum.svg</file>
         <file alias="edit_struct">icons/edit_struct.svg</file>

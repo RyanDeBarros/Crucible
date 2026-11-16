@@ -29,7 +29,7 @@ LogModelRefreshCallback::LogModelRefreshCallback(LogModel& model)
 
 void LogModelRefreshCallback::before_append(std::size_t row)
 {
-    model_.beginInsertRows(QModelIndex(), static_cast<int>(row), static_cast<int>(row));
+    model_.beginInsertRows({}, static_cast<int>(row), static_cast<int>(row));
 }
 
 void LogModelRefreshCallback::after_append()
@@ -140,30 +140,6 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
         return QString::fromStdString(entry.message);
 
     return {};
-}
-
-QVariant LogModel::headerData(int section, Qt::Orientation orientation, int role) const
-{
-    if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
-        return {};
-
-    switch (section)
-    {
-    case LogColumn::Timestamp:
-        return "Time";
-
-    case LogColumn::Level:
-        return "Level";
-
-    case LogColumn::Category:
-        return "Category";
-
-    case LogColumn::Message:
-        return "Message";
-
-    default:
-        return {};
-    }
 }
 
 void LogModel::refresh()

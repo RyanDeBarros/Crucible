@@ -4,10 +4,10 @@
 
 #include <crucible/gui/util/modal_dialog.hpp>
 
+#include <QAbstractListModel>
 #include <QAbstractTableModel>
 
 class QLineEdit;
-class QListWidget;
 class QStackedWidget;
 class QTableView;
 class QVBoxLayout;
@@ -48,12 +48,9 @@ signals:
     void deleteRequested(core::typing::Specialization enum_instance);
 
 public:
-    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
-    int columnCount(const QModelIndex& parent = QModelIndex()) const override;
+    int rowCount(const QModelIndex& parent = {}) const override;
+    int columnCount(const QModelIndex& parent = {}) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
-    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-
-    Qt::ItemFlags flags(const QModelIndex& index) const override;
 
     void addEnum(QString name, core::typing::Specialization instance);
 };
@@ -64,7 +61,7 @@ class EnumListView
     Q_OBJECT;
 
 private:
-    EnumTableModel* model_;
+    EnumTableModel* model_ = nullptr;
 
 public:
     explicit EnumListView(QWidget* parent = nullptr);
@@ -80,15 +77,61 @@ private:
     void newEnum();
 };
 
+class EnumValuesTableModel
+    : public QAbstractTableModel
+{
+    Q_OBJECT;
+
+public:
+    enum Column
+    {
+        DragHandle,
+        Value,
+        Delete,
+        _Count
+    };
+
+private:
+    QVector<QString> values_;
+
+public:
+    explicit EnumValuesTableModel(QTableView& table, QWidget* parent = nullptr);
+
+    int rowCount(const QModelIndex& parent = {}) const override;
+    int columnCount(const QModelIndex& parent = {}) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
+    
+    QStringList mimeTypes() const override;
+    QMimeData* mimeData(const QModelIndexList& indexes) const override;
+
+    bool dropMimeData(
+        const QMimeData* data,
+        Qt::DropAction action,
+        int row,
+        int column,
+        const QModelIndex& parent) override;
+
+    Qt::DropActions supportedDropActions() const override;
+    Qt::ItemFlags flags(const QModelIndex& index) const override;
+
+    void setValues(const std::vector<std::string>& values);
+
+    void newValue();
+    void clearValues();
+};
+
 class EnumEditView
     : public QWidget
 {
     Q_OBJECT;
 
 private:
+    EnumValuesTableModel* model_ = nullptr;
+
     QLineEdit* title_edit_ = nullptr;
     QLineEdit* id_label_ = nullptr;
-    QListWidget* elements_list_ = nullptr;
+    QTableView* values_table_ = nullptr;
 
 public:
     explicit EnumEditView(QWidget* parent = nullptr);
