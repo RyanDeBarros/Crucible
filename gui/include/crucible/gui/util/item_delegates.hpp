@@ -8,28 +8,63 @@
 namespace crucible::gui
 {
 
+class IconDelegate
+    : public QStyledItemDelegate
+{
+    Q_OBJECT;
+
+public:
+    struct Config
+    {
+        bool show_select_highlight = false;
+    };
+
+private:
+    Icon icon_;
+    Config config_;
+
+public:
+    IconDelegate(Icon icon, Config config = {}, QObject* parent = nullptr);
+
+    void paint(
+        QPainter* painter,
+        const QStyleOptionViewItem& option,
+        const QModelIndex& index) const override;
+};
+
 class ButtonDelegate
     : public QStyledItemDelegate
 {
     Q_OBJECT;
 
+public:
+    struct Config
+    {
+        QString tooltip = {};
+        bool show_select_highlight = false;
+    };
+
 private:
     QAbstractItemView& view_;
-    QString tooltip_;
     Icon icon_;
+    Config config_;
 
 public:
     explicit ButtonDelegate(
         QAbstractItemView& view,
-        int column,
         Icon icon,
-        QString tooltip,
+        Config config = {},
         QObject* parent = nullptr);
 
     QWidget* createEditor(
         QWidget* parent,
         const QStyleOptionViewItem&,
         const QModelIndex&) const override;
+
+    void paint(
+        QPainter* painter,
+        const QStyleOptionViewItem& option,
+        const QModelIndex& index) const override;
 
 signals:
     void onClick(const QModelIndex& index) const;
@@ -40,21 +75,30 @@ class LineEditDelegate
 {
     Q_OBJECT;
 
+public:
+    struct Config
+    {
+        QString placeholder_text = {};
+        bool show_select_highlight = false;
+    };
+
 private:
-    QAbstractItemView& view_;
-    QString placeholder_text_;
+    Config config_;
 
 public:
     explicit LineEditDelegate(
-        QAbstractItemView& view,
-        int column,
-        QString placeholder_text = {},
+        Config config = {},
         QObject* parent = nullptr);
 
     QWidget* createEditor(
         QWidget* parent,
         const QStyleOptionViewItem&,
         const QModelIndex&) const override;
+
+    void paint(
+        QPainter* painter,
+        const QStyleOptionViewItem& option,
+        const QModelIndex& index) const override;
 
     void setEditorData(QWidget*, const QModelIndex&) const override;
     void setModelData(QWidget*, QAbstractItemModel*, const QModelIndex&) const override;

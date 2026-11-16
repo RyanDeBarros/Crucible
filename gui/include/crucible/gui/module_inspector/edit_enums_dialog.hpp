@@ -38,6 +38,7 @@ public:
     };
 
 private:
+    QTableView& table_;
     QVector<EnumTemplate> enums_;
 
 public:
@@ -53,6 +54,7 @@ public:
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
 
     void addEnum(QString name, core::typing::Specialization instance);
+    void setEnums(std::vector<std::pair<QString, core::typing::Specialization>> enums);
 };
 
 class EnumListView
@@ -69,6 +71,9 @@ public:
 signals:
     void editRequested(core::typing::Specialization enum_instance);
     void deleteRequested(core::typing::Specialization enum_instance);
+
+public:
+    void loadEnums();
 
 private:
     QTableView* initTable();
@@ -116,6 +121,7 @@ public:
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
     void setValues(const std::vector<std::string>& values);
+    std::vector<std::string> getValues() const;
 
     void newValue();
     void clearValues();
@@ -132,6 +138,7 @@ private:
     QLineEdit* title_edit_ = nullptr;
     QLineEdit* id_label_ = nullptr;
     QTableView* values_table_ = nullptr;
+    core::typing::Specialization enum_instance_ = {};
 
 public:
     explicit EnumEditView(QWidget* parent = nullptr);
@@ -145,6 +152,9 @@ public:
 private:
     QVBoxLayout* initList();
     QVBoxLayout* initOptions();
+
+    void applyChanges();
+    void cancelChanges();
 };
 
 class EditEnumsDialog

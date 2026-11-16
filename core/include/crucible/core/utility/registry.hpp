@@ -44,6 +44,14 @@ public:
 private:
     class UnsafeIterator
     {
+    public:
+        struct Entry
+        {
+            Handle handle;
+            const Element& element;
+        };
+
+    private:
         const Registry& registry_;
         Handle handle_ = 0;
         Handle max_handle_ = 0;
@@ -67,9 +75,12 @@ private:
             return *this;
         }
 
-        Handle operator*() const
+        Entry operator*() const
         {
-            return handle_;
+            return Entry{
+                .handle = handle_,
+                .element = registry_.get_unsafe(handle_)
+            };
         }
 
         bool operator!=(const UnsafeIterator& o) const

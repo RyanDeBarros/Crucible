@@ -30,32 +30,36 @@ static QString repr(core::typing::Specialization instance)
 
 EnumTableModel::EnumTableModel(QTableView& table, QObject* parent)
     : QAbstractTableModel(parent)
+    , table_(table)
 {
-    table.setModel(this);
+    table_.setModel(this);
 
-    auto* edit_buttons = new ButtonDelegate(table, Edit, Icon::Edit, tr("Edit enum"), this);
+    auto* edit_buttons = new ButtonDelegate(table, Icon::Edit, { .tooltip = tr("Edit enum") }, this);
+    table_.setItemDelegateForColumn(Edit, edit_buttons);
     connect(edit_buttons, &ButtonDelegate::onClick, this, [this](const QModelIndex& idx) {
         Q_EMIT editRequested(enums_[idx.row()].instance);
     });
 
-    auto* delete_buttons = new ButtonDelegate(table, Delete, Icon::Delete, tr("Delete enum"), this);
+    auto* delete_buttons = new ButtonDelegate(table, Icon::Delete, { .tooltip = tr("Delete enum") }, this);
+    table_.setItemDelegateForColumn(Delete, delete_buttons);
     connect(delete_buttons, &ButtonDelegate::onClick, this, [this](const QModelIndex& idx) {
         beginRemoveRows({}, idx.row(), idx.row());
+        const auto enum_instance = enums_[idx.row()].instance;
         enums_.removeAt(idx.row());
         endRemoveRows();
 
-        Q_EMIT deleteRequested(enums_[idx.row()].instance);
+        Q_EMIT deleteRequested(enum_instance);
     });
 
     connect(
         this,
         &EnumTableModel::rowsInserted,
         this,
-        [this, &table](const QModelIndex&, int first, int last) {
+        [this](const QModelIndex&, int first, int last) {
             for (int row = first; row <= last; ++row)
             {
-                table.openPersistentEditor(index(row, EnumTableModel::Edit));
-                table.openPersistentEditor(index(row, EnumTableModel::Delete));
+                table_.openPersistentEditor(index(row, EnumTableModel::Edit));
+                table_.openPersistentEditor(index(row, EnumTableModel::Delete));
             }
         });
 }
@@ -75,7 +79,7 @@ int EnumTableModel::columnCount(const QModelIndex& parent) const
 
 QVariant EnumTableModel::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid() || index.row() < 0 || index.row() >= enums_.size())
+    if (!index.isValid() || index.row() >= enums_.size())
         return {};
 
     const auto& enum_instance = enums_[index.row()];
@@ -111,6 +115,31 @@ void EnumTableModel::addEnum(QString name, core::typing::Specialization instance
     endInsertRows();
 }
 
+void EnumTableModel::setEnums(std::vector<std::pair<QString, core::typing::Specialization>> enums)
+{
+    beginResetModel();
+    
+    enums_.clear();
+    enums_.reserve(enums.size());
+    for (auto&& [name, instance] : enums)
+    {
+        enums_.push_back(
+            {
+                .name = std::move(name),
+                .instance = instance,
+                .id = repr(instance)
+            });
+    }
+
+    endResetModel();
+
+    for (int row = 0; row <= enums_.size(); ++row)
+    {
+        table_.openPersistentEditor(index(row, EnumTableModel::Edit));
+        table_.openPersistentEditor(index(row, EnumTableModel::Delete));
+    }
+}
+
 EnumListView::EnumListView(QWidget* parent)
     : QWidget(parent)
 {
@@ -119,6 +148,14 @@ EnumListView::EnumListView(QWidget* parent)
     layout->addWidget(initTable(), 1);
     addSeparator(*this, *layout);
     layout->addLayout(initOptions());
+}
+
+void EnumListView::loadEnums()
+{
+    std::vector<std::pair<QString, core::typing::Specialization>> enums;
+    for (auto [handle, element] : core::typing::gEnumRegistry.range())
+        enums.push_back(std::make_pair(QString::fromStdString(element.title), handle));
+    model_->setEnums(std::move(enums));
 }
 
 QTableView* EnumListView::initTable()
@@ -176,9 +213,11 @@ EnumValuesTableModel::EnumValuesTableModel(QTableView& table, QWidget* parent)
 {
     table.setModel(this);
 
-    auto* value_edits = new LineEditDelegate(table, Value, {}, this);
+    auto* value_edits = new LineEditDelegate({}, this);
+    table.setItemDelegateForColumn(Value, value_edits);
 
-    auto* delete_buttons = new ButtonDelegate(table, Delete, Icon::Delete, tr("Delete value"), this);
+    auto* delete_buttons = new ButtonDelegate(table, Icon::Delete, { .tooltip = tr("Delete value") }, this);
+    table.setItemDelegateForColumn(Delete, delete_buttons);
     connect(delete_buttons, &ButtonDelegate::onClick, this, [this](const QModelIndex& idx) {
         beginRemoveRows({}, idx.row(), idx.row());
         values_.removeAt(idx.row());
@@ -210,11 +249,8 @@ int EnumValuesTableModel::columnCount(const QModelIndex& parent) const
 
 QVariant EnumValuesTableModel::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid() || index.row() < 0 || index.row() >= values_.size())
+    if (!index.isValid() || index.row() >= values_.size())
         return {};
-
-    if (index.column() == DragHandle && role == Qt::DecorationRole)
-        return loadIcon(Icon::DragHandle);
 
     if (index.column() == Value && role == Qt::EditRole)
         return values_[index.row()];
@@ -224,7 +260,7 @@ QVariant EnumValuesTableModel::data(const QModelIndex& index, int role) const
 
 bool EnumValuesTableModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
-    if (!index.isValid() || index.row() < 0 || index.row() >= values_.size())
+    if (!index.isValid() || index.row() >= values_.size())
         return false;
 
     if (index.column() == Value && role == Qt::EditRole)
@@ -332,6 +368,15 @@ void EnumValuesTableModel::setValues(const std::vector<std::string>& values)
     endResetModel();
 }
 
+std::vector<std::string> EnumValuesTableModel::getValues() const
+{
+    std::vector<std::string> values;
+    values.resize(values_.size());
+    for (size_t i = 0; i < values_.size(); ++i)
+        values[i] = values_[i].toStdString();
+    return values;
+}
+
 void EnumValuesTableModel::newValue()
 {
     const int row = static_cast<int>(values_.size());
@@ -359,9 +404,11 @@ EnumEditView::EnumEditView(QWidget* parent)
 
 void EnumEditView::loadEnum(core::typing::Specialization enum_instance)
 {
-    auto enum_data = core::typing::gEnumRegistry.get(enum_instance);
+    enum_instance_ = enum_instance;
 
-    id_label_->setText(repr(enum_instance));
+    auto enum_data = core::typing::gEnumRegistry.get(enum_instance_);
+
+    id_label_->setText(repr(enum_instance_));
     title_edit_->setText(QString::fromStdString(enum_data->title));
     title_edit_->setFocus();
     model_->setValues(enum_data->names);
@@ -404,6 +451,10 @@ QVBoxLayout* EnumEditView::initList()
     header->setSectionResizeMode(EnumValuesTableModel::DragHandle, QHeaderView::ResizeToContents);
     header->setSectionResizeMode(EnumValuesTableModel::Value, QHeaderView::Stretch);
     header->setSectionResizeMode(EnumValuesTableModel::Delete, QHeaderView::ResizeToContents);
+    
+    values_table_->setItemDelegateForColumn(
+        EnumValuesTableModel::DragHandle,
+        new IconDelegate(Icon::DragHandle, {}, this));
 
     layout->addWidget(values_table_);
 
@@ -423,12 +474,12 @@ QVBoxLayout* EnumEditView::initOptions()
 
     auto* apply_button = new QPushButton(loadIcon(Icon::Apply), tr("Apply"), this);
     apply_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    connect(apply_button, &QPushButton::clicked, this, []() { /* TODO */ });
+    connect(apply_button, &QPushButton::clicked, this, &EnumEditView::applyChanges);
     layout->addWidget(apply_button); // TODO grey out apply/cancel if no changes are made
 
     auto* cancel_button = new QPushButton(loadIcon(Icon::Cancel), tr("Cancel"), this);
     cancel_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    connect(cancel_button, &QPushButton::clicked, this, []() { /* TODO */ });
+    connect(cancel_button, &QPushButton::clicked, this, &EnumEditView::cancelChanges);
     layout->addWidget(cancel_button);
 
     addSeparator(*this, *layout);
@@ -445,6 +496,19 @@ QVBoxLayout* EnumEditView::initOptions()
 
     layout->addStretch();
     return layout;
+}
+
+void EnumEditView::applyChanges()
+{
+    // TODO validate no duplicates
+    auto enm = core::typing::gEnumRegistry.get(enum_instance_);
+    enm->title = title_edit_->text().toStdString();
+    enm->names = model_->getValues();
+}
+
+void EnumEditView::cancelChanges()
+{
+    loadEnum(enum_instance_);
 }
 
 EditEnumsDialog::EditEnumsDialog(QWidget* parent)
@@ -471,12 +535,13 @@ void EditEnumsDialog::initStack()
 
     layout->addWidget(stack_);
 
-    stack_->setCurrentWidget(list_view_);
+    showListView();
 }
 
 void EditEnumsDialog::showListView()
 {
     // TODO check for unsaved changes
+    list_view_->loadEnums();
     stack_->setCurrentWidget(list_view_);
 }
 

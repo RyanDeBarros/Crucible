@@ -1,5 +1,7 @@
 #include <crucible/gui/util/item_delegates.hpp>
 
+#include <crucible/core/utility/optional_copy.hpp>
+
 #include <QLineEdit>
 #include <QTimer>
 #include <QToolButton>
@@ -7,18 +9,45 @@
 namespace crucible::gui
 {
 
+IconDelegate::IconDelegate(Icon icon, Config config, QObject* parent)
+    : QStyledItemDelegate(parent)
+    , icon_(icon)
+    , config_(std::move(config))
+{
+}
+
+void IconDelegate::paint(
+    QPainter* painter,
+    const QStyleOptionViewItem& option,
+    const QModelIndex& index) const
+{
+    OptionalCopy opt(option);
+
+    if (!config_.show_select_highlight)
+        opt.modify().state &= ~QStyle::State_Selected;
+
+    QStyledItemDelegate::paint(painter, *opt, index);
+
+    const int icon_size = 16;
+    const QRect icon_rect(
+        opt->rect.center().x() - icon_size / 2,
+        opt->rect.center().y() - icon_size / 2,
+        icon_size,
+        icon_size);
+
+    loadIcon(icon_).paint(painter, icon_rect);
+}
+
 ButtonDelegate::ButtonDelegate(
     QAbstractItemView& view,
-    int column,
     Icon icon,
-    QString tooltip,
+    Config config,
     QObject* parent)
     : QStyledItemDelegate(parent)
     , view_(view)
     , icon_(icon)
-    , tooltip_(std::move(tooltip))
+    , config_(std::move(config))
 {
-    view.setItemDelegateForColumn(column, this);
 }
 
 QWidget* ButtonDelegate::createEditor(
@@ -29,7 +58,7 @@ QWidget* ButtonDelegate::createEditor(
     auto* button = new QToolButton(parent);
 
     button->setIcon(loadIcon(icon_));
-    button->setToolTip(tooltip_);
+    button->setToolTip(config_.tooltip);
 
     connect(button, &QToolButton::clicked, this, [this, button]() {
         Q_EMIT onClick(view_.indexAt(button->pos()));
@@ -38,16 +67,25 @@ QWidget* ButtonDelegate::createEditor(
     return button;
 }
 
+void ButtonDelegate::paint(
+    QPainter* painter,
+    const QStyleOptionViewItem& option,
+    const QModelIndex& index) const
+{
+    OptionalCopy opt(option);
+
+    if (!config_.show_select_highlight)
+        opt.modify().state &= ~QStyle::State_Selected;
+
+    QStyledItemDelegate::paint(painter, *opt, index);
+}
+
 LineEditDelegate::LineEditDelegate(
-    QAbstractItemView& view,
-    int column,
-    QString placeholder_text,
+    Config config,
     QObject* parent)
     : QStyledItemDelegate(parent)
-    , view_(view)
-    , placeholder_text_(std::move(placeholder_text))
+    , config_(std::move(config))
 {
-    view.setItemDelegateForColumn(column, this);
 }
 
 QWidget* LineEditDelegate::createEditor(
@@ -56,8 +94,21 @@ QWidget* LineEditDelegate::createEditor(
     const QModelIndex& index) const
 {
     auto* edit = new QLineEdit(parent);
-    edit->setPlaceholderText(placeholder_text_);
+    edit->setPlaceholderText(config_.placeholder_text);
     return edit;
+}
+
+void LineEditDelegate::paint(
+    QPainter* painter,
+    const QStyleOptionViewItem& option,
+    const QModelIndex& index) const
+{
+    OptionalCopy opt(option);
+
+    if (!config_.show_select_highlight)
+        opt.modify().state &= ~QStyle::State_Selected;
+
+    QStyledItemDelegate::paint(painter, *opt, index);
 }
 
 void LineEditDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const

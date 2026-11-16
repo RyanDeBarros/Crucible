@@ -2,7 +2,7 @@
 
 #include <mutex>
 
-namespace crucible::core
+namespace crucible
 {
 
 template<auto>
