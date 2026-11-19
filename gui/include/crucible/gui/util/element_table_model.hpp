@@ -5,6 +5,7 @@
 #include <QAbstractTableModel>
 #include <QDataStream>
 #include <QHeaderView>
+#include <QIODevice>
 #include <QMimeData>
 #include <QString>
 #include <QTableView>
@@ -335,6 +336,5 @@ public:
         return elements_;
     }
 };
-
 
 } // crucible::gui

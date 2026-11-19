@@ -48,6 +48,7 @@ public:
             return false;
     }
 
+    using Super::lock;
     using Super::exists;
     using Super::get;
     using Super::range;
@@ -120,6 +121,7 @@ class PointerRegistry final
 public:
     using Super::intern;
     using Super::invalidate;
+    using Super::lock;
     using Super::exists;
     using Super::range;
     using Super::peek_next_handle;
@@ -137,6 +139,7 @@ class ListRegistry final
 public:
     using Super::intern;
     using Super::invalidate;
+    using Super::lock;
     using Super::exists;
     using Super::range;
     using Super::peek_next_handle;
@@ -154,6 +157,7 @@ class SetRegistry final
 public:
     using Super::intern;
     using Super::invalidate;
+    using Super::lock;
     using Super::exists;
     using Super::range;
     using Super::peek_next_handle;
@@ -171,6 +175,7 @@ class MapRegistry final
 public:
     using Super::intern;
     using Super::invalidate;
+    using Super::lock;
     using Super::exists;
     using Super::range;
     using Super::peek_next_handle;

@@ -18,26 +18,73 @@ private:
     class UnsafeIterator;
 
 public:
-    class Range
+    class Lock
     {
-        const Registry& registry_;
+    public:
+        const Registry& registry;
+
+    private:
         std::unique_lock<std::mutex> lock_;
 
     public:
-        Range(const Registry& registry)
-            : registry_(registry)
+        Lock(const Registry& registry)
+            : registry(registry)
             , lock_(registry.mutex_)
         {
         }
 
+        void assert_valid(const Registry* registry) const
+        {
+            if (&this->registry != registry)
+                throw std::runtime_error("Lock does not point to registry");
+        }
+    };
+
+    class Range
+    {
+        friend class Registry;
+
+        Lock lock_;
+
+    private:
+        Range(const Registry& registry)
+            : lock_(registry)
+        {
+        }
+
+    public:
         UnsafeIterator begin() const
         {
-            return UnsafeIterator(registry_, true);
+            return UnsafeIterator(lock_.registry, true);
         }
 
         UnsafeIterator end() const
         {
-            return UnsafeIterator(registry_, false);
+            return UnsafeIterator(lock_.registry, false);
+        }
+    };
+
+    class SafeRange
+    {
+        friend class Registry;
+
+        const Lock& lock_;
+
+    private:
+        SafeRange(const Lock& lock)
+            : lock_(lock)
+        {
+        }
+
+    public:
+        UnsafeIterator begin() const
+        {
+            return UnsafeIterator(lock_.registry, true);
+        }
+
+        UnsafeIterator end() const
+        {
+            return UnsafeIterator(lock_.registry, false);
         }
     };
 
@@ -126,9 +173,20 @@ public:
         pages_.emplace_back(std::make_unique<Page>());
     }
 
+    Lock lock() const
+    {
+        return Lock(*this);
+    }
+
     Handle add(Element el)
     {
         std::unique_lock lock(mutex_);
+        return add_unsafe(std::move(el));
+    }
+
+    Handle add(const Lock& lock, Element el)
+    {
+        lock.assert_valid(this);
         return add_unsafe(std::move(el));
     }
 
@@ -138,9 +196,21 @@ public:
         return remove_unsafe(handle);
     }
 
+    bool remove(const Lock& lock, Handle handle)
+    {
+        lock.assert_valid(this);
+        return remove_unsafe(handle);
+    }
+
     bool exists(Handle handle) const
     {
         std::unique_lock lock(mutex_);
+        return exists_unsafe(handle);
+    }
+
+    bool exists(const Lock& lock, Handle handle) const
+    {
+        lock.assert_valid(this);
         return exists_unsafe(handle);
     }
 
@@ -156,32 +226,39 @@ public:
         return ThreadSafeReference<Element>(std::move(lock), get_unsafe(handle));
     }
 
+    const Element& get(const Lock& lock, Handle handle) const
+    {
+        lock.assert_valid(this);
+        return get_unsafe(handle);
+    }
+
+    Element& get(const Lock& lock, Handle handle)
+    {
+        lock.assert_valid(this);
+        return get_unsafe(handle);
+    }
+
     Range range() const
     {
         return Range(*this);
     }
 
+    SafeRange range(const Lock& lock) const
+    {
+        lock.assert_valid(this);
+        return SafeRange(lock);
+    }
+
     ThreadSafeValue<Handle> peek_next_handle() const
     {
         std::unique_lock lock(mutex_);
-        Handle handle;
+        return ThreadSafeValue<Handle>(std::move(lock), peek_next_handle_unsafe());
+    }
 
-        if (free_head_ != 0)
-            handle = free_head_;
-        else
-        {
-            size_t page_count = pages_.size();
-            size_t last_page_filled = pages_.back()->filled;
-            if (pages_.back()->filled == Page::kSize)
-            {
-                ++page_count;
-                last_page_filled = 0;
-            }
-
-            handle = static_cast<Handle>((page_count - 1) * Page::kSize + last_page_filled + 1);
-        }
-
-        return ThreadSafeValue<Handle>(std::move(lock), handle);
+    Handle peek_next_handle(const Lock& lock) const
+    {
+        lock.assert_valid(this);
+        return peek_next_handle_unsafe();
     }
 
 protected:
@@ -242,6 +319,24 @@ protected:
     Element& get_unsafe(Handle handle)
     {
         return *get_slot_unsafe(handle).el;
+    }
+
+    Handle peek_next_handle_unsafe()
+    {
+        if (free_head_ != 0)
+            return free_head_;
+        else
+        {
+            size_t page_count = pages_.size();
+            size_t last_page_filled = pages_.back()->filled;
+            if (pages_.back()->filled == Page::kSize)
+            {
+                ++page_count;
+                last_page_filled = 0;
+            }
+
+            return static_cast<Handle>((page_count - 1) * Page::kSize + last_page_filled + 1);
+        }
     }
 
 private:

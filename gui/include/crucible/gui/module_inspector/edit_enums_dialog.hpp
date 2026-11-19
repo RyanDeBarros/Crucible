@@ -14,19 +14,19 @@ class QVBoxLayout;
 namespace crucible::gui
 {
 
-struct EnumTemplate
-{
-    QString name;
-    core::typing::Specialization instance;
-    QString id;
-};
-
 class EnumListView
     : public QWidget
 {
     Q_OBJECT;
 
 private:
+    struct EnumTemplate
+    {
+        QString name;
+        core::typing::Specialization instance;
+        QString id;
+    };
+
     using TableModel = ElementTableModel<EnumTemplate, 4>;
 
     TableModel* model_ = nullptr;

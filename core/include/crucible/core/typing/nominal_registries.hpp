@@ -16,6 +16,7 @@ class NominalRegistry
     using Super = Registry<Template, Specialization>;
 
 public:
+    using Super::lock;
     using Super::add;
     using Super::remove;
     using Super::exists;
@@ -36,6 +37,7 @@ class EnumRegistry final
     using Super = NominalRegistry<EnumTemplate>;
 
 public:
+    using Super::lock;
     using Super::add;
     using Super::remove;
     using Super::exists;
@@ -66,6 +68,7 @@ class StructRegistry final
 
 public:
     Specialization add(StructTemplate tmpl);
+    using Super::lock;
     using Super::remove;
     using Super::exists;
     using Super::get;

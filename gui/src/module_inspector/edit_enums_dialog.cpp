@@ -114,17 +114,32 @@ QVBoxLayout* EnumListView::initOptions()
 
 void EnumListView::newEnum()
 {
-    QString title = tr("New enum"); // TODO (#) suffix
-    
-    auto handle = core::typing::gEnumRegistry.add({
-        .title = title.toStdString(),
-        .names = {}
-    });
+    QString title = tr("New enum");
+    core::typing::Specialization spec;
 
+    {
+        auto lock = core::typing::gEnumRegistry.lock();
+
+        std::unordered_set<std::string> titles;
+        for (const auto& entry : lock.registry.range(lock))
+            titles.insert(entry.element.title);
+
+        std::string std_title = title.toStdString();
+        size_t suffix = 0;
+        while (titles.contains(std_title))
+            std_title = std::format("{} ({})", title.toStdString(), ++suffix);
+        title = QString::fromStdString(std_title);
+
+        spec = core::typing::gEnumRegistry.add(lock, {
+            .title = title.toStdString(),
+            .names = {}
+        });
+    }
+    
     model_->addElement({
         .name = std::move(title),
-        .instance = handle,
-        .id = repr(handle)
+        .instance = spec,
+        .id = repr(spec)
     });
 }
 
