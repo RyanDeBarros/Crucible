@@ -54,7 +54,7 @@ class EnumEditView
     Q_OBJECT;
 
 private:
-    using TableModel = ElementTableModel<QString, 3>;
+    using TableModel = ElementTableModel<QString, 4>;
 
     TableModel* model_ = nullptr;
 

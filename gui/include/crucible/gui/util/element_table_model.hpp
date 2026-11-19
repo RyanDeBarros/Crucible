@@ -50,11 +50,11 @@ public:
 
         QHeaderView::ResizeMode resize_mode = QHeaderView::ResizeToContents;
 
-        std::function<QVariant(const Element& element, int role)> data_fn =
-            [](const Element& element, int role) -> QVariant { return {}; };
+        std::function<QVariant(size_t row, const Element& element, int role)> data_fn =
+            [](size_t row, const Element& element, int role) -> QVariant { return {}; };
 
-        std::function<bool(Element& element, const QVariant& value, int role)> set_data_fn =
-            [](Element& element, const QVariant& value, int role) { return false; };
+        std::function<bool(size_t row, Element& element, const QVariant& value, int role)> set_data_fn =
+            [](size_t row, Element& element, const QVariant& value, int role) { return false; };
     };
 
     struct Config
@@ -174,7 +174,7 @@ public:
         if (!index.isValid() || index.row() >= elements_.size() || index.column() >= columns_.size())
             return {};
 
-        return columns_[index.column()].data_fn(elements_[index.row()], role);
+        return columns_[index.column()].data_fn(index.row(), elements_[index.row()], role);
     }
 
     bool setData(const QModelIndex& index, const QVariant& value, int role) override
@@ -182,7 +182,7 @@ public:
         if (!index.isValid() || index.row() >= elements_.size() || index.column() >= columns_.size())
             return false;
 
-        if (columns_[index.column()].set_data_fn(elements_[index.row()], value, role))
+        if (columns_[index.column()].set_data_fn(index.row(), elements_[index.row()], value, role))
         {
             Q_EMIT dataChanged(index, index, { role });
             return true;

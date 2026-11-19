@@ -59,7 +59,7 @@ QTableView* EnumListView::initTable()
     std::array<TableModel::Column, 4> columns{
         TableModel::Column{
             .resize_mode = QHeaderView::Stretch,
-            .data_fn = [](const EnumTemplate& element, int role) -> QVariant {
+            .data_fn = [](size_t row, const EnumTemplate& element, int role) -> QVariant {
                 if (role == Qt::DisplayRole)
                     return element.title;
                 else
@@ -70,7 +70,7 @@ QTableView* EnumListView::initTable()
             .preset = TableModel::Column::Preset::EditButton
         },
         TableModel::Column{
-            .data_fn = [](const EnumTemplate& element, int role) -> QVariant {
+            .data_fn = [](size_t row, const EnumTemplate& element, int role) -> QVariant {
                 if (role == Qt::DisplayRole)
                     return element.id;
                 else
@@ -269,21 +269,28 @@ QTableView* EnumEditView::initTable()
 {
     auto* table = new QTableView(this);
 
-    // TODO add column after drag handle for enum numerical value so it's clear for large enums
-    std::array<TableModel::Column, 3> columns{
+    std::array<TableModel::Column, 4> columns{
         TableModel::Column{
             .preset = TableModel::Column::Preset::DragHandle
         },
         TableModel::Column{
+            .data_fn = [](size_t row, const QString& element, int role) -> QVariant {
+                if (role == Qt::DisplayRole)
+                    return QString::number(row);
+                else
+                    return {};
+            },
+        },
+        TableModel::Column{
             .preset = TableModel::Column::Preset::LineEdit,
             .resize_mode = QHeaderView::Stretch,
-            .data_fn = [](const QString& element, int role) -> QVariant {
+            .data_fn = [](size_t row, const QString& element, int role) -> QVariant {
                 if (role == Qt::EditRole)
                     return element;
                 else
                     return {};
             },
-            .set_data_fn = [](QString& element, const QVariant& value, int role) -> bool {
+            .set_data_fn = [](size_t row, QString& element, const QVariant& value, int role) -> bool {
                 if (role == Qt::EditRole)
                 {
                     element = value.toString();
