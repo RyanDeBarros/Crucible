@@ -16,6 +16,11 @@ IconDelegate::IconDelegate(Icon icon, Config config, QObject* parent)
 {
 }
 
+QWidget* IconDelegate::createEditor(QWidget*, const QStyleOptionViewItem&, const QModelIndex&) const
+{
+    return nullptr;
+}
+
 void IconDelegate::paint(
     QPainter* painter,
     const QStyleOptionViewItem& option,

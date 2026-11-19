@@ -2,10 +2,8 @@
 
 #include <crucible/core/typing/kind.hpp>
 
+#include <crucible/gui/util/element_table_model.hpp>
 #include <crucible/gui/util/modal_dialog.hpp>
-
-#include <QAbstractListModel>
-#include <QAbstractTableModel>
 
 class QLineEdit;
 class QPushButton;
@@ -16,48 +14,11 @@ class QVBoxLayout;
 namespace crucible::gui
 {
 
-class EnumTableModel
-    : public QAbstractTableModel
+struct EnumTemplate
 {
-    Q_OBJECT;
-
-public:
-    enum Column
-    {
-        Name,
-        Edit,
-        Id,
-        Delete,
-        _Count
-    };
-
-    struct EnumTemplate
-    {
-        QString name;
-        core::typing::Specialization instance;
-        QString id;
-    };
-
-private:
-    QTableView& table_;
-    QVector<EnumTemplate> enums_;
-
-public:
-    explicit EnumTableModel(QTableView& table, QObject* parent = nullptr);
-
-signals:
-    void editRequested(core::typing::Specialization enum_instance);
-    void deleteRequested(core::typing::Specialization enum_instance);
-
-public:
-    int rowCount(const QModelIndex& parent = {}) const override;
-    int columnCount(const QModelIndex& parent = {}) const override;
-    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
-
-    void openPersistentEditors(int first, int last);
-
-    void addEnum(QString name, core::typing::Specialization instance);
-    void setEnums(std::vector<std::pair<QString, core::typing::Specialization>> enums);
+    QString name;
+    core::typing::Specialization instance;
+    QString id;
 };
 
 class EnumListView
@@ -66,7 +27,9 @@ class EnumListView
     Q_OBJECT;
 
 private:
-    EnumTableModel* model_ = nullptr;
+    using TableModel = ElementTableModel<EnumTemplate, 4>;
+
+    TableModel* model_ = nullptr;
 
 public:
     explicit EnumListView(QWidget* parent = nullptr);
@@ -85,67 +48,18 @@ private:
     void newEnum();
 };
 
-class EnumValuesTableModel
-    : public QAbstractTableModel
-{
-    Q_OBJECT;
-
-public:
-    enum Column
-    {
-        DragHandle,
-        Value,
-        Delete,
-        _Count
-    };
-
-private:
-    QTableView& table_;
-    QVector<QString> values_;
-
-public:
-    explicit EnumValuesTableModel(QTableView& table, QWidget* parent = nullptr);
-
-    int rowCount(const QModelIndex& parent = {}) const override;
-    int columnCount(const QModelIndex& parent = {}) const override;
-    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
-    bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
-    
-    QStringList mimeTypes() const override;
-    QMimeData* mimeData(const QModelIndexList& indexes) const override;
-
-    bool dropMimeData(
-        const QMimeData* data,
-        Qt::DropAction action,
-        int row,
-        int column,
-        const QModelIndex& parent) override;
-
-    Qt::DropActions supportedDropActions() const override;
-    Qt::ItemFlags flags(const QModelIndex& index) const override;
-
-    void openPersistentEditors(int first, int last);
-    void externalReset();
-
-    void setValues(const std::vector<std::string>& values);
-    std::vector<std::string> getValues() const;
-    bool valuesDiffer(const std::vector<std::string>& values) const;
-
-    void newValue();
-    void clearValues();
-};
-
 class EnumEditView
     : public QWidget
 {
     Q_OBJECT;
 
 private:
-    EnumValuesTableModel* model_ = nullptr;
+    using TableModel = ElementTableModel<QString, 3>;
+
+    TableModel* model_ = nullptr;
 
     QLineEdit* title_edit_ = nullptr;
     QLineEdit* id_label_ = nullptr;
-    QTableView* values_table_ = nullptr;
     core::typing::Specialization enum_instance_ = {};
 
     QPushButton* apply_button_ = nullptr;
@@ -164,6 +78,7 @@ public:
 
 private:
     QVBoxLayout* initList();
+    QTableView* initTable();
     QVBoxLayout* initOptions();
 
     void syncDirtyState();

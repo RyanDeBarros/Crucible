@@ -26,6 +26,8 @@ private:
 public:
     IconDelegate(Icon icon, Config config = {}, QObject* parent = nullptr);
 
+    QWidget* createEditor(QWidget*, const QStyleOptionViewItem&, const QModelIndex&) const override;
+
     void paint(
         QPainter* painter,
         const QStyleOptionViewItem& option,
