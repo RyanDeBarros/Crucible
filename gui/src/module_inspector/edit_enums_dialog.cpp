@@ -365,13 +365,34 @@ void EnumEditView::syncDirtyState()
 void EnumEditView::applyChanges()
 {
     {
-        // TODO validate no duplicates
-        auto enum_data = core::typing::gEnumRegistry.get(enum_instance_);
-        enum_data->title = title_edit_->text().toStdString();
+        auto lock = core::typing::gEnumRegistry.lock();
 
-        enum_data->names.clear();
+        std::unordered_set<std::string> existing_titles;
+        for (const auto& entry : core::typing::gEnumRegistry.range(lock))
+        {
+            if (entry.handle != enum_instance_)
+                existing_titles.insert(entry.element.title);
+        }
+
+        std::string title = title_edit_->text().toStdString();
+        if (existing_titles.contains(title))
+        {
+            QMessageBox::critical(
+                this,
+                tr("Cannot apply changes"),
+                tr("An enum with the name '%1' already exists").arg(title),
+                QMessageBox::Ok,
+                QMessageBox::Ok);
+
+            return;
+        }
+
+        auto& enum_data = core::typing::gEnumRegistry.get(lock, enum_instance_);
+        enum_data.title = std::move(title);
+
+        enum_data.names.clear();
         for (const auto& name : model_->getElements())
-            enum_data->names.push_back(name.toStdString());
+            enum_data.names.push_back(name.toStdString());
     }
 
     syncDirtyState();

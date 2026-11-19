@@ -214,6 +214,8 @@ public:
         return exists_unsafe(handle);
     }
 
+    // TODO might as well get rid of ThreadSafeReference/ThreadSafeValue as well as all methods that don't pass lock()
+
     ThreadSafeReference<const Element> get(Handle handle) const
     {
         std::unique_lock lock(mutex_);
