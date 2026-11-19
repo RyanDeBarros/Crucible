@@ -22,7 +22,7 @@ class EnumListView
 private:
     struct EnumTemplate
     {
-        QString name;
+        QString title;
         core::typing::Specialization instance;
         QString id;
     };

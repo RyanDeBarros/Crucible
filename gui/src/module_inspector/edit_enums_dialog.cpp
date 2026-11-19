@@ -45,7 +45,7 @@ void EnumListView::loadEnums()
     for (auto [handle, element] : core::typing::gEnumRegistry.range())
     {
         enums.push_back({
-            .name = QString::fromStdString(element.title),
+            .title = QString::fromStdString(element.title),
             .instance = handle,
             .id = repr(handle)
         });
@@ -61,7 +61,7 @@ QTableView* EnumListView::initTable()
             .resize_mode = QHeaderView::Stretch,
             .data_fn = [](const EnumTemplate& element, int role) -> QVariant {
                 if (role == Qt::DisplayRole)
-                    return element.name;
+                    return element.title;
                 else
                     return {};
             }
@@ -83,13 +83,28 @@ QTableView* EnumListView::initTable()
     };
 
     auto* table = new QTableView(this);
-    model_ = new TableModel(std::move(columns), *table, {}, this);
+    model_ = new TableModel(
+        std::move(columns),
+        *table,
+        {
+            .pre_delete_check = [this](size_t row) -> bool {
+                auto reply = QMessageBox::question(
+                    this,
+                    tr("Delete enum"),
+                    tr("Are you sure you want to delete '%1'? This action cannot be undone.")
+                        .arg(model_->at(row).title),
+                    { QMessageBox::Yes, QMessageBox::No },
+                    QMessageBox::No);
+
+                return reply == QMessageBox::Yes;
+            }
+        },
+        this);
 
     connect(model_, &TableModel::editRequested, this, [this](size_t row) {
         Q_EMIT editRequested(model_->at(row).instance);
     });
     connect(model_, &TableModel::deleteRequested, this, [this](size_t row) {
-        // TODO confirmation alert
         Q_EMIT deleteRequested(model_->at(row).instance);
     });
 
@@ -137,7 +152,7 @@ void EnumListView::newEnum()
     }
     
     model_->addElement({
-        .name = std::move(title),
+        .title = std::move(title),
         .instance = spec,
         .id = repr(spec)
     });

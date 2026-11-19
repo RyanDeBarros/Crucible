@@ -61,6 +61,8 @@ public:
     {
         bool reorderable = false;
         bool show_grid = false;
+
+        std::function<bool(size_t row)> pre_delete_check = [](size_t row) { return true; };
     };
 
 private:
@@ -95,9 +97,14 @@ public:
                 auto* delete_buttons = new ButtonDelegate(table_, Icon::Delete, { .tooltip = tr("Delete") }, this);
                 table_.setItemDelegateForColumn(i, delete_buttons);
                 connect(delete_buttons, &ButtonDelegate::onClick, this, [this](const QModelIndex& idx) {
+                    if (!idx.isValid() || idx.row() >= elements_.size())
+                        return;
+
+                    if (!config_.pre_delete_check(idx.row()))
+                        return;
+
                     Q_EMIT deleteRequested(idx.row());
 
-                    // TODO some way to refuse deletion if not allowed to delete
                     beginRemoveRows({}, idx.row(), idx.row());
                     elements_.erase(elements_.begin() + idx.row());
                     endRemoveRows();
