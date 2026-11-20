@@ -1,6 +1,8 @@
 #include <crucible/gui/ram/ram_panel.hpp>
 
 #include <crucible/gui/dialogs/edit_enums_dialog.hpp>
+#include <crucible/gui/dialogs/edit_structs_dialog.hpp>
+#include <crucible/gui/dialogs/new_module_dialog.hpp>
 
 #include <crucible/gui/ram/ram_controls.hpp>
 
@@ -35,14 +37,14 @@ RamPanel::RamPanel(QWidget* parent)
 
 void RamPanel::newModule()
 {
-    // TODO
-    LOG.info(kModules) << "New module";
+    NewModuleDialog dialog(this);
+    dialog.exec();
 }
 
 void RamPanel::editStructs()
 {
-    // TODO
-    LOG.info(kModules) << "Edit structs!";
+    EditStructsDialog dialog(this);
+    dialog.exec();
 }
 
 void RamPanel::editEnums()
