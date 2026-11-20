@@ -42,7 +42,8 @@ void EnumListView::loadEnums()
 {
     std::vector<EnumTemplate> enums;
 
-    for (auto [handle, element] : core::typing::gEnumRegistry.range())
+    auto lock = core::typing::gEnumRegistry.lock();
+    for (auto [handle, element] : core::typing::gEnumRegistry.range(lock))
     {
         enums.push_back({
             .title = QString::fromStdString(element.title),
@@ -136,7 +137,7 @@ void EnumListView::newEnum()
         auto lock = core::typing::gEnumRegistry.lock();
 
         std::unordered_set<std::string> titles;
-        for (const auto& entry : lock.registry.range(lock))
+        for (const auto& entry : core::typing::gEnumRegistry.range(lock))
             titles.insert(entry.element.title);
 
         std::string std_title = title.toStdString();
@@ -178,13 +179,15 @@ void EnumEditView::loadEnum(core::typing::Specialization enum_instance)
             QSignalBlocker(model_),
         };
 
-        auto enum_data = core::typing::gEnumRegistry.get(enum_instance_);
+        auto lock = core::typing::gEnumRegistry.lock();
+
+        const auto& enum_data = core::typing::gEnumRegistry.get(lock, enum_instance_);
 
         id_label_->setText(repr(enum_instance_));
-        title_edit_->setText(QString::fromStdString(enum_data->title));
+        title_edit_->setText(QString::fromStdString(enum_data.title));
 
         std::vector<QString> names;
-        for (const auto& name : enum_data->names)
+        for (const auto& name : enum_data.names)
             names.push_back(QString::fromStdString(name));
         model_->setElements(std::move(names));
     }
@@ -199,18 +202,20 @@ void EnumEditView::loadEnum(core::typing::Specialization enum_instance)
 
 bool EnumEditView::unsavedChanges() const
 {
-    auto enum_data = core::typing::gEnumRegistry.get(enum_instance_);
+    auto lock = core::typing::gEnumRegistry.lock();
 
-    if (enum_data->title != title_edit_->text())
+    const auto& enum_data = core::typing::gEnumRegistry.get(lock, enum_instance_);
+
+    if (enum_data.title != title_edit_->text())
         return true;
 
     const auto& names = model_->getElements();
-    if (names.size() != enum_data->names.size())
+    if (names.size() != enum_data.names.size())
         return true;
 
     for (size_t i = 0; i < names.size(); ++i)
     {
-        if (names[i] != enum_data->names[i])
+        if (names[i] != enum_data.names[i])
             return true;
     }
 
@@ -456,7 +461,7 @@ void EditEnumsDialog::showEditView(core::typing::Specialization enum_instance)
 
 void EditEnumsDialog::deleteEnum(core::typing::Specialization enum_instance)
 {
-    core::typing::gEnumRegistry.remove(enum_instance);
+    core::typing::gEnumRegistry.remove(core::typing::gEnumRegistry.lock(), enum_instance);
 }
 
 bool EditEnumsDialog::checkForUnsavedChanges()

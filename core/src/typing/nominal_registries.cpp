@@ -9,23 +9,23 @@ namespace crucible::core::typing
 
 EnumRegistry gEnumRegistry{};
 
-std::string EnumRegistry::enum_title(Specialization spec) const
+std::string EnumRegistry::enum_title(const Lock& lock, Specialization spec) const
 {
-    return get(spec)->title;
+    return get(lock, spec).title;
 }
 
-std::string EnumRegistry::enum_name(Specialization spec, std::uint64_t index) const
+std::string EnumRegistry::enum_name(const Lock& lock, Specialization spec, std::uint64_t index) const
 {
-    const auto& names = get(spec)->names;
+    const auto& names = get(lock, spec).names;
     if (index >= names.size())
         throw std::out_of_range("Enum name index out of range");
 
     return names[index];
 }
 
-std::uint64_t EnumRegistry::enum_count(Specialization spec) const
+std::uint64_t EnumRegistry::enum_count(const Lock& lock, Specialization spec) const
 {
-    return get(spec)->names.size();
+    return get(lock, spec).names.size();
 }
 
 StructRegistry gStructRegistry{};
@@ -48,43 +48,43 @@ void StructTemplate::assert_valid() const
         throw std::logic_error("Struct template has duplicate field names");
 }
 
-Specialization StructRegistry::add(StructTemplate tmpl)
+Specialization StructRegistry::add(const Lock& lock, StructTemplate tmpl)
 {
     tmpl.assert_valid();
-    return Super::add(std::move(tmpl));
+    return Super::add(lock, std::move(tmpl));
 }
 
-std::string StructRegistry::struct_title(Specialization spec) const
+std::string StructRegistry::struct_title(const Lock& lock, Specialization spec) const
 {
-    return get(spec)->title;
+    return get(lock, spec).title;
 }
 
-size_t StructRegistry::struct_field_count(Specialization spec) const
+size_t StructRegistry::struct_field_count(const Lock& lock, Specialization spec) const
 {
-    return get(spec)->fields.size();
+    return get(lock, spec).fields.size();
 }
 
-std::string StructRegistry::struct_field_name(Specialization spec, std::uint64_t index) const
+std::string StructRegistry::struct_field_name(const Lock& lock, Specialization spec, std::uint64_t index) const
 {
-    const auto& fields = get(spec)->fields;
+    const auto& fields = get(lock, spec).fields;
     if (index >= fields.size())
         throw std::out_of_range("Struct field index out of range");
 
     return fields[index].first;
 }
 
-QualifiedType StructRegistry::struct_field_type(Specialization spec, std::uint64_t index) const
+QualifiedType StructRegistry::struct_field_type(const Lock& lock, Specialization spec, std::uint64_t index) const
 {
-    const auto& fields = get(spec)->fields;
+    const auto& fields = get(lock, spec).fields;
     if (index >= fields.size())
         throw std::out_of_range("Struct field index out of range");
 
     return fields[index].second;
 }
 
-QualifiedType StructRegistry::struct_field_type(Specialization spec, const std::string_view name) const
+QualifiedType StructRegistry::struct_field_type(const Lock& lock, Specialization spec, const std::string_view name) const
 {
-    const auto& fields = get(spec)->fields;
+    const auto& fields = get(lock, spec).fields;
     for (const auto& [fname, ftype] : fields)
     {
         if (fname == name)

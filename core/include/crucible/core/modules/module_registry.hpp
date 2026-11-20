@@ -13,13 +13,16 @@ class ModuleRegistry
     using Super = Registry<Module, ModuleId>;
 
 public:
+    using Lock = Super::Lock;
+
+    using Super::lock;
     using Super::remove;
     using Super::exists;
     using Super::get;
 
-    ModuleId create(typing::Storage storage, Metadata metadata);
+    ModuleId create(const Lock& lock, typing::Storage storage, Metadata metadata);
 
-    typing::QualifiedType module_type(ModuleId id) const;
+    typing::QualifiedType module_type(const Lock& lock, ModuleId id) const;
 };
 
 extern ModuleRegistry gModuleRegistry;

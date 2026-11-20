@@ -16,6 +16,8 @@ class NominalRegistry
     using Super = Registry<Template, Specialization>;
 
 public:
+    using Lock = Super::Lock;
+
     using Super::lock;
     using Super::add;
     using Super::remove;
@@ -37,6 +39,8 @@ class EnumRegistry final
     using Super = NominalRegistry<EnumTemplate>;
 
 public:
+    using Lock = Super::Lock;
+
     using Super::lock;
     using Super::add;
     using Super::remove;
@@ -45,9 +49,9 @@ public:
     using Super::range;
     using Super::peek_next_handle;
 
-    std::string enum_title(Specialization spec) const;
-    std::string enum_name(Specialization spec, std::uint64_t index) const;
-    std::uint64_t enum_count(Specialization spec) const;
+    std::string enum_title(const Lock& lock, Specialization spec) const;
+    std::string enum_name(const Lock& lock, Specialization spec, std::uint64_t index) const;
+    std::uint64_t enum_count(const Lock& lock, Specialization spec) const;
 };
 
 extern EnumRegistry gEnumRegistry;
@@ -67,7 +71,9 @@ class StructRegistry final
     using Super = NominalRegistry<StructTemplate>;
 
 public:
-    Specialization add(StructTemplate tmpl);
+    using Lock = Super::Lock;
+
+    Specialization add(const Lock& lock, StructTemplate tmpl);
     using Super::lock;
     using Super::remove;
     using Super::exists;
@@ -75,11 +81,11 @@ public:
     using Super::range;
     using Super::peek_next_handle;
 
-    std::string struct_title(Specialization spec) const;
-    size_t struct_field_count(Specialization spec) const;
-    std::string struct_field_name(Specialization spec, std::uint64_t index) const;
-    QualifiedType struct_field_type(Specialization spec, std::uint64_t index) const;
-    QualifiedType struct_field_type(Specialization spec, const std::string_view name) const;
+    std::string struct_title(const Lock& lock, Specialization spec) const;
+    size_t struct_field_count(const Lock& lock, Specialization spec) const;
+    std::string struct_field_name(const Lock& lock, Specialization spec, std::uint64_t index) const;
+    QualifiedType struct_field_type(const Lock& lock, Specialization spec, std::uint64_t index) const;
+    QualifiedType struct_field_type(const Lock& lock, Specialization spec, const std::string_view name) const;
 };
 
 extern StructRegistry gStructRegistry;

@@ -15,27 +15,67 @@ template<typename Element, typename Handle = size_t>
 class Registry
 {
 private:
+    class Range;
     class UnsafeIterator;
 
 public:
     class Lock
     {
-    public:
-        const Registry& registry;
+        friend class Range;
 
     private:
+        const Registry* registry_;
         std::unique_lock<std::mutex> lock_;
 
     public:
         Lock(const Registry& registry)
-            : registry(registry)
+            : registry_(&registry)
             , lock_(registry.mutex_)
         {
         }
 
+        Lock(const Lock&) = delete;
+
+        Lock(Lock&& o) noexcept
+            : registry_(o.registry_)
+            , lock_(std::move(o.lock_))
+        {
+            if (registry_ && registry_->active_lock_ == &o)
+                registry_->active_lock_ = this;
+        }
+
+        ~Lock()
+        {
+            if (registry_ && registry_->active_lock_ == this)
+                registry_->active_lock_ = nullptr;
+        }
+
+        Lock& operator=(const Lock&) = delete;
+
+        Lock& operator=(Lock&& o) noexcept
+        {
+            if (this != &o)
+            {
+                if (registry_ && registry_->active_lock_ == this)
+                    registry_->active_lock_ = nullptr;
+
+                registry_ = o.registry_;
+
+                if (registry_ && registry_->active_lock_ == &o)
+                    registry_->active_lock_ = this;
+
+                lock_ = std::move(o.lock_);
+            }
+
+            return *this;
+        }
+
         void assert_valid(const Registry* registry) const
         {
-            if (&this->registry != registry)
+            if (registry_ == nullptr)
+                throw std::runtime_error("Null pointer");
+
+            if (registry_ != registry)
                 throw std::runtime_error("Lock does not point to registry");
         }
     };
@@ -44,34 +84,10 @@ public:
     {
         friend class Registry;
 
-        Lock lock_;
-
-    private:
-        Range(const Registry& registry)
-            : lock_(registry)
-        {
-        }
-
-    public:
-        UnsafeIterator begin() const
-        {
-            return UnsafeIterator(lock_.registry, true);
-        }
-
-        UnsafeIterator end() const
-        {
-            return UnsafeIterator(lock_.registry, false);
-        }
-    };
-
-    class SafeRange
-    {
-        friend class Registry;
-
         const Lock& lock_;
 
     private:
-        SafeRange(const Lock& lock)
+        Range(const Lock& lock)
             : lock_(lock)
         {
         }
@@ -79,12 +95,14 @@ public:
     public:
         UnsafeIterator begin() const
         {
-            return UnsafeIterator(lock_.registry, true);
+            lock_.assert_valid(lock_.registry_);
+            return UnsafeIterator(*lock_.registry_, true);
         }
 
         UnsafeIterator end() const
         {
-            return UnsafeIterator(lock_.registry, false);
+            lock_.assert_valid(lock_.registry_);
+            return UnsafeIterator(*lock_.registry_, false);
         }
     };
 
@@ -166,6 +184,7 @@ protected:
 private:
     std::vector<std::unique_ptr<Page>> pages_;
     Handle free_head_ = 0;
+    mutable Lock* active_lock_ = nullptr;
 
 public:
     Registry()
@@ -175,13 +194,14 @@ public:
 
     Lock lock() const
     {
-        return Lock(*this);
-    }
-
-    Handle add(Element el)
-    {
-        std::unique_lock lock(mutex_);
-        return add_unsafe(std::move(el));
+        if (active_lock_ == nullptr)
+        {
+            Lock lock(*this);
+            active_lock_ = &lock;
+            return lock;
+        }
+        else
+            throw std::runtime_error("Active lock already exists on registry");
     }
 
     Handle add(const Lock& lock, Element el)
@@ -190,42 +210,16 @@ public:
         return add_unsafe(std::move(el));
     }
 
-    bool remove(Handle handle)
-    {
-        std::unique_lock lock(mutex_);
-        return remove_unsafe(handle);
-    }
-
     bool remove(const Lock& lock, Handle handle)
     {
         lock.assert_valid(this);
         return remove_unsafe(handle);
     }
 
-    bool exists(Handle handle) const
-    {
-        std::unique_lock lock(mutex_);
-        return exists_unsafe(handle);
-    }
-
     bool exists(const Lock& lock, Handle handle) const
     {
         lock.assert_valid(this);
         return exists_unsafe(handle);
-    }
-
-    // TODO might as well get rid of ThreadSafeReference/ThreadSafeValue as well as all methods that don't pass lock()
-
-    ThreadSafeReference<const Element> get(Handle handle) const
-    {
-        std::unique_lock lock(mutex_);
-        return ThreadSafeReference<const Element>(std::move(lock), get_unsafe(handle));
-    }
-
-    ThreadSafeReference<Element> get(Handle handle)
-    {
-        std::unique_lock lock(mutex_);
-        return ThreadSafeReference<Element>(std::move(lock), get_unsafe(handle));
     }
 
     const Element& get(const Lock& lock, Handle handle) const
@@ -240,21 +234,10 @@ public:
         return get_unsafe(handle);
     }
 
-    Range range() const
-    {
-        return Range(*this);
-    }
-
-    SafeRange range(const Lock& lock) const
+    Range range(const Lock& lock) const
     {
         lock.assert_valid(this);
-        return SafeRange(lock);
-    }
-
-    ThreadSafeValue<Handle> peek_next_handle() const
-    {
-        std::unique_lock lock(mutex_);
-        return ThreadSafeValue<Handle>(std::move(lock), peek_next_handle_unsafe());
+        return Range(lock);
     }
 
     Handle peek_next_handle(const Lock& lock) const

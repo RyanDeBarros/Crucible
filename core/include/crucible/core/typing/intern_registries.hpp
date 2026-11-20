@@ -20,9 +20,11 @@ private:
     std::unordered_map<Template, Specialization> lut_;
 
 public:
-    Specialization intern(Template tmpl)
+    using Lock = Super::Lock;
+
+    Specialization intern(const Lock& lock, Template tmpl)
     {
-        std::unique_lock lock(Super::mutex_);
+        lock.assert_valid(this);
 
         if (auto it = lut_.find(tmpl); it != lut_.end())
             return it->second;
@@ -36,9 +38,10 @@ public:
             return {};
     }
 
-    bool invalidate(Specialization spec)
+    bool invalidate(const Lock& lock, Specialization spec)
     {
-        std::unique_lock lock(Super::mutex_);
+        lock.assert_valid(this);
+
         if (Super::exists_unsafe(spec))
         {
             lut_.erase(Super::get_unsafe(spec));
@@ -119,6 +122,8 @@ class PointerRegistry final
     using Super = InternRegistry<PointerTemplate>;
 
 public:
+    using Lock = Super::Lock;
+
     using Super::intern;
     using Super::invalidate;
     using Super::lock;
@@ -126,7 +131,7 @@ public:
     using Super::range;
     using Super::peek_next_handle;
 
-    QualifiedType underlying_type(Specialization spec) const;
+    QualifiedType underlying_type(const Lock& lock, Specialization spec) const;
 };
 
 extern PointerRegistry gPointerRegistry;
@@ -137,6 +142,8 @@ class ListRegistry final
     using Super = InternRegistry<ListTemplate>;
 
 public:
+    using Lock = Super::Lock;
+
     using Super::intern;
     using Super::invalidate;
     using Super::lock;
@@ -144,7 +151,7 @@ public:
     using Super::range;
     using Super::peek_next_handle;
 
-    QualifiedType element_type(Specialization spec) const;
+    QualifiedType element_type(const Lock& lock, Specialization spec) const;
 };
 
 extern ListRegistry gListRegistry;
@@ -155,6 +162,8 @@ class SetRegistry final
     using Super = InternRegistry<SetTemplate>;
 
 public:
+    using Lock = Super::Lock;
+
     using Super::intern;
     using Super::invalidate;
     using Super::lock;
@@ -162,7 +171,7 @@ public:
     using Super::range;
     using Super::peek_next_handle;
 
-    QualifiedType element_type(Specialization spec) const;
+    QualifiedType element_type(const Lock& lock, Specialization spec) const;
 };
 
 extern SetRegistry gSetRegistry;
@@ -173,6 +182,8 @@ class MapRegistry final
     using Super = InternRegistry<MapTemplate>;
 
 public:
+    using Lock = Super::Lock;
+
     using Super::intern;
     using Super::invalidate;
     using Super::lock;
@@ -180,8 +191,8 @@ public:
     using Super::range;
     using Super::peek_next_handle;
 
-    QualifiedType key_type(Specialization spec) const;
-    QualifiedType value_type(Specialization spec) const;
+    QualifiedType key_type(const Lock& lock, Specialization spec) const;
+    QualifiedType value_type(const Lock& lock, Specialization spec) const;
 };
 
 extern MapRegistry gMapRegistry;

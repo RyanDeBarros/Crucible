@@ -42,12 +42,34 @@ Storage Storage::make_null(QualifiedType type)
     return Storage(std::move(type), reflector::box{}, StorageState::Null);
 }
 
-static bool validate_pointer(Specialization spec, const PointerPayload& payload);
-static bool validate_enum(Specialization spec, const EnumPayload& payload);
-static bool validate_list(Specialization spec, const ListPayload& payload);
-static bool validate_set(Specialization spec, const SetPayload& payload);
-static bool validate_map(Specialization spec, const MapPayload& payload);
-static bool validate_struct(Specialization spec, const StructPayload& payload);
+struct RegistryLockPack
+{
+    modules::ModuleRegistry::Lock module_lock;
+    PointerRegistry::Lock pointer_lock;
+    EnumRegistry::Lock enum_lock;
+    ListRegistry::Lock list_lock;
+    SetRegistry::Lock set_lock;
+    MapRegistry::Lock map_lock;
+    StructRegistry::Lock struct_lock;
+
+    RegistryLockPack()
+        : module_lock(modules::gModuleRegistry.lock())
+        , pointer_lock(gPointerRegistry.lock())
+        , enum_lock(gEnumRegistry.lock())
+        , list_lock(gListRegistry.lock())
+        , set_lock(gSetRegistry.lock())
+        , map_lock(gMapRegistry.lock())
+        , struct_lock(gStructRegistry.lock())
+    {
+    }
+};
+
+static bool validate_pointer(const RegistryLockPack& locks, Specialization spec, const PointerPayload& payload);
+static bool validate_enum(const RegistryLockPack& locks, Specialization spec, const EnumPayload& payload);
+static bool validate_list(const RegistryLockPack& locks, Specialization spec, const ListPayload& payload);
+static bool validate_set(const RegistryLockPack& locks, Specialization spec, const SetPayload& payload);
+static bool validate_map(const RegistryLockPack& locks, Specialization spec, const MapPayload& payload);
+static bool validate_struct(const RegistryLockPack& locks, Specialization spec, const StructPayload& payload);
 
 template<typename PayloadType>
 constexpr bool kShouldItercheck =
@@ -59,49 +81,49 @@ constexpr bool kShouldItercheck =
     std::is_same_v<PayloadType, StructPayload>;
 
 template<typename PayloadType>
-static bool validate_element(Specialization spec, const PayloadType& payload)
+static bool validate_element(const RegistryLockPack& locks, Specialization spec, const PayloadType& payload)
 {
     if constexpr (std::is_same_v<PayloadType, PointerPayload>)
-        return validate_pointer(spec, payload);
+        return validate_pointer(locks, spec, payload);
 
     else if constexpr (std::is_same_v<PayloadType, EnumPayload>)
-        return validate_enum(spec, payload);
+        return validate_enum(locks, spec, payload);
 
     else if constexpr (std::is_same_v<PayloadType, ListPayload>)
-        return validate_list(spec, payload);
+        return validate_list(locks, spec, payload);
 
     else if constexpr (std::is_same_v<PayloadType, SetPayload>)
-        return validate_set(spec, payload);
+        return validate_set(locks, spec, payload);
 
     else if constexpr (std::is_same_v<PayloadType, MapPayload>)
-        return validate_map(spec, payload);
+        return validate_map(locks, spec, payload);
 
     else if constexpr (std::is_same_v<PayloadType, StructPayload>)
-        return validate_struct(spec, payload);
+        return validate_struct(locks, spec, payload);
 
     else
         static_assert(kFalse<PayloadType>);
 }
 
-static bool validate_pointer(Specialization spec, const PointerPayload& payload)
+static bool validate_pointer(const RegistryLockPack& locks, Specialization spec, const PointerPayload& payload)
 {
-    if (!gPointerRegistry.exists(spec))
+    if (!gPointerRegistry.exists(locks.pointer_lock, spec))
         return false;
 
-    const auto expected_underlying_type = gPointerRegistry.underlying_type(spec);
-    return modules::gModuleRegistry.module_type(payload.value) == expected_underlying_type;
+    const auto expected_underlying_type = gPointerRegistry.underlying_type(locks.pointer_lock, spec);
+    return modules::gModuleRegistry.module_type(locks.module_lock, payload.value) == expected_underlying_type;
 }
 
-static bool validate_enum(Specialization spec, const EnumPayload& payload)
+static bool validate_enum(const RegistryLockPack& locks, Specialization spec, const EnumPayload& payload)
 {
-    if (!gEnumRegistry.exists(spec))
+    if (!gEnumRegistry.exists(locks.enum_lock, spec))
         return false;
     
-    return payload.value < gEnumRegistry.enum_count(spec);
+    return payload.value < gEnumRegistry.enum_count(locks.enum_lock, spec);
 }
 
 template<typename ElementPayloadType, typename PayloadContainer>
-bool std_itercheck(const auto& payload, const QualifiedType& expected_element_type)
+bool std_itercheck(const RegistryLockPack& locks, const auto& payload, const QualifiedType& expected_element_type)
 {
     if (const auto* pld = payload.value.as<PayloadContainer>())
     {
@@ -109,7 +131,7 @@ bool std_itercheck(const auto& payload, const QualifiedType& expected_element_ty
         {
             for (const auto& el : *pld)
             {
-                if (!validate_element(expected_element_type.specialization(), el))
+                if (!validate_element(locks, expected_element_type.specialization(), el))
                     return false;
             }
         }
@@ -122,6 +144,7 @@ bool std_itercheck(const auto& payload, const QualifiedType& expected_element_ty
 
 #define ITERCHECK(Container, PayloadType) \
         return std_itercheck<PayloadType, Container<PayloadType>>( \
+            locks, \
             payload, \
             expected_element_type);
 
@@ -141,22 +164,22 @@ bool std_itercheck(const auto& payload, const QualifiedType& expected_element_ty
         case Kind::Joker:   ITERCHECK(Container, JokerPayload) \
         }
 
-static bool validate_list(Specialization spec, const ListPayload& payload)
+static bool validate_list(const RegistryLockPack& locks, Specialization spec, const ListPayload& payload)
 {
-    if (!gListRegistry.exists(spec))
+    if (!gListRegistry.exists(locks.list_lock, spec))
         return false;
 
-    const auto expected_element_type = gListRegistry.element_type(spec);
+    const auto expected_element_type = gListRegistry.element_type(locks.list_lock, spec);
     VALIDATE_ITERABLE(std::vector);
     return false;
 }
 
-static bool validate_set(Specialization spec, const SetPayload& payload)
+static bool validate_set(const RegistryLockPack& locks, Specialization spec, const SetPayload& payload)
 {
-    if (!gSetRegistry.exists(spec))
+    if (!gSetRegistry.exists(locks.set_lock, spec))
         return false;
 
-    const auto expected_element_type = gSetRegistry.element_type(spec);
+    const auto expected_element_type = gSetRegistry.element_type(locks.set_lock, spec);
     VALIDATE_ITERABLE(std::unordered_set);
     return false;
 }
@@ -166,6 +189,7 @@ static bool validate_set(Specialization spec, const SetPayload& payload)
 
 template<typename KeyPayloadType, typename ValuePayloadType, typename PayloadContainer>
 bool map_itercheck(
+    const RegistryLockPack& locks,
     const PayloadContainer& payload,
     const QualifiedType& expected_key_type,
     const QualifiedType& expected_value_type)
@@ -176,7 +200,7 @@ bool map_itercheck(
         {
             for (const auto& [key, _] : *pld)
             {
-                if (!validate_element(expected_key_type.specialization(), key))
+                if (!validate_element(locks, expected_key_type.specialization(), key))
                     return false;
             }
         }
@@ -185,7 +209,7 @@ bool map_itercheck(
         {
             for (const auto& [_, value] : *pld)
             {
-                if (!validate_element(expected_value_type.specialization(), value))
+                if (!validate_element(locks, expected_value_type.specialization(), value))
                     return false;
             }
         }
@@ -196,31 +220,32 @@ bool map_itercheck(
         return false;
 }
 
+// TODO replace map_itercheck with macro to reduce line length
 #define VALIDATE_MAP_INNER(KeyPayloadType) \
         switch (expected_value_type.kind()) \
         { \
         case Kind::Bool: \
-            return map_itercheck<KeyPayloadType, BoolPayload>(payload, expected_key_type, expected_value_type); \
+            return map_itercheck<KeyPayloadType, BoolPayload>(locks, payload, expected_key_type, expected_value_type); \
         case Kind::Int: \
-            return map_itercheck<KeyPayloadType, IntPayload>(payload, expected_key_type, expected_value_type); \
+            return map_itercheck<KeyPayloadType, IntPayload>(locks, payload, expected_key_type, expected_value_type); \
         case Kind::Float: \
-            return map_itercheck<KeyPayloadType, FloatPayload>(payload, expected_key_type, expected_value_type); \
+            return map_itercheck<KeyPayloadType, FloatPayload>(locks, payload, expected_key_type, expected_value_type); \
         case Kind::String: \
-            return map_itercheck<KeyPayloadType, StringPayload>(payload, expected_key_type, expected_value_type); \
+            return map_itercheck<KeyPayloadType, StringPayload>(locks, payload, expected_key_type, expected_value_type); \
         case Kind::Pointer: \
-            return map_itercheck<KeyPayloadType, PointerPayload>(payload, expected_key_type, expected_value_type); \
+            return map_itercheck<KeyPayloadType, PointerPayload>(locks, payload, expected_key_type, expected_value_type); \
         case Kind::Enum: \
-            return map_itercheck<KeyPayloadType, EnumPayload>(payload, expected_key_type, expected_value_type); \
+            return map_itercheck<KeyPayloadType, EnumPayload>(locks, payload, expected_key_type, expected_value_type); \
         case Kind::List: \
-            return map_itercheck<KeyPayloadType, ListPayload>(payload, expected_key_type, expected_value_type); \
+            return map_itercheck<KeyPayloadType, ListPayload>(locks, payload, expected_key_type, expected_value_type); \
         case Kind::Set: \
-            return map_itercheck<KeyPayloadType, SetPayload>(payload, expected_key_type, expected_value_type); \
+            return map_itercheck<KeyPayloadType, SetPayload>(locks, payload, expected_key_type, expected_value_type); \
         case Kind::Map: \
-            return map_itercheck<KeyPayloadType, MapPayload>(payload, expected_key_type, expected_value_type); \
+            return map_itercheck<KeyPayloadType, MapPayload>(locks, payload, expected_key_type, expected_value_type); \
         case Kind::Struct: \
-            return map_itercheck<KeyPayloadType, StructPayload>(payload, expected_key_type, expected_value_type); \
+            return map_itercheck<KeyPayloadType, StructPayload>(locks, payload, expected_key_type, expected_value_type); \
         case Kind::Joker: \
-            return map_itercheck<KeyPayloadType, JokerPayload>(payload, expected_key_type, expected_value_type); \
+            return map_itercheck<KeyPayloadType, JokerPayload>(locks, payload, expected_key_type, expected_value_type); \
         }
 
 #define VALIDATE_MAP_OUTER \
@@ -239,13 +264,13 @@ bool map_itercheck(
         case Kind::Joker:   VALIDATE_MAP_INNER(JokerPayload) \
         }
 
-static bool validate_map(Specialization spec, const MapPayload& payload)
+static bool validate_map(const RegistryLockPack& locks, Specialization spec, const MapPayload& payload)
 {
-    if (!gMapRegistry.exists(spec))
+    if (!gMapRegistry.exists(locks.map_lock, spec))
         return false;
 
-    const auto expected_key_type = gMapRegistry.key_type(spec);
-    const auto expected_value_type = gMapRegistry.value_type(spec);
+    const auto expected_key_type = gMapRegistry.key_type(locks.map_lock, spec);
+    const auto expected_value_type = gMapRegistry.value_type(locks.map_lock, spec);
     VALIDATE_MAP_OUTER;
     return false;
 }
@@ -253,19 +278,19 @@ static bool validate_map(Specialization spec, const MapPayload& payload)
 #undef VALIDATE_MAP_OUTER
 #undef VALIDATE_MAP_INNER
 
-static bool validate_struct(Specialization spec, const StructPayload& payload)
+static bool validate_struct(const RegistryLockPack& locks, Specialization spec, const StructPayload& payload)
 {
-    if (!gStructRegistry.exists(spec))
+    if (!gStructRegistry.exists(locks.struct_lock, spec))
         return false;
 
-    const size_t field_count = gStructRegistry.struct_field_count(spec);
+    const size_t field_count = gStructRegistry.struct_field_count(locks.struct_lock, spec);
     if (field_count != payload.value.size())
         return false;
 
     for (size_t i = 0; i < field_count; ++i)
     {
         if (!Storage::is_valid_payload(
-            gStructRegistry.struct_field_type(spec, i),
+            gStructRegistry.struct_field_type(locks.struct_lock, spec, i),
             payload.value[i]))
         {
             return false;
@@ -277,6 +302,8 @@ static bool validate_struct(Specialization spec, const StructPayload& payload)
 
 bool Storage::is_valid_payload(const QualifiedType& type, const reflector::box& payload)
 {
+    RegistryLockPack locks;
+
     switch (type.kind())
     {
     case Kind::Bool:
@@ -293,38 +320,38 @@ bool Storage::is_valid_payload(const QualifiedType& type, const reflector::box& 
 
     case Kind::Pointer:
         if (auto* pld = payload.as<PointerPayload>())
-            return validate_pointer(type.specialization(), *pld);
+            return validate_pointer(locks, type.specialization(), *pld);
         else
             return false;
 
     case Kind::Enum:
         if (auto* pld = payload.as<EnumPayload>())
-            return validate_enum(type.specialization(), *pld);
+            return validate_enum(locks, type.specialization(), *pld);
         else
             return false;
 
     case Kind::List:
         if (auto* pld = payload.as<ListPayload>())
-            return validate_list(type.specialization(), *pld);
+            return validate_list(locks, type.specialization(), *pld);
         else
             return false;
 
     case Kind::Set:
         if (auto* pld = payload.as<SetPayload>())
-            return validate_set(type.specialization(), *pld);
+            return validate_set(locks, type.specialization(), *pld);
         else
             return false;
 
     case Kind::Map:
         if (auto* pld = payload.as<MapPayload>())
-            return validate_map(type.specialization(), *pld);
+            return validate_map(locks, type.specialization(), *pld);
         else
             return false;
 
     case Kind::Struct:
     {
         if (const auto* pld = payload.as<StructPayload>())
-            return validate_struct(type.specialization(), *pld);
+            return validate_struct(locks, type.specialization(), *pld);
         else
             return false;
     }

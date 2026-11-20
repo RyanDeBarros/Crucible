@@ -51,7 +51,7 @@ QualifiedType QualifiedType::make_pointer(QualifiedType underlying_type)
 {
     return QualifiedType(
         Kind::Pointer,
-        gPointerRegistry.intern({ .underlying_type = underlying_type }));
+        gPointerRegistry.intern(gPointerRegistry.lock(), {.underlying_type = underlying_type}));
 }
 
 QualifiedType QualifiedType::make_enum(Specialization spec)
@@ -63,21 +63,23 @@ QualifiedType QualifiedType::make_list(QualifiedType elem_type)
 {
     return QualifiedType(
         Kind::List,
-        gListRegistry.intern({ .element_type = std::move(elem_type) }));
+        gListRegistry.intern(gListRegistry.lock(), {.element_type = std::move(elem_type)}));
 }
 
 QualifiedType QualifiedType::make_set(QualifiedType elem_type)
 {
     return QualifiedType(
         Kind::Set,
-        gSetRegistry.intern({ .element_type = std::move(elem_type) }));
+        gSetRegistry.intern(gSetRegistry.lock(), {.element_type = std::move(elem_type)}));
 }
 
 QualifiedType QualifiedType::make_map(QualifiedType key_type, QualifiedType value_type)
 {
     return QualifiedType(
         Kind::Map,
-        gMapRegistry.intern({ .key_type = std::move(key_type), .value_type = std::move(value_type) }));
+        gMapRegistry.intern(
+            gMapRegistry.lock(),
+            {.key_type = std::move(key_type), .value_type = std::move(value_type)}));
 }
 
 QualifiedType QualifiedType::make_struct(Specialization spec)

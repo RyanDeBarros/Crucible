@@ -29,35 +29,35 @@ namespace crucible::core::typing
 
 PointerRegistry gPointerRegistry{};
 
-QualifiedType PointerRegistry::underlying_type(Specialization spec) const
+QualifiedType PointerRegistry::underlying_type(const Lock& lock, Specialization spec) const
 {
-    return get(spec)->underlying_type;
+    return get(lock, spec).underlying_type;
 }
 
 ListRegistry gListRegistry{};
 
-QualifiedType ListRegistry::element_type(Specialization spec) const
+QualifiedType ListRegistry::element_type(const Lock& lock, Specialization spec) const
 {
-    return get(spec)->element_type;
+    return get(lock, spec).element_type;
 }
 
 SetRegistry gSetRegistry{};
 
-QualifiedType SetRegistry::element_type(Specialization spec) const
+QualifiedType SetRegistry::element_type(const Lock& lock, Specialization spec) const
 {
-    return get(spec)->element_type;
+    return get(lock, spec).element_type;
 }
 
 MapRegistry gMapRegistry{};
 
-QualifiedType MapRegistry::key_type(Specialization spec) const
+QualifiedType MapRegistry::key_type(const Lock& lock, Specialization spec) const
 {
-    return get(spec)->key_type;
+    return get(lock, spec).key_type;
 }
 
-QualifiedType MapRegistry::value_type(Specialization spec) const
+QualifiedType MapRegistry::value_type(const Lock& lock, Specialization spec) const
 {
-    return get(spec)->value_type;
+    return get(lock, spec).value_type;
 }
 
 } // namespace crucible::core::typing
