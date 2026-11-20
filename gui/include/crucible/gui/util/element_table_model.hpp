@@ -48,6 +48,8 @@ public:
 
         Preset preset = Preset::None;
 
+        mutable std::variant<std::monostate, LineEditDelegate::Config> ini_config = std::monostate{};
+
         QHeaderView::ResizeMode resize_mode = QHeaderView::ResizeToContents;
 
         std::function<QVariant(size_t row, const Element& element, int role)> data_fn =
@@ -122,8 +124,10 @@ public:
 
             if (column.preset == Column::Preset::LineEdit)
             {
-                // TODO pass LineEditDelegate::Config - instead of preset enum, use variant of configs
-                table_.setItemDelegateForColumn(i, new LineEditDelegate({}, this));
+                LineEditDelegate::Config config;
+                if (auto* cfg = std::get_if<LineEditDelegate::Config>(&column.ini_config))
+                    config = std::move(*cfg);
+                table_.setItemDelegateForColumn(i, new LineEditDelegate(std::move(config), this));
             }
         }
 
