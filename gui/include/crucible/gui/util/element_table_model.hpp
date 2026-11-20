@@ -325,6 +325,11 @@ public:
         endResetModel();
     }
 
+    size_t elementCount() const
+    {
+        return elements_.size();
+    }
+
     void clearElements()
     {
         beginResetModel();

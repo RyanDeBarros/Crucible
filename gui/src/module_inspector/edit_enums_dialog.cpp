@@ -2,6 +2,7 @@
 
 #include <crucible/gui/util/item_delegates.hpp>
 #include <crucible/gui/util/layout_helpers.hpp>
+#include <crucible/gui/util/outlines.hpp>
 
 #include <crucible/gui/logging/logger_include.hpp>
 
@@ -258,9 +259,9 @@ QVBoxLayout* EnumEditView::initList()
     id_label_->setReadOnly(true);
     form->addRow(tr("ID"), id_label_);
 
-    // TODO sync error for duplicate enum titles
     title_edit_ = new QLineEdit(this);
-    connect(title_edit_, &QLineEdit::textChanged, this, &EnumEditView::syncDirtyState);
+    connect(title_edit_, &QLineEdit::editingFinished, this, &EnumEditView::syncDirtyState);
+    connect(title_edit_, &QLineEdit::editingFinished, this, &EnumEditView::syncTitleStatus);
     form->addRow(tr("Name"), title_edit_);
 
     layout->addLayout(form);
@@ -270,9 +271,11 @@ QVBoxLayout* EnumEditView::initList()
     return layout;
 }
 
+static constexpr size_t kValueColumn = 2;
+
 QTableView* EnumEditView::initTable()
 {
-    auto* table = new QTableView(this);
+    values_table_ = new QTableView(this);
 
     std::array<TableModel::Column, 4> columns{
         TableModel::Column{
@@ -310,14 +313,15 @@ QTableView* EnumEditView::initTable()
         }
     };
 
-    model_ = new TableModel(std::move(columns), *table, { .reorderable = true }, this);
+    model_ = new TableModel(std::move(columns), *values_table_, { .reorderable = true }, this);
     connect(model_, &TableModel::rowsInserted, this, &EnumEditView::syncDirtyState);
     connect(model_, &TableModel::rowsRemoved, this, &EnumEditView::syncDirtyState);
     connect(model_, &TableModel::rowsMoved, this, &EnumEditView::syncDirtyState);
     connect(model_, &TableModel::dataChanged, this, &EnumEditView::syncDirtyState);
+    connect(model_, &TableModel::dataChanged, this, &EnumEditView::syncValueStatuses);
     connect(model_, &TableModel::modelReset, this, &EnumEditView::syncDirtyState);
 
-    return table;
+    return values_table_;
 }
 
 QVBoxLayout* EnumEditView::initOptions()
@@ -378,6 +382,59 @@ void EnumEditView::syncDirtyState()
     cancel_button_->setEnabled(enabled);
 }
 
+void EnumEditView::syncTitleStatus()
+{
+    bool duplicate = false;
+
+    auto lock = core::typing::gEnumRegistry.lock();
+
+    for (const auto& entry : core::typing::gEnumRegistry.range(lock))
+    {
+        if (entry.handle != enum_instance_ && entry.element.title == title_edit_->text().toStdString())
+        {
+            duplicate = true;
+            break;
+        }
+    }
+
+    syncErrorOutline(*title_edit_, duplicate, tr("An enum already exists with this name"));
+}
+
+void EnumEditView::syncValueStatuses()
+{
+    std::unordered_multimap<QString, size_t> lut;
+
+    for (size_t i = 0; i < model_->elementCount(); ++i)
+        lut.insert(std::make_pair(model_->at(i), i));
+
+    for (auto it = lut.begin(); it != lut.end(); )
+    {
+        auto [first, last] = lut.equal_range(it->first);
+        size_t count = 0;
+
+        for (auto jt = first; jt != last; ++jt)
+        {
+            ++count;
+
+            if (count <= 1)
+                syncErrorOutline(valueEdit(jt->second), false, {});
+
+            if (count > 1)
+                syncErrorOutline(valueEdit(jt->second), true, tr("Duplicate enum value"));
+
+            if (count == 2)
+                syncErrorOutline(valueEdit(first->second), true, tr("Duplicate enum value"));
+        }
+
+        it = last;
+    }
+}
+
+QLineEdit& EnumEditView::valueEdit(size_t row)
+{
+    return *static_cast<QLineEdit*>(values_table_->indexWidget(model_->index(row, kValueColumn)));
+}
+
 void EnumEditView::applyChanges()
 {
     {
@@ -401,6 +458,22 @@ void EnumEditView::applyChanges()
                 QMessageBox::Ok);
 
             return;
+        }
+
+        std::unordered_set<QString> values;
+        for (size_t i = 0; i < model_->elementCount(); ++i)
+        {
+            if (!values.insert(model_->at(i)).second)
+            {
+                QMessageBox::critical(
+                    this,
+                    tr("Cannot apply changes"),
+                    tr("There are duplicate enum values"),
+                    QMessageBox::Ok,
+                    QMessageBox::Ok);
+
+                return;
+            }
         }
 
         auto& enum_data = core::typing::gEnumRegistry.get(lock, enum_instance_);

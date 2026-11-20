@@ -57,6 +57,7 @@ private:
     using TableModel = ElementTableModel<QString, 4>;
 
     TableModel* model_ = nullptr;
+    QTableView* values_table_ = nullptr;
 
     QLineEdit* title_edit_ = nullptr;
     QLineEdit* id_label_ = nullptr;
@@ -82,6 +83,9 @@ private:
     QVBoxLayout* initOptions();
 
     void syncDirtyState();
+    void syncTitleStatus();
+    void syncValueStatuses();
+    QLineEdit& valueEdit(size_t row);
 
     void applyChanges();
     void cancelChanges();
