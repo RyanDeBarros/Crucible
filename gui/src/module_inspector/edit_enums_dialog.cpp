@@ -346,7 +346,18 @@ QVBoxLayout* EnumEditView::initOptions()
     auto* new_element_button = new QPushButton(loadIcon(Icon::Plus), tr("New value"), this);
     new_element_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     connect(new_element_button, &QPushButton::clicked, model_, [this]() {
-        model_->addElement(tr("New value")); // TODO (#) suffix + sync error for duplicates
+        const char* base_name = "New value";
+        std::unordered_set<QString> existing_names;
+
+        for (const auto& name : model_->getElements())
+            existing_names.insert(name);
+
+        QString new_name = tr(base_name);
+        size_t index = 0;
+        while (existing_names.contains(new_name))
+            new_name = tr(std::format("{} (%1)", base_name).c_str()).arg(++index);
+
+        model_->addElement(new_name);
     });
     layout->addWidget(new_element_button);
 
