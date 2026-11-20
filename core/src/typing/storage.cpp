@@ -142,27 +142,37 @@ bool std_itercheck(const RegistryLockPack& locks, const auto& payload, const Qua
         return false;
 }
 
-#define ITERCHECK(Container, PayloadType) \
-        return std_itercheck<PayloadType, Container<PayloadType>>( \
-            locks, \
-            payload, \
-            expected_element_type);
+#define EXPAND_MACRO_0(M) \
+        M(Bool) \
+        M(Int) \
+        M(Float) \
+        M(String) \
+        M(Pointer) \
+        M(Enum) \
+        M(List) \
+        M(Set) \
+        M(Map) \
+        M(Struct) \
+        M(Joker)
 
-#define VALIDATE_ITERABLE(Container) \
-        switch (expected_element_type.kind()) \
-        { \
-        case Kind::Bool:    ITERCHECK(Container, BoolPayload) \
-        case Kind::Int:     ITERCHECK(Container, IntPayload) \
-        case Kind::Float:   ITERCHECK(Container, FloatPayload) \
-        case Kind::String:  ITERCHECK(Container, StringPayload) \
-        case Kind::Pointer: ITERCHECK(Container, PointerPayload) \
-        case Kind::Enum:    ITERCHECK(Container, EnumPayload) \
-        case Kind::List:    ITERCHECK(Container, ListPayload) \
-        case Kind::Set:     ITERCHECK(Container, SetPayload) \
-        case Kind::Map:     ITERCHECK(Container, MapPayload) \
-        case Kind::Struct:  ITERCHECK(Container, StructPayload) \
-        case Kind::Joker:   ITERCHECK(Container, JokerPayload) \
-        }
+#define EXPAND_MACRO_1(M, Arg) \
+        M(Arg, Bool) \
+        M(Arg, Int) \
+        M(Arg, Float) \
+        M(Arg, String) \
+        M(Arg, Pointer) \
+        M(Arg, Enum) \
+        M(Arg, List) \
+        M(Arg, Set) \
+        M(Arg, Map) \
+        M(Arg, Struct) \
+        M(Arg, Joker)
+
+#define ITERCHECK(Container, ElementType) \
+        case Kind::ElementType: return std_itercheck<ElementType##Payload, Container<ElementType##Payload>>( \
+            locks, payload, expected_element_type);
+
+#define VALIDATE_ITERABLE(Container) switch (expected_element_type.kind()) { EXPAND_MACRO_1(ITERCHECK, Container) }
 
 static bool validate_list(const RegistryLockPack& locks, Specialization spec, const ListPayload& payload)
 {
@@ -220,49 +230,14 @@ bool map_itercheck(
         return false;
 }
 
-// TODO replace map_itercheck with macro to reduce line length
-#define VALIDATE_MAP_INNER(KeyPayloadType) \
-        switch (expected_value_type.kind()) \
-        { \
-        case Kind::Bool: \
-            return map_itercheck<KeyPayloadType, BoolPayload>(locks, payload, expected_key_type, expected_value_type); \
-        case Kind::Int: \
-            return map_itercheck<KeyPayloadType, IntPayload>(locks, payload, expected_key_type, expected_value_type); \
-        case Kind::Float: \
-            return map_itercheck<KeyPayloadType, FloatPayload>(locks, payload, expected_key_type, expected_value_type); \
-        case Kind::String: \
-            return map_itercheck<KeyPayloadType, StringPayload>(locks, payload, expected_key_type, expected_value_type); \
-        case Kind::Pointer: \
-            return map_itercheck<KeyPayloadType, PointerPayload>(locks, payload, expected_key_type, expected_value_type); \
-        case Kind::Enum: \
-            return map_itercheck<KeyPayloadType, EnumPayload>(locks, payload, expected_key_type, expected_value_type); \
-        case Kind::List: \
-            return map_itercheck<KeyPayloadType, ListPayload>(locks, payload, expected_key_type, expected_value_type); \
-        case Kind::Set: \
-            return map_itercheck<KeyPayloadType, SetPayload>(locks, payload, expected_key_type, expected_value_type); \
-        case Kind::Map: \
-            return map_itercheck<KeyPayloadType, MapPayload>(locks, payload, expected_key_type, expected_value_type); \
-        case Kind::Struct: \
-            return map_itercheck<KeyPayloadType, StructPayload>(locks, payload, expected_key_type, expected_value_type); \
-        case Kind::Joker: \
-            return map_itercheck<KeyPayloadType, JokerPayload>(locks, payload, expected_key_type, expected_value_type); \
-        }
+#define MAP_ITERCHECK(KeyPayloadType, ValueType) \
+        case Kind::ValueType: return map_itercheck<KeyPayloadType, ValueType##Payload>( \
+            locks, payload, expected_key_type, expected_value_type);
 
-#define VALIDATE_MAP_OUTER \
-        switch (expected_key_type.kind()) \
-        { \
-        case Kind::Bool:    VALIDATE_MAP_INNER(BoolPayload) \
-        case Kind::Int:     VALIDATE_MAP_INNER(IntPayload) \
-        case Kind::Float:   VALIDATE_MAP_INNER(FloatPayload) \
-        case Kind::String:  VALIDATE_MAP_INNER(StringPayload) \
-        case Kind::Pointer: VALIDATE_MAP_INNER(PointerPayload) \
-        case Kind::Enum:    VALIDATE_MAP_INNER(EnumPayload) \
-        case Kind::List:    VALIDATE_MAP_INNER(ListPayload) \
-        case Kind::Set:     VALIDATE_MAP_INNER(SetPayload) \
-        case Kind::Map:     VALIDATE_MAP_INNER(MapPayload) \
-        case Kind::Struct:  VALIDATE_MAP_INNER(StructPayload) \
-        case Kind::Joker:   VALIDATE_MAP_INNER(JokerPayload) \
-        }
+#define VALIDATE_MAP_INNER(KeyType) \
+        case Kind::KeyType: switch (expected_value_type.kind()) { EXPAND_MACRO_1(MAP_ITERCHECK, KeyType##Payload) }
+
+#define VALIDATE_MAP_OUTER switch (expected_key_type.kind()) { EXPAND_MACRO_0(VALIDATE_MAP_INNER) }
 
 static bool validate_map(const RegistryLockPack& locks, Specialization spec, const MapPayload& payload)
 {
@@ -277,6 +252,10 @@ static bool validate_map(const RegistryLockPack& locks, Specialization spec, con
 
 #undef VALIDATE_MAP_OUTER
 #undef VALIDATE_MAP_INNER
+#undef MAP_ITERCHECK
+
+#undef EXPAND_MACRO_0
+#undef EXPAND_MACRO_1
 
 static bool validate_struct(const RegistryLockPack& locks, Specialization spec, const StructPayload& payload)
 {
