@@ -5,6 +5,7 @@ target_sources(crucible_gui
         main_window.cpp
 )
 
+add_subdirectory(dialogs)
 add_subdirectory(logging)
 add_subdirectory(module_inspector)
 add_subdirectory(op_graph)

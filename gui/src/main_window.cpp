@@ -1,5 +1,7 @@
 #include <crucible/gui/main_window.hpp>
 
+#include <crucible/gui/dialogs/edit_enums_dialog.hpp>
+
 #include <crucible/gui/logging/logger_include.hpp>
 #include <crucible/gui/logging/log_panel.hpp>
 
@@ -194,17 +196,20 @@ void MainWindow::connectPanels() const
 
 void MainWindow::newModule()
 {
-    module_inspector_panel_->newModule();
+    // TODO
+    LOG.info(kModules) << "New module";
 }
 
 void MainWindow::editStructs()
 {
-    module_inspector_panel_->editStructs();
+    // TODO
+    LOG.info(kModules) << "Edit structs!";
 }
 
 void MainWindow::editEnums()
 {
-    module_inspector_panel_->editEnums();
+    EditEnumsDialog dialog(this);
+    dialog.exec();
 }
 
 } // crucible::gui

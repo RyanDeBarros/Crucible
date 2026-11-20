@@ -19,7 +19,9 @@ public:
     explicit RamPanel(QWidget* parent = nullptr);
 
 private:
-    void createLayout();
+    void newModule();
+    void editStructs();
+    void editEnums();
 };
 
 } // crucible::gui

@@ -1,7 +1,8 @@
 #include <crucible/gui/module_inspector/module_inspector_panel.hpp>
 
+#include <crucible/gui/dialogs/edit_enums_dialog.hpp>
+
 #include <crucible/gui/module_inspector/module_inspector_controls.hpp>
-#include <crucible/gui/module_inspector/edit_enums_dialog.hpp>
 
 #include <crucible/gui/logging/logger_include.hpp>
 
@@ -33,11 +34,13 @@ ModuleInspectorPanel::ModuleInspectorPanel(QWidget* parent)
 
 void ModuleInspectorPanel::newModule()
 {
+    // TODO
     LOG.info(kModules) << "New module";
 }
 
 void ModuleInspectorPanel::editStructs()
 {
+    // TODO
     LOG.info(kModules) << "Edit structs!";
 }
 

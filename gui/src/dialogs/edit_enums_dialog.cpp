@@ -1,4 +1,4 @@
-#include <crucible/gui/module_inspector/edit_enums_dialog.hpp>
+#include <crucible/gui/dialogs/edit_enums_dialog.hpp>
 
 #include <crucible/gui/util/item_delegates.hpp>
 #include <crucible/gui/util/layout_helpers.hpp>

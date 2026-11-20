@@ -12,6 +12,11 @@ class RamControls
 
 public:
     explicit RamControls(QWidget* parent = nullptr);
+
+signals:
+    void newModule();
+    void editStructs();
+    void editEnums();
 };
 
 } // crucible::gui

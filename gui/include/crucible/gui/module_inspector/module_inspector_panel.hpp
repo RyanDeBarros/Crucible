@@ -20,7 +20,7 @@ private:
 public:
     explicit ModuleInspectorPanel(QWidget* parent = nullptr);
 
-public:
+private:
     void newModule();
     void editStructs();
     void editEnums();
