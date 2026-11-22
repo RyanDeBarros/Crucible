@@ -78,7 +78,7 @@ public:
     bool alertUnsavedChanges();
 
 private:
-    QVBoxLayout* initList();
+    QVBoxLayout* initMainLayout();
     QTableView* initTable();
     QVBoxLayout* initOptions();
 

@@ -2,6 +2,8 @@
 
 #include <crucible/core/typing/kind.hpp>
 
+#include <string>
+
 namespace crucible::core::typing
 {
 
@@ -20,6 +22,8 @@ public:
     Kind kind() const;
     Specialization specialization() const;
     size_t hash() const;
+
+    std::string repr() const;
 
     static QualifiedType make_bool();
     static QualifiedType make_int();

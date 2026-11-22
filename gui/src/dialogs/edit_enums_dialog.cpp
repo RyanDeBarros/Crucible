@@ -4,8 +4,6 @@
 #include <crucible/gui/util/layout_helpers.hpp>
 #include <crucible/gui/util/outlines.hpp>
 
-#include <crucible/gui/logging/logger_include.hpp>
-
 #include <crucible/core/typing/nominal_registries.hpp>
 
 #include <QCloseEvent>
@@ -165,7 +163,7 @@ EnumEditView::EnumEditView(QWidget* parent)
 {
     auto* layout = new QHBoxLayout(this);
 
-    layout->addLayout(initList(), 1);
+    layout->addLayout(initMainLayout(), 1);
     addSeparator(*this, *layout);
     layout->addLayout(initOptions());
 }
@@ -249,7 +247,7 @@ bool EnumEditView::alertUnsavedChanges()
         return false;
 }
 
-QVBoxLayout* EnumEditView::initList()
+QVBoxLayout* EnumEditView::initMainLayout()
 {
     auto* layout = new QVBoxLayout();
 

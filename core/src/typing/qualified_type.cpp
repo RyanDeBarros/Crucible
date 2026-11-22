@@ -27,6 +27,41 @@ size_t QualifiedType::hash() const
     return std::hash<Kind>{}(kind_) ^ std::hash<Specialization>{}(spec_);
 }
 
+std::string QualifiedType::repr() const
+{
+    switch (kind_)
+    {
+    case crucible::core::typing::Kind::Bool:
+        return "bool";
+    case crucible::core::typing::Kind::Int:
+        return "int";
+    case crucible::core::typing::Kind::Float:
+        return "float";
+    case crucible::core::typing::Kind::String:
+        return "string";
+    case crucible::core::typing::Kind::Pointer:
+        return gPointerRegistry.underlying_type(gPointerRegistry.lock(), spec_).repr() + "*";
+    case crucible::core::typing::Kind::Enum:
+        return "#" + gEnumRegistry.enum_title(gEnumRegistry.lock(), spec_);
+    case crucible::core::typing::Kind::List:
+        return "list[" + gListRegistry.element_type(gListRegistry.lock(), spec_).repr() + "]";
+    case crucible::core::typing::Kind::Set:
+        return "set[" + gSetRegistry.element_type(gSetRegistry.lock(), spec_).repr() + "]";
+    case crucible::core::typing::Kind::Map:
+    {
+        auto lock = gMapRegistry.lock();
+        return "map[" + gMapRegistry.key_type(lock, spec_).repr()
+            + ", " + gMapRegistry.value_type(lock, spec_).repr() + "]";
+    }
+    case crucible::core::typing::Kind::Struct:
+        return "!" + gStructRegistry.struct_title(gStructRegistry.lock(), spec_);
+    case crucible::core::typing::Kind::Joker:
+        return "joker";
+    default:
+        throw std::runtime_error("unsupported type");
+    }
+}
+
 QualifiedType QualifiedType::make_bool()
 {
     return QualifiedType(Kind::Bool, 0);
