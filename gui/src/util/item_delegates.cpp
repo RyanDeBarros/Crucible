@@ -9,6 +9,32 @@
 namespace crucible::gui
 {
 
+LabelDelegate::LabelDelegate(Config config, QObject* parent)
+    : QStyledItemDelegate(parent)
+    , config_(std::move(config))
+{
+}
+
+QWidget* LabelDelegate::createEditor(QWidget*, const QStyleOptionViewItem&, const QModelIndex&) const
+{
+    return nullptr;
+}
+
+void LabelDelegate::paint(
+    QPainter* painter,
+    const QStyleOptionViewItem& option,
+    const QModelIndex& index) const
+{
+    OptionalCopy opt(option);
+
+    if (!config_.show_select_highlight)
+        opt.modify().state &= ~QStyle::State_Selected;
+
+    opt.modify().displayAlignment = Qt::AlignCenter;
+
+    QStyledItemDelegate::paint(painter, *opt, index);
+}
+
 IconDelegate::IconDelegate(Icon icon, Config config, QObject* parent)
     : QStyledItemDelegate(parent)
     , icon_(icon)

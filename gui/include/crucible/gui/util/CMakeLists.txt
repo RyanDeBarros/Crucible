@@ -1,5 +1,6 @@
 target_sources(crucible_gui
     PRIVATE
+        delegate_columns.hpp
         dialog_underlay.hpp
         element_table_model.hpp
         icons.hpp

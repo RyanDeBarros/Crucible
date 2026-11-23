@@ -8,6 +8,31 @@
 namespace crucible::gui
 {
 
+class LabelDelegate
+    : public QStyledItemDelegate
+{
+    Q_OBJECT;
+
+public:
+    struct Config
+    {
+        bool show_select_highlight = false;
+    };
+
+private:
+    Config config_;
+
+public:
+    explicit LabelDelegate(Config config = {}, QObject* parent = nullptr);
+
+    QWidget* createEditor(QWidget*, const QStyleOptionViewItem&, const QModelIndex&) const override;
+
+    void paint(
+        QPainter* painter,
+        const QStyleOptionViewItem& option,
+        const QModelIndex& index) const override;
+};
+
 class IconDelegate
     : public QStyledItemDelegate
 {
@@ -24,7 +49,7 @@ private:
     Config config_;
 
 public:
-    IconDelegate(Icon icon, Config config = {}, QObject* parent = nullptr);
+    explicit IconDelegate(Icon icon, Config config = {}, QObject* parent = nullptr);
 
     QWidget* createEditor(QWidget*, const QStyleOptionViewItem&, const QModelIndex&) const override;
 

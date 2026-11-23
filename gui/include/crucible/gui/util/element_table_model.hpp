@@ -1,7 +1,5 @@
 #pragma once
 
-#include <crucible/gui/util/item_delegates.hpp>
-
 #include <QAbstractTableModel>
 #include <QDataStream>
 #include <QHeaderView>
@@ -11,6 +9,7 @@
 #include <QTableView>
 
 #include <functional>
+#include <memory>
 
 namespace crucible::gui
 {
@@ -20,12 +19,60 @@ class ElementTableModelBase
 {
     Q_OBJECT;
 
+protected:
+    QTableView& table_;
+
 public:
-    using QAbstractTableModel::QAbstractTableModel;
+    explicit ElementTableModelBase(QTableView& table, QObject* parent = nullptr)
+        : QAbstractTableModel(parent)
+        , table_(table)
+    {
+    }
 
 signals:
     void editRequested(size_t row);
     bool deleteRequested(size_t row);
+
+public:
+    QTableView& table()
+    {
+        return table_;
+    }
+
+    virtual void signalDelete(size_t row) = 0;
+};
+
+template<typename Element>
+struct DelegateColumn
+{
+    QHeaderView::ResizeMode resize_mode;
+
+    explicit DelegateColumn(QHeaderView::ResizeMode resize_mode = QHeaderView::ResizeToContents)
+        : resize_mode(resize_mode)
+    {
+    }
+
+    virtual ~DelegateColumn() = default;
+
+    virtual QAbstractItemDelegate* newDelegate(ElementTableModelBase& table) const
+    {
+        return nullptr;
+    }
+
+    virtual bool draggable() const
+    {
+        return false;
+    }
+
+    virtual QVariant data(size_t row, const Element& element, int role = Qt::DisplayRole) const
+    {
+        return {};
+    }
+
+    virtual bool setData(size_t row, Element& element, const QVariant& value, int role = Qt::DisplayRole)
+    {
+        return false;
+    }
 };
 
 template<typename Element, size_t ColumnCount>
@@ -34,30 +81,7 @@ class ElementTableModel
 {
 public:
     using ElementType = Element;
-
-    struct Column
-    {
-        enum class Preset
-        {
-            None,
-            DragHandle,
-            DeleteButton,
-            EditButton,
-            LineEdit,
-        };
-
-        Preset preset = Preset::None;
-
-        mutable std::variant<std::monostate, LineEditDelegate::Config> ini_config = std::monostate{};
-
-        QHeaderView::ResizeMode resize_mode = QHeaderView::ResizeToContents;
-
-        std::function<QVariant(size_t row, const Element& element, int role)> data_fn =
-            [](size_t row, const Element& element, int role) -> QVariant { return {}; };
-
-        std::function<bool(size_t row, Element& element, const QVariant& value, int role)> set_data_fn =
-            [](size_t row, Element& element, const QVariant& value, int role) { return false; };
-    };
+    using ColumnList = std::array<std::unique_ptr<DelegateColumn<Element>>, ColumnCount>;
 
     struct Config
     {
@@ -68,20 +92,18 @@ public:
     };
 
 private:
-    QTableView& table_;
-    std::array<Column, ColumnCount> columns_;
+    ColumnList columns_;
     std::vector<Element> elements_;
     Config config_;
     QString mime_reorder_type_;
 
 public:
     ElementTableModel(
-        std::array<Column, ColumnCount> columns,
+        ColumnList columns,
         QTableView& table,
         Config config = {},
         QObject* parent = nullptr)
-        : ElementTableModelBase(parent)
-        , table_(table)
+        : ElementTableModelBase(table, parent)
         , columns_(std::move(columns))
         , config_(std::move(config))
     {
@@ -89,45 +111,10 @@ public:
 
         for (size_t i = 0; i < ColumnCount; ++i)
         {
-            const auto& column = columns_[i];
-
-            if (column.preset == Column::Preset::DragHandle)
-                table_.setItemDelegateForColumn(i, new IconDelegate(Icon::DragHandle, {}, this));
-            
-            if (column.preset == Column::Preset::DeleteButton)
+            if (const auto& column = columns_[i])
             {
-                auto* delete_buttons = new ButtonDelegate(table_, Icon::Delete, { .tooltip = tr("Delete") }, this);
-                table_.setItemDelegateForColumn(i, delete_buttons);
-                connect(delete_buttons, &ButtonDelegate::onClick, this, [this](const QModelIndex& idx) {
-                    if (!idx.isValid() || idx.row() >= elements_.size())
-                        return;
-
-                    if (!config_.pre_delete_check(idx.row()))
-                        return;
-
-                    Q_EMIT deleteRequested(idx.row());
-
-                    beginRemoveRows({}, idx.row(), idx.row());
-                    elements_.erase(elements_.begin() + idx.row());
-                    endRemoveRows();
-                });
-            }
-
-            if (column.preset == Column::Preset::EditButton)
-            {
-                auto* edit_buttons = new ButtonDelegate(table_, Icon::Edit, { .tooltip = tr("Edit") }, this);
-                table_.setItemDelegateForColumn(i, edit_buttons);
-                connect(edit_buttons, &ButtonDelegate::onClick, this, [this](const QModelIndex& idx) {
-                    Q_EMIT editRequested(idx.row());
-                });
-            }
-
-            if (column.preset == Column::Preset::LineEdit)
-            {
-                LineEditDelegate::Config config;
-                if (auto* cfg = std::get_if<LineEditDelegate::Config>(&column.ini_config))
-                    config = std::move(*cfg);
-                table_.setItemDelegateForColumn(i, new LineEditDelegate(std::move(config), this));
+                if (auto* delegate = column->newDelegate(*this))
+                    table_.setItemDelegateForColumn(i, delegate);
             }
         }
 
@@ -141,16 +128,21 @@ public:
 
         table_.setEditTriggers(QAbstractItemView::NoEditTriggers);
         table_.setAlternatingRowColors(true);
+        table_.setShowGrid(config_.show_grid);
         table_.verticalHeader()->hide();
 
         auto* header = table_.horizontalHeader();
         header->hide();
         for (size_t i = 0; i < ColumnCount; ++i)
-            header->setSectionResizeMode(i, columns_[i].resize_mode);
+        {
+            if (const auto& column = columns_[i])
+                header->setSectionResizeMode(i, column->resize_mode);
+        }
 
         if (config_.reorderable)
         {
-            mime_reorder_type_ = QStringLiteral("application/reorder/") + QString::number(reinterpret_cast<uintptr_t>(this), 16);
+            mime_reorder_type_ = QStringLiteral("application/reorder/")
+                + QString::number(reinterpret_cast<uintptr_t>(this), 16);
 
             table_.setSelectionMode(QAbstractItemView::SingleSelection);
             table_.setSelectionBehavior(QAbstractItemView::SelectItems);
@@ -178,7 +170,10 @@ public:
         if (!index.isValid() || index.row() >= elements_.size() || index.column() >= columns_.size())
             return {};
 
-        return columns_[index.column()].data_fn(index.row(), elements_[index.row()], role);
+        if (const auto& column = columns_[index.column()])
+            return column->data(index.row(), elements_[index.row()], role);
+        else
+            return {};
     }
 
     bool setData(const QModelIndex& index, const QVariant& value, int role) override
@@ -186,10 +181,13 @@ public:
         if (!index.isValid() || index.row() >= elements_.size() || index.column() >= columns_.size())
             return false;
 
-        if (columns_[index.column()].set_data_fn(index.row(), elements_[index.row()], value, role))
+        if (const auto& column = columns_[index.column()])
         {
-            Q_EMIT dataChanged(index, index, { role });
-            return true;
+            if (column->setData(index.row(), elements_[index.row()], value, role))
+            {
+                Q_EMIT dataChanged(index, index, { role });
+                return true;
+            }
         }
 
         return false;
@@ -285,11 +283,23 @@ public:
             if (config_.reorderable)
                 flags |= Qt::ItemIsDropEnabled;
 
-            if (columns_[index.column()].preset == Column::Preset::DragHandle)
-                flags |= Qt::ItemIsDragEnabled;
+            if (const auto& column = columns_[index.column()])
+            {
+                if (column->draggable())
+                    flags |= Qt::ItemIsDragEnabled;
+            }
         }
 
         return flags;
+    }
+
+    void signalDelete(size_t row) override
+    {
+        if (row >= elements_.size() || !config_.pre_delete_check(row))
+            return;
+
+        Q_EMIT deleteRequested(row);
+        removeElement(row);
     }
 
     void openPersistentEditors(int first, int last)
@@ -298,10 +308,15 @@ public:
         {
             for (size_t i = 0; i < ColumnCount; ++i)
             {
-                if (columns_[i].preset != Column::Preset::None)
+                if (const auto& column = columns_[i])
                     table_.openPersistentEditor(index(row, i));
             }
         }
+    }
+
+    size_t elementCount() const
+    {
+        return elements_.size();
     }
 
     const Element& at(size_t row) const
@@ -322,16 +337,18 @@ public:
         endInsertRows();
     }
 
+    void removeElement(size_t row)
+    {
+        beginRemoveRows({}, row, row);
+        elements_.erase(elements_.begin() + row);
+        endRemoveRows();
+    }
+
     void setElements(std::vector<Element> elements)
     {
         beginResetModel();
         elements_ = std::move(elements);
         endResetModel();
-    }
-
-    size_t elementCount() const
-    {
-        return elements_.size();
     }
 
     void clearElements()

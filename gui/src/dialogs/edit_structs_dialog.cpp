@@ -1,5 +1,6 @@
 #include <crucible/gui/dialogs/edit_structs_dialog.hpp>
 
+#include <crucible/gui/util/delegate_columns.hpp>
 #include <crucible/gui/util/item_delegates.hpp>
 #include <crucible/gui/util/layout_helpers.hpp>
 #include <crucible/gui/util/outlines.hpp>
@@ -51,30 +52,23 @@ void StructListView::loadStructs()
 
 QTableView* StructListView::initTable()
 {
-    std::array<TableModel::Column, 4> columns{
-        TableModel::Column{
-            .resize_mode = QHeaderView::Stretch,
-            .data_fn = [](size_t row, const StructTemplate& element, int role) -> QVariant {
+    TableModel::ColumnList columns{
+        std::make_unique<DataColumn<StructTemplate>>(
+            [](size_t row, const StructTemplate& element, int role) -> QVariant {
                 if (role == Qt::DisplayRole)
                     return element.title;
                 else
                     return {};
-            }
-        },
-        TableModel::Column{
-            .preset = TableModel::Column::Preset::EditButton
-        },
-        TableModel::Column{
-            .data_fn = [](size_t row, const StructTemplate& element, int role) -> QVariant {
+            }),
+        std::make_unique<EditButtonColumn<StructTemplate>>(),
+        std::make_unique<DataColumn<StructTemplate>>(
+            [](size_t row, const StructTemplate& element, int role) -> QVariant {
                 if (role == Qt::DisplayRole)
                     return element.id;
                 else
                     return {};
-            }
-        },
-        TableModel::Column{
-            .preset = TableModel::Column::Preset::DeleteButton
-        },
+            }),
+        std::make_unique<DeleteButtonColumn<StructTemplate>>()
     };
 
     auto* table = new QTableView(this);
@@ -279,20 +273,16 @@ QTableView* StructEditView::initTable()
 {
     fields_table_ = new QTableView(this);
 
-    std::array<TableModel::Column, 4> columns{
-        TableModel::Column{
-            .preset = TableModel::Column::Preset::DragHandle
-        },
-        TableModel::Column{
-            .preset = TableModel::Column::Preset::LineEdit,
-            .resize_mode = QHeaderView::Stretch,
-            .data_fn = [](size_t row, const FieldTemplate& element, int role) -> QVariant {
+    TableModel::ColumnList columns{
+        std::make_unique<DragHandleColumn<FieldTemplate>>(),
+        std::make_unique<LineEditColumn<FieldTemplate>>(
+            [](size_t row, const FieldTemplate& element, int role) -> QVariant {
                 if (role == Qt::EditRole)
                     return element.name;
                 else
                     return {};
             },
-            .set_data_fn = [](size_t row, FieldTemplate& element, const QVariant& value, int role) -> bool {
+            [](size_t row, FieldTemplate& element, const QVariant& value, int role) -> bool {
 
                 if (role == Qt::EditRole)
                 {
@@ -301,18 +291,15 @@ QTableView* StructEditView::initTable()
                 }
                 else
                     return false;
-            }
-        },
-        TableModel::Column{
-            .preset = TableModel::Column::Preset::LineEdit, // TODO searchable combo box
-            .resize_mode = QHeaderView::Stretch,
-            .data_fn = [](size_t row, const FieldTemplate& element, int role) -> QVariant {
+            }),
+        std::make_unique<LineEditColumn<FieldTemplate>>( // TODO searchable combo box
+            [](size_t row, const FieldTemplate& element, int role) -> QVariant {
                 if (role == Qt::EditRole)
                     return element.type_repr;
                 else
                     return {};
             },
-            .set_data_fn = [](size_t row, FieldTemplate& element, const QVariant& value, int role) -> bool {
+            [](size_t row, FieldTemplate& element, const QVariant& value, int role) -> bool {
 
                 if (role == Qt::EditRole)
                 {
@@ -321,11 +308,8 @@ QTableView* StructEditView::initTable()
                 }
                 else
                     return false;
-            }
-        },
-        TableModel::Column{
-            .preset = TableModel::Column::Preset::DeleteButton
-        }
+            }),
+        std::make_unique<DeleteButtonColumn<FieldTemplate>>()
     };
 
     model_ = new TableModel(std::move(columns), *fields_table_, { .reorderable = true }, this);

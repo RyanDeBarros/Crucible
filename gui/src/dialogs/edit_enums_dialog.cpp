@@ -1,5 +1,6 @@
 #include <crucible/gui/dialogs/edit_enums_dialog.hpp>
 
+#include <crucible/gui/util/delegate_columns.hpp>
 #include <crucible/gui/util/item_delegates.hpp>
 #include <crucible/gui/util/layout_helpers.hpp>
 #include <crucible/gui/util/outlines.hpp>
@@ -56,30 +57,23 @@ void EnumListView::loadEnums()
 
 QTableView* EnumListView::initTable()
 {
-    std::array<TableModel::Column, 4> columns{
-        TableModel::Column{
-            .resize_mode = QHeaderView::Stretch,
-            .data_fn = [](size_t row, const EnumTemplate& element, int role) -> QVariant {
+    TableModel::ColumnList columns{
+        std::make_unique<DataColumn<EnumTemplate>>(
+            [](size_t row, const EnumTemplate& element, int role) -> QVariant {
                 if (role == Qt::DisplayRole)
                     return element.title;
                 else
                     return {};
-            }
-        },
-        TableModel::Column{
-            .preset = TableModel::Column::Preset::EditButton
-        },
-        TableModel::Column{
-            .data_fn = [](size_t row, const EnumTemplate& element, int role) -> QVariant {
+            }),
+        std::make_unique<EditButtonColumn<EnumTemplate>>(),
+        std::make_unique<DataColumn<EnumTemplate>>(
+            [](size_t row, const EnumTemplate& element, int role) -> QVariant {
                 if (role == Qt::DisplayRole)
                     return element.id;
                 else
                     return {};
-            }
-        },
-        TableModel::Column{
-            .preset = TableModel::Column::Preset::DeleteButton
-        },
+            }),
+        std::make_unique<DeleteButtonColumn<EnumTemplate>>()
     };
 
     auto* table = new QTableView(this);
@@ -275,28 +269,24 @@ QTableView* EnumEditView::initTable()
 {
     values_table_ = new QTableView(this);
 
-    std::array<TableModel::Column, 4> columns{
-        TableModel::Column{
-            .preset = TableModel::Column::Preset::DragHandle
-        },
-        TableModel::Column{
-            .data_fn = [](size_t row, const QString& element, int role) -> QVariant {
+    TableModel::ColumnList columns{
+        std::make_unique<DragHandleColumn<QString>>(),
+        std::make_unique<LabelColumn<QString>>(
+            [](size_t row, const QString& element, int role) -> QVariant {
                 if (role == Qt::DisplayRole)
                     return QString::number(row);
                 else
                     return {};
-            },
-        },
-        TableModel::Column{
-            .preset = TableModel::Column::Preset::LineEdit,
-            .resize_mode = QHeaderView::Stretch,
-            .data_fn = [](size_t row, const QString& element, int role) -> QVariant {
+            }),
+        std::make_unique<LineEditColumn<QString>>(
+            [](size_t row, const QString& element, int role) -> QVariant {
                 if (role == Qt::EditRole)
                     return element;
                 else
                     return {};
             },
-            .set_data_fn = [](size_t row, QString& element, const QVariant& value, int role) -> bool {
+            [](size_t row, QString& element, const QVariant& value, int role) -> bool {
+
                 if (role == Qt::EditRole)
                 {
                     element = value.toString();
@@ -304,11 +294,8 @@ QTableView* EnumEditView::initTable()
                 }
                 else
                     return false;
-            }
-        },
-        TableModel::Column{
-            .preset = TableModel::Column::Preset::DeleteButton
-        }
+            }),
+        std::make_unique<DeleteButtonColumn<QString>>()
     };
 
     model_ = new TableModel(std::move(columns), *values_table_, { .reorderable = true }, this);
