@@ -194,6 +194,11 @@ void StructEditView::loadStruct(core::typing::Specialization struct_instance)
     syncDirtyState();
 }
 
+void StructEditView::setFieldType(size_t field_idx, core::typing::QualifiedType type)
+{
+    // TODO just set field type in gui, not core
+}
+
 bool StructEditView::unsavedChanges() const
 {
     auto lock = core::typing::gStructRegistry.lock();
@@ -496,6 +501,48 @@ void StructEditView::cancelChanges()
     loadStruct(struct_instance_);
 }
 
+EditFieldTypeView::EditFieldTypeView(QWidget* parent)
+    : QWidget(parent)
+{
+    auto* layout = new QHBoxLayout(this);
+
+    layout->addLayout(initMainLayout(), 1);
+    addSeparator(*this, *layout);
+    layout->addLayout(initOptions());
+}
+
+void EditFieldTypeView::loadType(size_t field_idx, core::typing::QualifiedType type)
+{
+    field_idx_ = field_idx;
+
+    // TODO
+}
+
+QVBoxLayout* EditFieldTypeView::initMainLayout()
+{
+    return new QVBoxLayout();
+}
+
+QVBoxLayout* EditFieldTypeView::initOptions()
+{
+    auto* layout = new QVBoxLayout();
+
+    auto* apply_button = new QPushButton(loadIcon(Icon::Apply), tr("Accept"), this);
+    apply_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    connect(apply_button, &QPushButton::clicked, this, [this]() {
+        Q_EMIT acceptRequested(field_idx_, core::typing::QualifiedType::make_int()); // TODO pass type
+    });
+    layout->addWidget(apply_button);
+
+    auto* cancel_button = new QPushButton(loadIcon(Icon::Cancel), tr("Cancel"), this);
+    cancel_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    connect(cancel_button, &QPushButton::clicked, this, &EditFieldTypeView::cancelRequested);
+    layout->addWidget(cancel_button);
+
+    layout->addStretch();
+    return layout;
+}
+
 EditStructsDialog::EditStructsDialog(QWidget* parent)
     : ModalDialog(tr("Edit Structs"), QSize(720, 405), parent)
 {
@@ -503,7 +550,28 @@ EditStructsDialog::EditStructsDialog(QWidget* parent)
 
     connect(list_view_, &StructListView::editRequested, this, &EditStructsDialog::showEditView);
     connect(list_view_, &StructListView::deleteRequested, this, &EditStructsDialog::deleteStruct);
+
     connect(edit_view_, &StructEditView::backRequested, this, &EditStructsDialog::showListView);
+    connect(
+        edit_view_,
+        &StructEditView::editFieldTypeRequested,
+        this,
+        [this](size_t field_idx, core::typing::QualifiedType type) {
+            field_type_view_->loadType(field_idx, std::move(type));
+            stack_->setCurrentWidget(field_type_view_);
+        });
+
+    connect(field_type_view_, &EditFieldTypeView::cancelRequested, this, [this]() {
+        stack_->setCurrentWidget(edit_view_);
+    });
+    connect(
+        field_type_view_,
+        &EditFieldTypeView::acceptRequested,
+        this,
+        [this](size_t field_idx, core::typing::QualifiedType type) {
+            edit_view_->setFieldType(field_idx, std::move(type));
+            stack_->setCurrentWidget(edit_view_);
+        });
 }
 
 void EditStructsDialog::closeEvent(QCloseEvent* event)
@@ -525,6 +593,9 @@ void EditStructsDialog::initStack()
 
     edit_view_ = new StructEditView(stack_);
     stack_->addWidget(edit_view_);
+
+    field_type_view_ = new EditFieldTypeView(stack_);
+    stack_->addWidget(field_type_view_);
 
     layout->addWidget(stack_);
 

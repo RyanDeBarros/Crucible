@@ -78,9 +78,11 @@ public:
 
 signals:
     void backRequested();
+    void editFieldTypeRequested(size_t field_idx, core::typing::QualifiedType type);
 
 public:
     void loadStruct(core::typing::Specialization struct_instance);
+    void setFieldType(size_t field_idx, core::typing::QualifiedType type);
     bool unsavedChanges() const;
     bool alertUnsavedChanges();
 
@@ -98,6 +100,29 @@ private:
     void cancelChanges();
 };
 
+class EditFieldTypeView
+    : public QWidget
+{
+    Q_OBJECT;
+
+private:
+    size_t field_idx_;
+
+public:
+    explicit EditFieldTypeView(QWidget* parent = nullptr);
+
+signals:
+    void acceptRequested(size_t field_idx, core::typing::QualifiedType type);
+    void cancelRequested();
+
+public:
+    void loadType(size_t field_idx, core::typing::QualifiedType type);
+
+private:
+    QVBoxLayout* initMainLayout();
+    QVBoxLayout* initOptions();
+};
+
 class EditStructsDialog
     : public ModalDialog
 {
@@ -108,6 +133,7 @@ private:
 
     StructListView* list_view_ = nullptr;
     StructEditView* edit_view_ = nullptr;
+    EditFieldTypeView* field_type_view_ = nullptr;
 
 public:
     explicit EditStructsDialog(QWidget* parent = nullptr);
