@@ -96,39 +96,6 @@ size_t QualifiedType::hash() const
     return std::hash<Simplex>{}(simplex_);
 }
 
-std::string QualifiedType::repr() const
-{
-    // TODO in GUI, reserve these strings for new type names. Also, don't '[', ']', or '*' in type names - anything else goes. Put this repr() in GUI as well.
-
-    switch (simplex_.kind)
-    {
-    case crucible::core::typing::Kind::Bool:
-        return "bool";
-    case crucible::core::typing::Kind::Int:
-        return "int";
-    case crucible::core::typing::Kind::Float:
-        return "float";
-    case crucible::core::typing::Kind::String:
-        return "string";
-    case crucible::core::typing::Kind::Pointer:
-        return template_[0]->repr() + "*";
-    case crucible::core::typing::Kind::Enum:
-        return gEnumRegistry.enum_title(gEnumRegistry.lock(), simplex_.user);
-    case crucible::core::typing::Kind::List:
-        return "list[" + template_[0]->repr() + "]";
-    case crucible::core::typing::Kind::Set:
-        return "set[" + template_[0]->repr() + "]";
-    case crucible::core::typing::Kind::Map:
-        return "map[" + template_[0]->repr() + ", " + template_[1]->repr() + "]";
-    case crucible::core::typing::Kind::Struct:
-        return gStructRegistry.struct_title(gStructRegistry.lock(), simplex_.user);
-    case crucible::core::typing::Kind::Joker:
-        return "joker";
-    default:
-        throw std::runtime_error("unsupported type");
-    }
-}
-
 QualifiedType QualifiedType::make_bool()
 {
     return QualifiedType({ .kind = Kind::Bool });

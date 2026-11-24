@@ -39,8 +39,6 @@ public:
     const QualifiedType* underlying(size_t idx) const;
     size_t hash() const;
 
-    std::string repr() const;
-
     static QualifiedType make_bool();
     static QualifiedType make_int();
     static QualifiedType make_float();

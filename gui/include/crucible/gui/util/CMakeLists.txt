@@ -8,6 +8,7 @@ target_sources(crucible_gui
         layout_helpers.hpp
         modal_dialog.hpp
         outlines.hpp
+        repr.hpp
         scrollbar_preserver.hpp
         signal_property.hpp
         stylesheet.hpp

@@ -4,6 +4,7 @@
 #include <crucible/gui/util/item_delegates.hpp>
 #include <crucible/gui/util/layout_helpers.hpp>
 #include <crucible/gui/util/outlines.hpp>
+#include <crucible/gui/util/repr.hpp>
 
 #include <crucible/core/typing/nominal_registries.hpp>
 
@@ -180,7 +181,7 @@ void StructEditView::loadStruct(core::typing::UserInstance user)
             fields.push_back({
                 .name = QString::fromStdString(field.first),
                 .type = field.second,
-                .type_repr = QString::fromStdString(field.second.repr())
+                .type_repr = repr(field.second)
             });
         }
         model_->setElements(std::move(fields));
@@ -368,7 +369,7 @@ QVBoxLayout* StructEditView::initOptions()
         model_->addElement({
             .name = new_name,
             .type = core::typing::QualifiedType::make_int(),
-            .type_repr = QString::fromStdString(core::typing::QualifiedType::make_int().repr())
+            .type_repr = repr(core::typing::QualifiedType::make_int())
         });
     });
     layout->addWidget(new_element_button);
