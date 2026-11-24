@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 namespace crucible::core::typing
 {
 
@@ -20,6 +22,6 @@ enum class Kind
     Joker
 };
 
-using Specialization = size_t;
+using UserInstance = uint32_t;
 
 } // crucible::core::typing

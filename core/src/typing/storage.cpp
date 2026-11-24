@@ -107,10 +107,10 @@ static bool validate_pointer(const RegistryLockPack& locks, const QualifiedType&
 
 static bool validate_enum(const RegistryLockPack& locks, const QualifiedType& type, const EnumPayload& payload)
 {
-    if (!gEnumRegistry.exists(locks.enum_lock, type.simplex().spec))
+    if (!gEnumRegistry.exists(locks.enum_lock, type.simplex().user))
         return false;
     
-    return payload.value < gEnumRegistry.enum_count(locks.enum_lock, type.simplex().spec);
+    return payload.value < gEnumRegistry.enum_count(locks.enum_lock, type.simplex().user);
 }
 
 template<typename ElementPayloadType, typename PayloadContainer>
@@ -256,17 +256,17 @@ static bool validate_map(const RegistryLockPack& locks, const QualifiedType& typ
 
 static bool validate_struct(const RegistryLockPack& locks, const QualifiedType& type, const StructPayload& payload)
 {
-    if (!gStructRegistry.exists(locks.struct_lock, type.simplex().spec))
+    if (!gStructRegistry.exists(locks.struct_lock, type.simplex().user))
         return false;
 
-    const size_t field_count = gStructRegistry.struct_field_count(locks.struct_lock, type.simplex().spec);
+    const size_t field_count = gStructRegistry.struct_field_count(locks.struct_lock, type.simplex().user);
     if (field_count != payload.value.size())
         return false;
 
     for (size_t i = 0; i < field_count; ++i)
     {
         if (!Storage::is_valid_payload(
-            gStructRegistry.struct_field_type(locks.struct_lock, type.simplex().spec, i),
+            gStructRegistry.struct_field_type(locks.struct_lock, type.simplex().user, i),
             payload.value[i]))
         {
             return false;
@@ -382,7 +382,7 @@ size_t std::hash<crucible::core::typing::BoolPayload>::operator()(
 size_t std::hash<crucible::core::typing::IntPayload>::operator()(
     const crucible::core::typing::IntPayload& pld) const
 {
-    return std::hash<std::int64_t>{}(pld.value);
+    return std::hash<int64_t>{}(pld.value);
 }
 
 size_t std::hash<crucible::core::typing::FloatPayload>::operator()(
@@ -406,7 +406,7 @@ size_t std::hash<crucible::core::typing::PointerPayload>::operator()(
 size_t std::hash<crucible::core::typing::EnumPayload>::operator()(
     const crucible::core::typing::EnumPayload& pld) const
 {
-    return std::hash<std::uint64_t>{}(pld.value);
+    return std::hash<uint64_t>{}(pld.value);
 }
 
 size_t std::hash<crucible::core::typing::ListPayload>::operator()(

@@ -23,7 +23,7 @@ private:
     struct StructTemplate
     {
         QString title;
-        core::typing::Specialization instance;
+        core::typing::UserInstance user;
         QString id;
     };
 
@@ -35,8 +35,8 @@ public:
     explicit StructListView(QWidget* parent = nullptr);
 
 signals:
-    void editRequested(core::typing::Specialization struct_instance);
-    void deleteRequested(core::typing::Specialization struct_instance);
+    void editRequested(core::typing::UserInstance user);
+    void deleteRequested(core::typing::UserInstance user);
 
 public:
     void loadStructs();
@@ -68,7 +68,7 @@ private:
 
     QLineEdit* title_edit_ = nullptr;
     QLineEdit* id_label_ = nullptr;
-    core::typing::Specialization struct_instance_ = {};
+    core::typing::UserInstance user_ = {};
 
     QPushButton* apply_button_ = nullptr;
     QPushButton* cancel_button_ = nullptr;
@@ -81,7 +81,7 @@ signals:
     void editFieldTypeRequested(size_t field_idx, core::typing::QualifiedType type);
 
 public:
-    void loadStruct(core::typing::Specialization struct_instance);
+    void loadStruct(core::typing::UserInstance user);
     void setFieldType(size_t field_idx, core::typing::QualifiedType type);
     bool unsavedChanges() const;
     bool alertUnsavedChanges();
@@ -144,8 +144,8 @@ private:
     void initStack();
 
     void showListView();
-    void showEditView(core::typing::Specialization struct_instance);
-    void deleteStruct(core::typing::Specialization struct_instance);
+    void showEditView(core::typing::UserInstance user);
+    void deleteStruct(core::typing::UserInstance user);
 
     bool checkForUnsavedChanges();
 };

@@ -23,7 +23,7 @@ private:
     struct EnumTemplate
     {
         QString title;
-        core::typing::Specialization instance;
+        core::typing::UserInstance user;
         QString id;
     };
 
@@ -35,8 +35,8 @@ public:
     explicit EnumListView(QWidget* parent = nullptr);
 
 signals:
-    void editRequested(core::typing::Specialization enum_instance);
-    void deleteRequested(core::typing::Specialization enum_instance);
+    void editRequested(core::typing::UserInstance user);
+    void deleteRequested(core::typing::UserInstance user);
 
 public:
     void loadEnums();
@@ -61,7 +61,7 @@ private:
 
     QLineEdit* title_edit_ = nullptr;
     QLineEdit* id_label_ = nullptr;
-    core::typing::Specialization enum_instance_ = {};
+    core::typing::UserInstance user_ = {};
 
     QPushButton* apply_button_ = nullptr;
     QPushButton* cancel_button_ = nullptr;
@@ -73,7 +73,7 @@ signals:
     void backRequested();
 
 public:
-    void loadEnum(core::typing::Specialization enum_instance);
+    void loadEnum(core::typing::UserInstance user);
     bool unsavedChanges() const;
     bool alertUnsavedChanges();
 
@@ -111,8 +111,8 @@ private:
     void initStack();
 
     void showListView();
-    void showEditView(core::typing::Specialization enum_instance);
-    void deleteEnum(core::typing::Specialization enum_instance);
+    void showEditView(core::typing::UserInstance user);
+    void deleteEnum(core::typing::UserInstance user);
 
     bool checkForUnsavedChanges();
 };

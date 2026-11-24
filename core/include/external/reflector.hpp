@@ -56,12 +56,12 @@ constexpr std::string_view compiler_type_name() noexcept;
 namespace detail
 {
 
-constexpr std::uint64_t fnv1a_hash(std::string_view str) noexcept;
+constexpr uint64_t fnv1a_hash(std::string_view str) noexcept;
 
 } // detail
 
 template<typename ty>
-constexpr std::uint64_t kTypeHash = detail::fnv1a_hash(compiler_type_name<ty>());
+constexpr uint64_t kTypeHash = detail::fnv1a_hash(compiler_type_name<ty>());
 
 struct template_node;
 
@@ -215,12 +215,12 @@ constexpr std::string_view compiler_type_name() noexcept
 namespace detail
 {
 
-constexpr std::uint64_t fnv1a_hash(std::string_view str) noexcept
+constexpr uint64_t fnv1a_hash(std::string_view str) noexcept
 {
-    std::uint64_t hash = 0xcbf29ce484222325ULL;
+    uint64_t hash = 0xcbf29ce484222325ULL;
     for (char c : str)
     {
-        hash ^= static_cast<std::uint64_t>(static_cast<unsigned char>(c));
+        hash ^= static_cast<uint64_t>(static_cast<unsigned char>(c));
         hash *= 0x00000100000001B3ULL;
     }
     return hash;
@@ -350,7 +350,7 @@ struct type_erasure
     public:
         std::string_view name;
         const template_node& (*template_tree)();
-        std::uint64_t type_hash;
+        uint64_t type_hash;
 
     private:
         void (*dtor_op_)(void*);
@@ -365,7 +365,7 @@ struct type_erasure
         constexpr descriptor(
             std::string_view name,
             const template_node& (*template_tree)(),
-            std::uint64_t type_hash,
+            uint64_t type_hash,
             void (*dtor_op)(void*),
             void* (*copy_op)(const void*),
             void (*copy_assign_op)(void*, const void*),

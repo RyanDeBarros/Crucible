@@ -6,7 +6,7 @@ size_t std::hash<crucible::core::typing::Simplex>::operator()(
     const crucible::core::typing::Simplex& s) const
 {
     return std::hash<crucible::core::typing::Kind>{}(s.kind)
-        ^ std::hash<crucible::core::typing::Specialization>{}(s.spec);
+        ^ std::hash<crucible::core::typing::UserInstance>{}(s.user);
 }
 
 namespace crucible::core::typing
@@ -113,7 +113,7 @@ std::string QualifiedType::repr() const
     case crucible::core::typing::Kind::Pointer:
         return template_[0]->repr() + "*";
     case crucible::core::typing::Kind::Enum:
-        return gEnumRegistry.enum_title(gEnumRegistry.lock(), simplex_.spec);
+        return gEnumRegistry.enum_title(gEnumRegistry.lock(), simplex_.user);
     case crucible::core::typing::Kind::List:
         return "list[" + template_[0]->repr() + "]";
     case crucible::core::typing::Kind::Set:
@@ -121,7 +121,7 @@ std::string QualifiedType::repr() const
     case crucible::core::typing::Kind::Map:
         return "map[" + template_[0]->repr() + ", " + template_[1]->repr() + "]";
     case crucible::core::typing::Kind::Struct:
-        return gStructRegistry.struct_title(gStructRegistry.lock(), simplex_.spec);
+        return gStructRegistry.struct_title(gStructRegistry.lock(), simplex_.user);
     case crucible::core::typing::Kind::Joker:
         return "joker";
     default:
@@ -156,9 +156,9 @@ QualifiedType QualifiedType::make_pointer(QualifiedType underlying_type)
     return type;
 }
 
-QualifiedType QualifiedType::make_enum(Specialization spec)
+QualifiedType QualifiedType::make_enum(UserInstance user)
 {
-    return QualifiedType({ .kind = Kind::Enum, .spec = spec });
+    return QualifiedType({ .kind = Kind::Enum, .user = user });
 }
 
 QualifiedType QualifiedType::make_list(QualifiedType elem_type)
@@ -183,9 +183,9 @@ QualifiedType QualifiedType::make_map(QualifiedType key_type, QualifiedType valu
     return type;
 }
 
-QualifiedType QualifiedType::make_struct(Specialization spec)
+QualifiedType QualifiedType::make_struct(UserInstance user)
 {
-    return QualifiedType({ .kind = Kind::Struct, .spec = spec });
+    return QualifiedType({ .kind = Kind::Struct, .user = user });
 }
 
 QualifiedType QualifiedType::make_joker()

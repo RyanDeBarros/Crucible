@@ -22,7 +22,7 @@ struct BoolPayload
 
 struct IntPayload
 {
-    std::int64_t value;
+    int64_t value;
 
     bool operator==(const IntPayload&) const = default;
 };
@@ -50,7 +50,7 @@ struct PointerPayload
 
 struct EnumPayload
 {
-    std::uint64_t value;
+    uint64_t value;
 
     bool operator==(const EnumPayload&) const = default;
 };

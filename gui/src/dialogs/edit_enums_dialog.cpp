@@ -23,9 +23,9 @@
 namespace crucible::gui
 {
 
-static QString repr(core::typing::Specialization instance)
+static QString repr(core::typing::UserInstance user)
 {
-    return QString::fromStdString(std::format("0x{:08X}", instance));
+    return QString::fromStdString(std::format("0x{:08X}", user));
 }
 
 EnumListView::EnumListView(QWidget* parent)
@@ -47,7 +47,7 @@ void EnumListView::loadEnums()
     {
         enums.push_back({
             .title = QString::fromStdString(element.title),
-            .instance = handle,
+            .user = handle,
             .id = repr(handle)
         });
     }
@@ -96,10 +96,10 @@ QTableView* EnumListView::initTable()
         this);
 
     connect(model_, &TableModel::editRequested, this, [this](size_t row) {
-        Q_EMIT editRequested(model_->at(row).instance);
+        Q_EMIT editRequested(model_->at(row).user);
     });
     connect(model_, &TableModel::deleteRequested, this, [this](size_t row) {
-        Q_EMIT deleteRequested(model_->at(row).instance);
+        Q_EMIT deleteRequested(model_->at(row).user);
     });
 
     table->setSelectionMode(QAbstractItemView::NoSelection);
@@ -124,7 +124,7 @@ QVBoxLayout* EnumListView::initOptions()
 void EnumListView::newEnum()
 {
     QString title = tr("New enum");
-    core::typing::Specialization spec;
+    core::typing::UserInstance spec;
 
     {
         auto lock = core::typing::gEnumRegistry.lock();
@@ -147,7 +147,7 @@ void EnumListView::newEnum()
     
     model_->addElement({
         .title = std::move(title),
-        .instance = spec,
+        .user = spec,
         .id = repr(spec)
     });
 }
@@ -162,9 +162,9 @@ EnumEditView::EnumEditView(QWidget* parent)
     layout->addLayout(initOptions());
 }
 
-void EnumEditView::loadEnum(core::typing::Specialization enum_instance)
+void EnumEditView::loadEnum(core::typing::UserInstance user)
 {
-    enum_instance_ = enum_instance;
+    user_ = user;
 
     {
         QSignalBlocker blockers[] = {
@@ -174,9 +174,9 @@ void EnumEditView::loadEnum(core::typing::Specialization enum_instance)
 
         auto lock = core::typing::gEnumRegistry.lock();
 
-        const auto& enum_data = core::typing::gEnumRegistry.get(lock, enum_instance_);
+        const auto& enum_data = core::typing::gEnumRegistry.get(lock, user_);
 
-        id_label_->setText(repr(enum_instance_));
+        id_label_->setText(repr(user_));
         title_edit_->setText(QString::fromStdString(enum_data.title));
 
         std::vector<QString> names;
@@ -197,7 +197,7 @@ bool EnumEditView::unsavedChanges() const
 {
     auto lock = core::typing::gEnumRegistry.lock();
 
-    const auto& enum_data = core::typing::gEnumRegistry.get(lock, enum_instance_);
+    const auto& enum_data = core::typing::gEnumRegistry.get(lock, user_);
 
     if (enum_data.title != title_edit_->text())
         return true;
@@ -375,7 +375,7 @@ void EnumEditView::syncTitleStatus()
 
     for (const auto& entry : core::typing::gEnumRegistry.range(lock))
     {
-        if (entry.handle != enum_instance_ && entry.element.title == title_edit_->text().toStdString())
+        if (entry.handle != user_ && entry.element.title == title_edit_->text().toStdString())
         {
             duplicate = true;
             break;
@@ -428,7 +428,7 @@ void EnumEditView::applyChanges()
         std::unordered_set<std::string> existing_titles;
         for (const auto& entry : core::typing::gEnumRegistry.range(lock))
         {
-            if (entry.handle != enum_instance_)
+            if (entry.handle != user_)
                 existing_titles.insert(entry.element.title);
         }
 
@@ -461,7 +461,7 @@ void EnumEditView::applyChanges()
             }
         }
 
-        auto& enum_data = core::typing::gEnumRegistry.get(lock, enum_instance_);
+        auto& enum_data = core::typing::gEnumRegistry.get(lock, user_);
         enum_data.title = std::move(title);
 
         enum_data.names.clear();
@@ -475,7 +475,7 @@ void EnumEditView::applyChanges()
 
 void EnumEditView::cancelChanges()
 {
-    loadEnum(enum_instance_);
+    loadEnum(user_);
 }
 
 EditEnumsDialog::EditEnumsDialog(QWidget* parent)
@@ -522,15 +522,15 @@ void EditEnumsDialog::showListView()
     }
 }
 
-void EditEnumsDialog::showEditView(core::typing::Specialization enum_instance)
+void EditEnumsDialog::showEditView(core::typing::UserInstance user)
 {
-    edit_view_->loadEnum(enum_instance);
+    edit_view_->loadEnum(user);
     stack_->setCurrentWidget(edit_view_);
 }
 
-void EditEnumsDialog::deleteEnum(core::typing::Specialization enum_instance)
+void EditEnumsDialog::deleteEnum(core::typing::UserInstance user)
 {
-    core::typing::gEnumRegistry.remove(core::typing::gEnumRegistry.lock(), enum_instance);
+    core::typing::gEnumRegistry.remove(core::typing::gEnumRegistry.lock(), user);
 }
 
 bool EditEnumsDialog::checkForUnsavedChanges()

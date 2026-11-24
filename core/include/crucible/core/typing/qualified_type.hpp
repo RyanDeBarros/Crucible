@@ -11,7 +11,7 @@ namespace crucible::core::typing
 struct Simplex
 {
     Kind kind;
-    Specialization spec; // TODO rename to UserInstance and make uint32_t (remove std:: prefix)
+    UserInstance user;
 
     bool operator==(const Simplex&) const = default;
 };
@@ -46,11 +46,11 @@ public:
     static QualifiedType make_float();
     static QualifiedType make_string();
     static QualifiedType make_pointer(QualifiedType underlying_type);
-    static QualifiedType make_enum(Specialization spec);
+    static QualifiedType make_enum(UserInstance user);
     static QualifiedType make_list(QualifiedType elem_type);
     static QualifiedType make_set(QualifiedType elem_type);
     static QualifiedType make_map(QualifiedType key_type, QualifiedType value_type);
-    static QualifiedType make_struct(Specialization spec);
+    static QualifiedType make_struct(UserInstance user);
     static QualifiedType make_joker();
 };
 

@@ -18,9 +18,9 @@
 namespace crucible::gui
 {
 
-static QString repr(core::typing::Specialization instance)
+static QString repr(core::typing::UserInstance user)
 {
-    return QString::fromStdString(std::format("0x{:08X}", instance));
+    return QString::fromStdString(std::format("0x{:08X}", user));
 }
 
 StructListView::StructListView(QWidget* parent)
@@ -42,7 +42,7 @@ void StructListView::loadStructs()
     {
         structs.push_back({
             .title = QString::fromStdString(element.title),
-            .instance = handle,
+            .user = handle,
             .id = repr(handle)
         });
     }
@@ -91,10 +91,10 @@ QTableView* StructListView::initTable()
         this);
 
     connect(model_, &TableModel::editRequested, this, [this](size_t row) {
-        Q_EMIT editRequested(model_->at(row).instance);
+        Q_EMIT editRequested(model_->at(row).user);
     });
     connect(model_, &TableModel::deleteRequested, this, [this](size_t row) {
-        Q_EMIT deleteRequested(model_->at(row).instance);
+        Q_EMIT deleteRequested(model_->at(row).user);
     });
 
     table->setSelectionMode(QAbstractItemView::NoSelection);
@@ -119,7 +119,7 @@ QVBoxLayout* StructListView::initOptions()
 void StructListView::newStruct()
 {
     QString title = tr("New struct");
-    core::typing::Specialization spec;
+    core::typing::UserInstance user;
 
     {
         auto lock = core::typing::gStructRegistry.lock();
@@ -134,7 +134,7 @@ void StructListView::newStruct()
             std_title = std::format("{} ({})", title.toStdString(), ++suffix);
         title = QString::fromStdString(std_title);
 
-        spec = core::typing::gStructRegistry.add(lock, {
+        user = core::typing::gStructRegistry.add(lock, {
             .title = title.toStdString(),
             .fields = {}
         });
@@ -142,8 +142,8 @@ void StructListView::newStruct()
 
     model_->addElement({
         .title = std::move(title),
-        .instance = spec,
-        .id = repr(spec)
+        .user = user,
+        .id = repr(user)
     });
 }
 
@@ -157,9 +157,9 @@ StructEditView::StructEditView(QWidget* parent)
     layout->addLayout(initOptions());
 }
 
-void StructEditView::loadStruct(core::typing::Specialization struct_instance)
+void StructEditView::loadStruct(core::typing::UserInstance user)
 {
-    struct_instance_ = struct_instance;
+    user_ = user;
 
     {
         QSignalBlocker blockers[] = {
@@ -169,9 +169,9 @@ void StructEditView::loadStruct(core::typing::Specialization struct_instance)
 
         auto lock = core::typing::gStructRegistry.lock();
 
-        const auto& struct_data = core::typing::gStructRegistry.get(lock, struct_instance_);
+        const auto& struct_data = core::typing::gStructRegistry.get(lock, user_);
 
-        id_label_->setText(repr(struct_instance_));
+        id_label_->setText(repr(user_));
         title_edit_->setText(QString::fromStdString(struct_data.title));
 
         std::vector<FieldTemplate> fields;
@@ -203,7 +203,7 @@ bool StructEditView::unsavedChanges() const
 {
     auto lock = core::typing::gStructRegistry.lock();
 
-    const auto& struct_data = core::typing::gStructRegistry.get(lock, struct_instance_);
+    const auto& struct_data = core::typing::gStructRegistry.get(lock, user_);
 
     if (struct_data.title != title_edit_->text())
         return true;
@@ -398,7 +398,7 @@ void StructEditView::syncTitleStatus()
 
     for (const auto& entry : core::typing::gStructRegistry.range(lock))
     {
-        if (entry.handle != struct_instance_ && entry.element.title == title_edit_->text().toStdString())
+        if (entry.handle != user_ && entry.element.title == title_edit_->text().toStdString())
         {
             duplicate = true;
             break;
@@ -451,7 +451,7 @@ void StructEditView::applyChanges()
         std::unordered_set<std::string> existing_titles;
         for (const auto& entry : core::typing::gStructRegistry.range(lock))
         {
-            if (entry.handle != struct_instance_)
+            if (entry.handle != user_)
                 existing_titles.insert(entry.element.title);
         }
 
@@ -484,7 +484,7 @@ void StructEditView::applyChanges()
             }
         }
 
-        auto& struct_data = core::typing::gStructRegistry.get(lock, struct_instance_);
+        auto& struct_data = core::typing::gStructRegistry.get(lock, user_);
         struct_data.title = std::move(title);
 
         struct_data.fields.clear();
@@ -498,7 +498,7 @@ void StructEditView::applyChanges()
 
 void StructEditView::cancelChanges()
 {
-    loadStruct(struct_instance_);
+    loadStruct(user_);
 }
 
 EditFieldTypeView::EditFieldTypeView(QWidget* parent)
@@ -611,15 +611,15 @@ void EditStructsDialog::showListView()
     }
 }
 
-void EditStructsDialog::showEditView(core::typing::Specialization struct_instance)
+void EditStructsDialog::showEditView(core::typing::UserInstance user)
 {
-    edit_view_->loadStruct(struct_instance);
+    edit_view_->loadStruct(user);
     stack_->setCurrentWidget(edit_view_);
 }
 
-void EditStructsDialog::deleteStruct(core::typing::Specialization struct_instance)
+void EditStructsDialog::deleteStruct(core::typing::UserInstance user)
 {
-    core::typing::gStructRegistry.remove(core::typing::gStructRegistry.lock(), struct_instance);
+    core::typing::gStructRegistry.remove(core::typing::gStructRegistry.lock(), user);
 }
 
 bool EditStructsDialog::checkForUnsavedChanges()
