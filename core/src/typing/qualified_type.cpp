@@ -1,35 +1,106 @@
 #include <crucible/core/typing/qualified_type.hpp>
 
-#include <crucible/core/typing/intern_registries.hpp>
 #include <crucible/core/typing/nominal_registries.hpp>
+
+size_t std::hash<crucible::core::typing::Simplex>::operator()(
+    const crucible::core::typing::Simplex& s) const
+{
+    return std::hash<crucible::core::typing::Kind>{}(s.kind)
+        ^ std::hash<crucible::core::typing::Specialization>{}(s.spec);
+}
 
 namespace crucible::core::typing
 {
 
-QualifiedType::QualifiedType(Kind base_type, Specialization spec)
-    : kind_(base_type)
-    , spec_(spec)
+QualifiedType::QualifiedType(Simplex simplex)
+    : simplex_(simplex)
 {
 }
 
-Kind QualifiedType::kind() const
+QualifiedType::QualifiedType(const QualifiedType& o)
+    : simplex_(o.simplex_)
 {
-    return kind_;
+    for (size_t i = 0; i < kTemplateCap; ++i)
+        template_[i] = o.template_[i] ? o.template_[i]->clone() : nullptr;
 }
 
-Specialization QualifiedType::specialization() const
+QualifiedType::QualifiedType(QualifiedType&& o) noexcept
+    : simplex_(std::move(o.simplex_))
 {
-    return spec_;
+    for (size_t i = 0; i < kTemplateCap; ++i)
+        template_[i] = std::move(o.template_[i]);
+}
+
+QualifiedType& QualifiedType::operator=(const QualifiedType& o)
+{
+    if (this != &o)
+    {
+        simplex_ = o.simplex_;
+
+        for (size_t i = 0; i < kTemplateCap; ++i)
+            template_[i] = o.template_[i] ? o.template_[i]->clone() : nullptr;
+    }
+
+    return *this;
+}
+
+QualifiedType& QualifiedType::operator=(QualifiedType&& o) noexcept
+{
+    if (this != &o)
+    {
+        simplex_ = o.simplex_;
+
+        for (size_t i = 0; i < kTemplateCap; ++i)
+            template_[i] = std::move(o.template_[i]);
+    }
+
+    return *this;
+}
+
+bool QualifiedType::operator==(const QualifiedType& o) const
+{
+    if (simplex_ != o.simplex_)
+        return false;
+
+    for (size_t i = 0; i < kTemplateCap; ++i)
+    {
+        if (template_[i] && o.template_[i])
+        {
+            if (!(*template_[i] == *o.template_[i]))
+                return false;
+        }
+        else if (template_[i] || o.template_[i])
+            return false;
+    }
+
+    return true;
+}
+
+std::unique_ptr<QualifiedType> QualifiedType::clone() const
+{
+    return std::unique_ptr<QualifiedType>(new QualifiedType(*this));
+}
+
+Simplex QualifiedType::simplex() const
+{
+    return simplex_;
+}
+
+const QualifiedType* QualifiedType::underlying(size_t idx) const
+{
+    return idx < kTemplateCap ? template_[idx].get() : nullptr;
 }
 
 size_t QualifiedType::hash() const
 {
-    return std::hash<Kind>{}(kind_) ^ std::hash<Specialization>{}(spec_);
+    return std::hash<Simplex>{}(simplex_);
 }
 
 std::string QualifiedType::repr() const
 {
-    switch (kind_)
+    // TODO in GUI, reserve these strings for new type names. Also, don't '[', ']', or '*' in type names - anything else goes. Put this repr() in GUI as well.
+
+    switch (simplex_.kind)
     {
     case crucible::core::typing::Kind::Bool:
         return "bool";
@@ -40,21 +111,17 @@ std::string QualifiedType::repr() const
     case crucible::core::typing::Kind::String:
         return "string";
     case crucible::core::typing::Kind::Pointer:
-        return gPointerRegistry.underlying_type(gPointerRegistry.lock(), spec_).repr() + "*";
+        return template_[0]->repr() + "*";
     case crucible::core::typing::Kind::Enum:
-        return "#" + gEnumRegistry.enum_title(gEnumRegistry.lock(), spec_);
+        return gEnumRegistry.enum_title(gEnumRegistry.lock(), simplex_.spec);
     case crucible::core::typing::Kind::List:
-        return "list[" + gListRegistry.element_type(gListRegistry.lock(), spec_).repr() + "]";
+        return "list[" + template_[0]->repr() + "]";
     case crucible::core::typing::Kind::Set:
-        return "set[" + gSetRegistry.element_type(gSetRegistry.lock(), spec_).repr() + "]";
+        return "set[" + template_[0]->repr() + "]";
     case crucible::core::typing::Kind::Map:
-    {
-        auto lock = gMapRegistry.lock();
-        return "map[" + gMapRegistry.key_type(lock, spec_).repr()
-            + ", " + gMapRegistry.value_type(lock, spec_).repr() + "]";
-    }
+        return "map[" + template_[0]->repr() + ", " + template_[1]->repr() + "]";
     case crucible::core::typing::Kind::Struct:
-        return "!" + gStructRegistry.struct_title(gStructRegistry.lock(), spec_);
+        return gStructRegistry.struct_title(gStructRegistry.lock(), simplex_.spec);
     case crucible::core::typing::Kind::Joker:
         return "joker";
     default:
@@ -64,67 +131,66 @@ std::string QualifiedType::repr() const
 
 QualifiedType QualifiedType::make_bool()
 {
-    return QualifiedType(Kind::Bool, 0);
+    return QualifiedType({ .kind = Kind::Bool });
 }
 
 QualifiedType QualifiedType::make_int()
 {
-    return QualifiedType(Kind::Int, 0);
+    return QualifiedType({ .kind = Kind::Int });
 }
 
 QualifiedType QualifiedType::make_float()
 {
-    return QualifiedType(Kind::Float, 0);
+    return QualifiedType({ .kind = Kind::Float });
 }
 
 QualifiedType QualifiedType::make_string()
 {
-    return QualifiedType(Kind::String, 0);
+    return QualifiedType({ .kind = Kind::String });
 }
 
 QualifiedType QualifiedType::make_pointer(QualifiedType underlying_type)
 {
-    return QualifiedType(
-        Kind::Pointer,
-        gPointerRegistry.intern(gPointerRegistry.lock(), {.underlying_type = underlying_type}));
+    QualifiedType type({ .kind = Kind::Pointer });
+    type.template_[0] = std::unique_ptr<QualifiedType>(new QualifiedType(std::move(underlying_type)));
+    return type;
 }
 
 QualifiedType QualifiedType::make_enum(Specialization spec)
 {
-    return QualifiedType(Kind::Enum, spec);
+    return QualifiedType({ .kind = Kind::Enum, .spec = spec });
 }
 
 QualifiedType QualifiedType::make_list(QualifiedType elem_type)
 {
-    return QualifiedType(
-        Kind::List,
-        gListRegistry.intern(gListRegistry.lock(), {.element_type = std::move(elem_type)}));
+    QualifiedType type({ .kind = Kind::List });
+    type.template_[0] = std::unique_ptr<QualifiedType>(new QualifiedType(std::move(elem_type)));
+    return type;
 }
 
 QualifiedType QualifiedType::make_set(QualifiedType elem_type)
 {
-    return QualifiedType(
-        Kind::Set,
-        gSetRegistry.intern(gSetRegistry.lock(), {.element_type = std::move(elem_type)}));
+    QualifiedType type({ .kind = Kind::Set });
+    type.template_[0] = std::unique_ptr<QualifiedType>(new QualifiedType(std::move(elem_type)));
+    return type;
 }
 
 QualifiedType QualifiedType::make_map(QualifiedType key_type, QualifiedType value_type)
 {
-    return QualifiedType(
-        Kind::Map,
-        gMapRegistry.intern(
-            gMapRegistry.lock(),
-            {.key_type = std::move(key_type), .value_type = std::move(value_type)}));
+    QualifiedType type({ .kind = Kind::List });
+    type.template_[0] = std::unique_ptr<QualifiedType>(new QualifiedType(std::move(key_type)));
+    type.template_[1] = std::unique_ptr<QualifiedType>(new QualifiedType(std::move(value_type)));
+    return type;
 }
 
 QualifiedType QualifiedType::make_struct(Specialization spec)
 {
-    return QualifiedType(Kind::Struct, spec);
+    return QualifiedType({ .kind = Kind::Struct, .spec = spec });
 }
 
 QualifiedType QualifiedType::make_joker()
 {
-    return QualifiedType(Kind::Joker, 0);
+    return QualifiedType({ .kind = Kind::Joker });
 }
 
 } // crucible::core::typing

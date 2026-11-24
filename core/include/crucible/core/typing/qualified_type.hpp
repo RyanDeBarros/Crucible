@@ -2,25 +2,41 @@
 
 #include <crucible/core/typing/kind.hpp>
 
+#include <memory>
 #include <string>
 
 namespace crucible::core::typing
 {
 
+struct Simplex
+{
+    Kind kind;
+    Specialization spec; // TODO rename to UserInstance and make uint32_t (remove std:: prefix)
+
+    bool operator==(const Simplex&) const = default;
+};
+
 class QualifiedType
 {
-    Kind kind_;
-    Specialization spec_; // pointer, enum, list, set, map, struct
+    constexpr static inline size_t kTemplateCap = 2;
 
-private:
-    QualifiedType(Kind base_type, Specialization spec);
+    Simplex simplex_;
+    std::unique_ptr<QualifiedType> template_[kTemplateCap]; // TODO instead of heap allocations in every QualifiedType, store a handle of some kind to a central data system of template chains?
+
+    QualifiedType(Simplex simplex);
 
 public:
-    bool operator==(const QualifiedType&) const = default;
-    bool operator!=(const QualifiedType&) const = default;
+    QualifiedType(const QualifiedType&);
+    QualifiedType(QualifiedType&&) noexcept;
+    QualifiedType& operator=(const QualifiedType&);
+    QualifiedType& operator=(QualifiedType&&) noexcept;
 
-    Kind kind() const;
-    Specialization specialization() const;
+    bool operator==(const QualifiedType&) const;
+
+    std::unique_ptr<QualifiedType> clone() const;
+
+    Simplex simplex() const;
+    const QualifiedType* underlying(size_t idx) const;
     size_t hash() const;
 
     std::string repr() const;
@@ -39,3 +55,9 @@ public:
 };
 
 } // crucible::core::typing
+
+template<>
+struct std::hash<crucible::core::typing::Simplex>
+{
+    size_t operator()(const crucible::core::typing::Simplex&) const;
+};
