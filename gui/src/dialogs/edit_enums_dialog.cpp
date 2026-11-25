@@ -1,9 +1,11 @@
 #include <crucible/gui/dialogs/edit_enums_dialog.hpp>
 
+#include <crucible/gui/util/alerts.hpp>
 #include <crucible/gui/util/delegate_columns.hpp>
 #include <crucible/gui/util/item_delegates.hpp>
 #include <crucible/gui/util/layout_helpers.hpp>
 #include <crucible/gui/util/outlines.hpp>
+#include <crucible/gui/util/repr.hpp>
 
 #include <crucible/core/typing/nominal_registries.hpp>
 
@@ -124,7 +126,7 @@ QVBoxLayout* EnumListView::initOptions()
 void EnumListView::newEnum()
 {
     QString title = tr("New enum");
-    core::typing::UserInstance spec;
+    core::typing::UserInstance user;
 
     {
         auto lock = core::typing::gEnumRegistry.lock();
@@ -139,7 +141,7 @@ void EnumListView::newEnum()
             std_title = std::format("{} ({})", title.toStdString(), ++suffix);
         title = QString::fromStdString(std_title);
 
-        spec = core::typing::gEnumRegistry.add(lock, {
+        user = core::typing::gEnumRegistry.add(lock, {
             .title = title.toStdString(),
             .names = {}
         });
@@ -147,8 +149,8 @@ void EnumListView::newEnum()
     
     model_->addElement({
         .title = std::move(title),
-        .user = spec,
-        .id = repr(spec)
+        .user = user,
+        .id = repr(user)
     });
 }
 
@@ -383,6 +385,12 @@ void EnumEditView::syncTitleStatus()
     }
 
     syncErrorOutline(*title_edit_, duplicate, tr("An enum already exists with this name"));
+
+    if (reservedTypeName(title_edit_->text()))
+        syncErrorOutline(*title_edit_, true, tr("Cannot use reserved name"));
+
+    if (!validCharactersInTypeName(title_edit_->text()))
+        syncErrorOutline(*title_edit_, true, tr("Cannot use invalid characters ('[', ']', '*') in name"));
 }
 
 void EnumEditView::syncValueStatuses()
@@ -442,6 +450,22 @@ void EnumEditView::applyChanges()
                 QMessageBox::Ok,
                 QMessageBox::Ok);
 
+            return;
+        }
+
+        if (reservedTypeName(title_edit_->text()))
+        {
+            alerts::cannotApplyChanges(
+                *this,
+                tr("Cannot use reserved enum name '%1'").arg(title_edit_->text()));
+            return;
+        }
+
+        if (!validCharactersInTypeName(title_edit_->text()))
+        {
+            alerts::cannotApplyChanges(
+                *this,
+                tr("Cannot use invalid characters ('[', ']', '*') in enum name '%1'").arg(title_edit_->text()));
             return;
         }
 

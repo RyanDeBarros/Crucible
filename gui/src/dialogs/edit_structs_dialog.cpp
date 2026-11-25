@@ -1,5 +1,6 @@
 #include <crucible/gui/dialogs/edit_structs_dialog.hpp>
 
+#include <crucible/gui/util/alerts.hpp>
 #include <crucible/gui/util/delegate_columns.hpp>
 #include <crucible/gui/util/item_delegates.hpp>
 #include <crucible/gui/util/layout_helpers.hpp>
@@ -450,12 +451,6 @@ void StructEditView::syncFieldStatuses()
             // TODO
             //syncErrorOutline(fieldTypeEdit(i), true, tr("Incomplete type"));
         }
-
-        if (reservedTypeName(field.name))
-            syncErrorOutline(fieldNameEdit(i), true, tr("Cannot use reserved name"));
-
-        if (!validCharactersInTypeName(field.name))
-            syncErrorOutline(fieldNameEdit(i), true, tr("Cannot use invalid characters ('[', ']', '*') in name"));
     }
 }
 
@@ -466,15 +461,6 @@ QLineEdit& StructEditView::fieldNameEdit(size_t row)
 
 void StructEditView::applyChanges()
 {
-    static const auto cannotApplyChanges = [](StructEditView* view, const QString& reason) {
-        QMessageBox::critical(
-            view,
-            tr("Cannot apply changes"),
-            reason,
-            QMessageBox::Ok,
-            QMessageBox::Ok);
-    };
-
     {
         auto lock = core::typing::gStructRegistry.lock();
 
@@ -488,21 +474,24 @@ void StructEditView::applyChanges()
         std::string title = title_edit_->text().toStdString();
         if (existing_titles.contains(title))
         {
-            cannotApplyChanges(this, tr("A struct with the name '%1' already exists")
-                .arg(title_edit_->text()));
+            alerts::cannotApplyChanges(
+                *this,
+                tr("A struct with the name '%1' already exists").arg(title_edit_->text()));
             return;
         }
 
         if (reservedTypeName(title_edit_->text()))
         {
-            cannotApplyChanges(this, tr("Cannot use reserved struct name '%1'").arg(title_edit_->text()));
+            alerts::cannotApplyChanges(
+                *this,
+                tr("Cannot use reserved struct name '%1'").arg(title_edit_->text()));
             return;
         }
 
         if (!validCharactersInTypeName(title_edit_->text()))
         {
-            cannotApplyChanges(
-                this,
+            alerts::cannotApplyChanges(
+                *this,
                 tr("Cannot use invalid characters ('[', ']', '*') in struct name '%1'").arg(title_edit_->text()));
             return;
         }
@@ -514,21 +503,7 @@ void StructEditView::applyChanges()
 
             if (!field_names.insert(field.name).second)
             {
-                cannotApplyChanges(this, tr("There are duplicate field names"));
-                return;
-            }
-
-            if (reservedTypeName(field.name))
-            {
-                cannotApplyChanges(this, tr("Cannot use reserved field name '%1'").arg(field.name));
-                return;
-            }
-
-            if (!validCharactersInTypeName(field.name))
-            {
-                cannotApplyChanges(
-                    this,
-                    tr("Cannot use invalid characters ('[', ']', '*') in field name '%1'").arg(field.name));
+                alerts::cannotApplyChanges(*this, tr("There are duplicate field names"));
                 return;
             }
         }
@@ -540,8 +515,7 @@ void StructEditView::applyChanges()
                 fields.push_back(std::make_pair(field.name.toStdString(), *field.type));
             else
             {
-                // TODO error sync
-                cannotApplyChanges(this, tr("Field '%1' has incomplete type").arg(field.name));
+                alerts::cannotApplyChanges(*this, tr("Field '%1' has incomplete type").arg(field.name));
                 return;
             }
         }
@@ -573,6 +547,7 @@ EditFieldTypeView::EditFieldTypeView(QWidget* parent)
 void EditFieldTypeView::loadType(size_t field_idx, core::typing::QualifiedType type)
 {
     field_idx_ = field_idx;
+    working_type_ = std::move(type);
 
     // TODO
 }
@@ -589,7 +564,7 @@ QVBoxLayout* EditFieldTypeView::initOptions()
     auto* apply_button = new QPushButton(loadIcon(Icon::Apply), tr("Accept"), this);
     apply_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     connect(apply_button, &QPushButton::clicked, this, [this]() {
-        Q_EMIT acceptRequested(field_idx_, core::typing::QualifiedType::make_int()); // TODO pass type
+        Q_EMIT acceptRequested(field_idx_, working_type_.value());
     });
     layout->addWidget(apply_button);
 

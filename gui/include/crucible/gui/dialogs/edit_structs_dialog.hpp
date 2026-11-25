@@ -107,6 +107,7 @@ class EditFieldTypeView
 
 private:
     size_t field_idx_;
+    std::optional<core::typing::QualifiedType> working_type_;
 
 public:
     explicit EditFieldTypeView(QWidget* parent = nullptr);
