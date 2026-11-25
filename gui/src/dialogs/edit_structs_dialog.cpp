@@ -58,7 +58,7 @@ QTableView* StructListView::initTable()
         std::make_unique<DataColumn<StructTemplate>>(
             [](size_t row, const StructTemplate& element, int role) -> QVariant {
                 if (role == Qt::DisplayRole)
-                    return element.title; // TODO this is still editable
+                    return element.title;
                 else
                     return {};
             }),
@@ -308,7 +308,6 @@ QTableView* StructEditView::initTable()
                     return {};
             },
             [](size_t row, FieldTemplate& element, const QVariant& value, int role) -> bool {
-
                 if (role == Qt::EditRole)
                 {
                     // TODO set type
@@ -556,8 +555,6 @@ void EditFieldTypeView::loadType(size_t field_idx, core::typing::Type type)
 {
     field_idx_ = field_idx;
     working_type_ = std::move(type);
-
-    // TODO
 }
 
 QVBoxLayout* EditFieldTypeView::initMainLayout()

@@ -93,6 +93,7 @@ public:
 
 private:
     ColumnList columns_;
+    std::array<QAbstractItemDelegate*, ColumnCount> delegates_;
     std::vector<Element> elements_;
     Config config_;
     QString mime_reorder_type_;
@@ -113,8 +114,8 @@ public:
         {
             if (const auto& column = columns_[i])
             {
-                if (auto* delegate = column->newDelegate(*this))
-                    table_.setItemDelegateForColumn(i, delegate);
+                if (delegates_[i] = column->newDelegate(*this); delegates_[i])
+                    table_.setItemDelegateForColumn(i, delegates_[i]);
             }
         }
 
@@ -308,7 +309,7 @@ public:
         {
             for (size_t i = 0; i < ColumnCount; ++i)
             {
-                if (const auto& column = columns_[i])
+                if (delegates_[i])
                     table_.openPersistentEditor(index(row, i));
             }
         }
