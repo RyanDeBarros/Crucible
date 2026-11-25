@@ -57,7 +57,7 @@ QTableView* StructListView::initTable()
         std::make_unique<DataColumn<StructTemplate>>(
             [](size_t row, const StructTemplate& element, int role) -> QVariant {
                 if (role == Qt::DisplayRole)
-                    return element.title;
+                    return element.title; // TODO this is still editable
                 else
                     return {};
             }),
@@ -181,7 +181,7 @@ void StructEditView::loadStruct(core::typing::UserInstance user)
             fields.push_back({
                 .name = QString::fromStdString(field.first),
                 .type = field.second,
-                .type_repr = repr(field.second)
+                .repr = repr(field.second)
             });
         }
         model_->setElements(std::move(fields));
@@ -197,7 +197,8 @@ void StructEditView::loadStruct(core::typing::UserInstance user)
 
 void StructEditView::setFieldType(size_t field_idx, core::typing::QualifiedType type)
 {
-    // TODO just set field type in gui, not core
+    model_->at(field_idx).type = type;
+    model_->at(field_idx).repr = repr(type);
 }
 
 bool StructEditView::unsavedChanges() const
@@ -301,7 +302,7 @@ QTableView* StructEditView::initTable()
         std::make_unique<LineEditColumn<FieldTemplate>>( // TODO searchable combo box
             [](size_t row, const FieldTemplate& element, int role) -> QVariant {
                 if (role == Qt::EditRole)
-                    return element.type_repr;
+                    return element.repr ? *element.repr : kUnselectedTypeName;
                 else
                     return {};
             },
@@ -366,11 +367,7 @@ QVBoxLayout* StructEditView::initOptions()
         while (existing_names.contains(new_name))
             new_name = tr(std::format("{} (%1)", base_name).c_str()).arg(++index);
 
-        model_->addElement({
-            .name = new_name,
-            .type = core::typing::QualifiedType::make_int(),
-            .type_repr = repr(core::typing::QualifiedType::make_int())
-        });
+        model_->addElement({ .name = new_name });
     });
     layout->addWidget(new_element_button);
 
@@ -407,6 +404,12 @@ void StructEditView::syncTitleStatus()
     }
 
     syncErrorOutline(*title_edit_, duplicate, tr("A struct already exists with this name"));
+
+    if (reservedTypeName(title_edit_->text()))
+        syncErrorOutline(*title_edit_, true, tr("Cannot use reserved name"));
+
+    if (!validCharactersInTypeName(title_edit_->text()))
+        syncErrorOutline(*title_edit_, true, tr("Cannot use invalid characters ('[', ']', '*') in name"));
 }
 
 void StructEditView::syncFieldStatuses()
@@ -437,6 +440,23 @@ void StructEditView::syncFieldStatuses()
 
         it = last;
     }
+
+    for (size_t i = 0; i < model_->elementCount(); ++i)
+    {
+        const auto& field = model_->at(i);
+
+        if (!field.type)
+        {
+            // TODO
+            //syncErrorOutline(fieldTypeEdit(i), true, tr("Incomplete type"));
+        }
+
+        if (reservedTypeName(field.name))
+            syncErrorOutline(fieldNameEdit(i), true, tr("Cannot use reserved name"));
+
+        if (!validCharactersInTypeName(field.name))
+            syncErrorOutline(fieldNameEdit(i), true, tr("Cannot use invalid characters ('[', ']', '*') in name"));
+    }
 }
 
 QLineEdit& StructEditView::fieldNameEdit(size_t row)
@@ -446,6 +466,15 @@ QLineEdit& StructEditView::fieldNameEdit(size_t row)
 
 void StructEditView::applyChanges()
 {
+    static const auto cannotApplyChanges = [](StructEditView* view, const QString& reason) {
+        QMessageBox::critical(
+            view,
+            tr("Cannot apply changes"),
+            reason,
+            QMessageBox::Ok,
+            QMessageBox::Ok);
+    };
+
     {
         auto lock = core::typing::gStructRegistry.lock();
 
@@ -459,38 +488,67 @@ void StructEditView::applyChanges()
         std::string title = title_edit_->text().toStdString();
         if (existing_titles.contains(title))
         {
-            QMessageBox::critical(
-                this,
-                tr("Cannot apply changes"),
-                tr("An struct with the name '%1' already exists").arg(title),
-                QMessageBox::Ok,
-                QMessageBox::Ok);
+            cannotApplyChanges(this, tr("A struct with the name '%1' already exists")
+                .arg(title_edit_->text()));
+            return;
+        }
 
+        if (reservedTypeName(title_edit_->text()))
+        {
+            cannotApplyChanges(this, tr("Cannot use reserved struct name '%1'").arg(title_edit_->text()));
+            return;
+        }
+
+        if (!validCharactersInTypeName(title_edit_->text()))
+        {
+            cannotApplyChanges(
+                this,
+                tr("Cannot use invalid characters ('[', ']', '*') in struct name '%1'").arg(title_edit_->text()));
             return;
         }
 
         std::unordered_set<QString> field_names;
         for (size_t i = 0; i < model_->elementCount(); ++i)
         {
-            if (!field_names.insert(model_->at(i).name).second)
-            {
-                QMessageBox::critical(
-                    this,
-                    tr("Cannot apply changes"),
-                    tr("There are duplicate field names"),
-                    QMessageBox::Ok,
-                    QMessageBox::Ok);
+            const auto& field = model_->at(i);
 
+            if (!field_names.insert(field.name).second)
+            {
+                cannotApplyChanges(this, tr("There are duplicate field names"));
+                return;
+            }
+
+            if (reservedTypeName(field.name))
+            {
+                cannotApplyChanges(this, tr("Cannot use reserved field name '%1'").arg(field.name));
+                return;
+            }
+
+            if (!validCharactersInTypeName(field.name))
+            {
+                cannotApplyChanges(
+                    this,
+                    tr("Cannot use invalid characters ('[', ']', '*') in field name '%1'").arg(field.name));
+                return;
+            }
+        }
+
+        std::vector<std::pair<std::string, core::typing::QualifiedType>> fields;
+        for (const auto& field : model_->getElements())
+        {
+            if (field.type)
+                fields.push_back(std::make_pair(field.name.toStdString(), *field.type));
+            else
+            {
+                // TODO error sync
+                cannotApplyChanges(this, tr("Field '%1' has incomplete type").arg(field.name));
                 return;
             }
         }
 
         auto& struct_data = core::typing::gStructRegistry.get(lock, user_);
         struct_data.title = std::move(title);
-
-        struct_data.fields.clear();
-        for (const auto& field : model_->getElements())
-            struct_data.fields.push_back(std::make_pair(field.name.toStdString(), field.type));
+        struct_data.fields = std::move(fields);
     }
 
     syncDirtyState();

@@ -57,8 +57,8 @@ private:
     struct FieldTemplate
     {
         QString name;
-        core::typing::QualifiedType type;
-        QString type_repr; // TODO instead of combined string, repr() should return representation in parts so it's easy to use sub-combos for nested types
+        std::optional<core::typing::QualifiedType> type;
+        std::optional<QString> repr;
     };
 
     using TableModel = ElementTableModel<FieldTemplate, 4>;

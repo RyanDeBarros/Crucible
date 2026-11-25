@@ -21,7 +21,7 @@ class QualifiedType
     constexpr static inline size_t kTemplateCap = 2;
 
     Simplex simplex_;
-    std::unique_ptr<QualifiedType> template_[kTemplateCap]; // TODO instead of heap allocations in every QualifiedType, store a handle of some kind to a central data system of template chains?
+    std::unique_ptr<QualifiedType> template_[kTemplateCap]; // TODO instead of heap allocations in every QualifiedType, store a handle of some kind to a central data system of template chains? Would also make comparisons much quicker and support caching.
 
     QualifiedType(Simplex simplex);
 

@@ -1,11 +1,11 @@
 #pragma once
 
-class QLineEdit;
+class QWidget;
 class QString;
 
 namespace crucible::gui
 {
 
-extern void syncErrorOutline(QLineEdit& edit, bool error, const QString& tooltip);
+extern void syncErrorOutline(QWidget& widget, bool error, const QString& tooltip);
 
 } // crucible::gui

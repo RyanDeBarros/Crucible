@@ -85,4 +85,6 @@ bool validCharactersInTypeName(const QString& name)
     return true;
 }
 
+const QString kUnselectedTypeName = "-- select --";
+
 } // crucible::gui

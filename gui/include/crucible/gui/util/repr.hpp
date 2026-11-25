@@ -11,4 +11,6 @@ extern QString repr(const core::typing::QualifiedType& type);
 extern bool reservedTypeName(const QString& name);
 extern bool validCharactersInTypeName(const QString& name);
 
+extern const QString kUnselectedTypeName;
+
 } // crucible::gui
