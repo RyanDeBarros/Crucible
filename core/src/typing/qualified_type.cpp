@@ -20,14 +20,14 @@ QualifiedType::QualifiedType(Simplex simplex)
 QualifiedType::QualifiedType(const QualifiedType& o)
     : simplex_(o.simplex_)
 {
-    for (size_t i = 0; i < kTemplateCap; ++i)
+    for (size_t i = 0; i < template_.size(); ++i)
         template_[i] = o.template_[i] ? o.template_[i]->clone() : nullptr;
 }
 
 QualifiedType::QualifiedType(QualifiedType&& o) noexcept
     : simplex_(std::move(o.simplex_))
 {
-    for (size_t i = 0; i < kTemplateCap; ++i)
+    for (size_t i = 0; i < template_.size(); ++i)
         template_[i] = std::move(o.template_[i]);
 }
 
@@ -37,7 +37,7 @@ QualifiedType& QualifiedType::operator=(const QualifiedType& o)
     {
         simplex_ = o.simplex_;
 
-        for (size_t i = 0; i < kTemplateCap; ++i)
+        for (size_t i = 0; i < template_.size(); ++i)
             template_[i] = o.template_[i] ? o.template_[i]->clone() : nullptr;
     }
 
@@ -50,7 +50,7 @@ QualifiedType& QualifiedType::operator=(QualifiedType&& o) noexcept
     {
         simplex_ = o.simplex_;
 
-        for (size_t i = 0; i < kTemplateCap; ++i)
+        for (size_t i = 0; i < template_.size(); ++i)
             template_[i] = std::move(o.template_[i]);
     }
 
@@ -62,7 +62,7 @@ bool QualifiedType::operator==(const QualifiedType& o) const
     if (simplex_ != o.simplex_)
         return false;
 
-    for (size_t i = 0; i < kTemplateCap; ++i)
+    for (size_t i = 0; i < template_.size(); ++i)
     {
         if (template_[i] && o.template_[i])
         {
@@ -88,12 +88,18 @@ Simplex QualifiedType::simplex() const
 
 const QualifiedType* QualifiedType::underlying(size_t idx) const
 {
-    return idx < kTemplateCap ? template_[idx].get() : nullptr;
+    return idx < template_.size() ? template_[idx].get() : nullptr;
 }
 
 size_t QualifiedType::hash() const
 {
-    return std::hash<Simplex>{}(simplex_);
+    size_t h = std::hash<Simplex>{}(simplex_);
+    for (size_t i = 0; i < template_.size(); ++i)
+    {
+        if (template_[i])
+            h ^= template_[i]->hash() << (i + 1);
+    }
+    return h;
 }
 
 QualifiedType QualifiedType::make_bool()
@@ -144,7 +150,7 @@ QualifiedType QualifiedType::make_set(QualifiedType elem_type)
 
 QualifiedType QualifiedType::make_map(QualifiedType key_type, QualifiedType value_type)
 {
-    QualifiedType type({ .kind = Kind::List });
+    QualifiedType type({ .kind = Kind::Map });
     type.template_[0] = std::unique_ptr<QualifiedType>(new QualifiedType(std::move(key_type)));
     type.template_[1] = std::unique_ptr<QualifiedType>(new QualifiedType(std::move(value_type)));
     return type;

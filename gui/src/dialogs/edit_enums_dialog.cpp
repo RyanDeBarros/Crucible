@@ -443,13 +443,10 @@ void EnumEditView::applyChanges()
         std::string title = title_edit_->text().toStdString();
         if (existing_titles.contains(title))
         {
-            QMessageBox::critical(
-                this,
-                tr("Cannot apply changes"),
-                tr("An enum with the name '%1' already exists").arg(title),
-                QMessageBox::Ok,
-                QMessageBox::Ok);
-
+            alerts::cannotApplyChanges(
+                *this,
+                tr("An enum with the name '%1' already exists")
+                    .arg(title));
             return;
         }
 
@@ -457,7 +454,8 @@ void EnumEditView::applyChanges()
         {
             alerts::cannotApplyChanges(
                 *this,
-                tr("Cannot use reserved enum name '%1'").arg(title_edit_->text()));
+                tr("Cannot use reserved enum name '%1'")
+                    .arg(title_edit_->text()));
             return;
         }
 
@@ -465,7 +463,8 @@ void EnumEditView::applyChanges()
         {
             alerts::cannotApplyChanges(
                 *this,
-                tr("Cannot use invalid characters ('[', ']', '*') in enum name '%1'").arg(title_edit_->text()));
+                tr("Cannot use invalid characters ('[', ']', '*') in enum name '%1'")
+                    .arg(title_edit_->text()));
             return;
         }
 
@@ -474,13 +473,9 @@ void EnumEditView::applyChanges()
         {
             if (!values.insert(model_->at(i)).second)
             {
-                QMessageBox::critical(
-                    this,
-                    tr("Cannot apply changes"),
-                    tr("There are duplicate enum values"),
-                    QMessageBox::Ok,
-                    QMessageBox::Ok);
-
+                alerts::cannotApplyChanges(
+                    *this,
+                    tr("There are duplicate enum values"));
                 return;
             }
         }

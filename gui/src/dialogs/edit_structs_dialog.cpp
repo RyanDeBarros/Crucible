@@ -476,7 +476,8 @@ void StructEditView::applyChanges()
         {
             alerts::cannotApplyChanges(
                 *this,
-                tr("A struct with the name '%1' already exists").arg(title_edit_->text()));
+                tr("A struct with the name '%1' already exists")
+                    .arg(title_edit_->text()));
             return;
         }
 
@@ -484,7 +485,8 @@ void StructEditView::applyChanges()
         {
             alerts::cannotApplyChanges(
                 *this,
-                tr("Cannot use reserved struct name '%1'").arg(title_edit_->text()));
+                tr("Cannot use reserved struct name '%1'")
+                    .arg(title_edit_->text()));
             return;
         }
 
@@ -492,7 +494,8 @@ void StructEditView::applyChanges()
         {
             alerts::cannotApplyChanges(
                 *this,
-                tr("Cannot use invalid characters ('[', ']', '*') in struct name '%1'").arg(title_edit_->text()));
+                tr("Cannot use invalid characters ('[', ']', '*') in struct name '%1'")
+                    .arg(title_edit_->text()));
             return;
         }
 
@@ -503,7 +506,9 @@ void StructEditView::applyChanges()
 
             if (!field_names.insert(field.name).second)
             {
-                alerts::cannotApplyChanges(*this, tr("There are duplicate field names"));
+                alerts::cannotApplyChanges(
+                    *this,
+                    tr("There are duplicate field names"));
                 return;
             }
         }
@@ -515,7 +520,10 @@ void StructEditView::applyChanges()
                 fields.push_back(std::make_pair(field.name.toStdString(), *field.type));
             else
             {
-                alerts::cannotApplyChanges(*this, tr("Field '%1' has incomplete type").arg(field.name));
+                alerts::cannotApplyChanges(
+                    *this,
+                    tr("Field '%1' has incomplete type")
+                        .arg(field.name));
                 return;
             }
         }
