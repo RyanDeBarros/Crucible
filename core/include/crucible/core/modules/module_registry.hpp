@@ -22,7 +22,7 @@ public:
 
     ModuleId create(const Lock& lock, typing::Storage storage, Metadata metadata);
 
-    typing::QualifiedType module_type(const Lock& lock, ModuleId id) const;
+    typing::Type module_type(const Lock& lock, ModuleId id) const;
 };
 
 extern ModuleRegistry gModuleRegistry;

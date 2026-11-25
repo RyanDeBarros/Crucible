@@ -1,11 +1,11 @@
 #include <crucible/gui/util/repr.hpp>
 
-#include <crucible/core/typing/nominal_registries.hpp>
+#include <crucible/core/typing/user_registries.hpp>
 
 namespace crucible::gui
 {
 
-QString repr(const core::typing::QualifiedType& type)
+QString repr(const core::typing::Type& type)
 {
     switch (type.simplex().kind)
     {
@@ -18,33 +18,18 @@ QString repr(const core::typing::QualifiedType& type)
     case crucible::core::typing::Kind::String:
         return QStringLiteral("string");
     case crucible::core::typing::Kind::Pointer:
-        if (auto underlying = type.underlying(0))
-            return repr(*underlying) + QStringLiteral("*");
-        else
-            throw std::runtime_error("Unsupported type");
+        return repr(type.underlying(0)) + QStringLiteral("*");
     case crucible::core::typing::Kind::Enum:
         return QString::fromStdString(core::typing::gEnumRegistry.enum_title(
             core::typing::gEnumRegistry.lock(),
             type.simplex().user));
     case crucible::core::typing::Kind::List:
-        if (auto underlying = type.underlying(0))
-            return QStringLiteral("list[") + repr(*underlying) + QStringLiteral("]");
-        else
-            throw std::runtime_error("Unsupported type");
+        return QStringLiteral("list[") + repr(type.underlying(0)) + QStringLiteral("]");
     case crucible::core::typing::Kind::Set:
-        if (auto underlying = type.underlying(0))
-            return QStringLiteral("set[") + repr(*underlying) + QStringLiteral("]");
-        else
-            throw std::runtime_error("Unsupported type");
+        return QStringLiteral("set[") + repr(type.underlying(0)) + QStringLiteral("]");
     case crucible::core::typing::Kind::Map:
-    {
-        auto key = type.underlying(0);
-        auto value = type.underlying(1);
-        if (key && value)
-            return QStringLiteral("map[") + repr(*key) + QStringLiteral(", ") + repr(*value) + QStringLiteral("]");
-        else
-            throw std::runtime_error("Unsupported type");
-    }
+        return QStringLiteral("map[") + repr(type.underlying(0)) + QStringLiteral(", ")
+            + repr(type.underlying(1)) + QStringLiteral("]");
     case crucible::core::typing::Kind::Struct:
         return QString::fromStdString(core::typing::gStructRegistry.struct_title(
             core::typing::gStructRegistry.lock(),
@@ -55,8 +40,6 @@ QString repr(const core::typing::QualifiedType& type)
         throw std::runtime_error("Unsupported type");
     }
 }
-
-// TODO validate these for enum and struct titles (user instances)
 
 bool reservedTypeName(const QString& name)
 {

@@ -13,7 +13,7 @@ ModuleId ModuleRegistry::create(const Lock& lock, typing::Storage storage, Metad
     return id;
 }
 
-typing::QualifiedType ModuleRegistry::module_type(const Lock& lock, ModuleId id) const
+typing::Type ModuleRegistry::module_type(const Lock& lock, ModuleId id) const
 {
     return get(lock, id).storage.type();
 }

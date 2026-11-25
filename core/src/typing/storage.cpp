@@ -1,6 +1,6 @@
 #include <crucible/core/typing/storage.hpp>
 
-#include <crucible/core/typing/nominal_registries.hpp>
+#include <crucible/core/typing/user_registries.hpp>
 
 #include <crucible/core/modules/module_registry.hpp>
 
@@ -9,14 +9,14 @@
 namespace crucible::core::typing
 {
 
-Storage::Storage(QualifiedType type, reflector::box payload, StorageState state)
+Storage::Storage(Type type, reflector::box payload, StorageState state)
     : type_(std::move(type))
     , payload_(std::move(payload))
     , state_(state)
 {
 }
 
-const QualifiedType& Storage::type() const
+const Type& Storage::type() const
 {
     return type_;
 }
@@ -26,17 +26,17 @@ StorageState Storage::state() const
     return state_;
 }
 
-Storage Storage::make_uninitialized(QualifiedType type)
+Storage Storage::make_uninitialized(Type type)
 {
     return Storage(std::move(type), reflector::box{}, StorageState::Uninitialized);
 }
 
-Storage Storage::make_initialized(QualifiedType type, reflector::box payload)
+Storage Storage::make_initialized(Type type, reflector::box payload)
 {
     return Storage(std::move(type), std::move(payload), StorageState::Initialized);
 }
 
-Storage Storage::make_null(QualifiedType type)
+Storage Storage::make_null(Type type)
 {
     return Storage(std::move(type), reflector::box{}, StorageState::Null);
 }
@@ -55,12 +55,12 @@ struct RegistryLockPack
     }
 };
 
-static bool validate_pointer(const RegistryLockPack& locks, const QualifiedType& type, const PointerPayload& payload);
-static bool validate_enum(const RegistryLockPack& locks, const QualifiedType& type, const EnumPayload& payload);
-static bool validate_list(const RegistryLockPack& locks, const QualifiedType& type, const ListPayload& payload);
-static bool validate_set(const RegistryLockPack& locks, const QualifiedType& type, const SetPayload& payload);
-static bool validate_map(const RegistryLockPack& locks, const QualifiedType& type, const MapPayload& payload);
-static bool validate_struct(const RegistryLockPack& locks, const QualifiedType& type, const StructPayload& payload);
+static bool validate_pointer(const RegistryLockPack& locks, const Type& type, const PointerPayload& payload);
+static bool validate_enum(const RegistryLockPack& locks, const Type& type, const EnumPayload& payload);
+static bool validate_list(const RegistryLockPack& locks, const Type& type, const ListPayload& payload);
+static bool validate_set(const RegistryLockPack& locks, const Type& type, const SetPayload& payload);
+static bool validate_map(const RegistryLockPack& locks, const Type& type, const MapPayload& payload);
+static bool validate_struct(const RegistryLockPack& locks, const Type& type, const StructPayload& payload);
 
 template<typename PayloadType>
 constexpr bool kShouldItercheck =
@@ -72,7 +72,7 @@ constexpr bool kShouldItercheck =
     std::is_same_v<PayloadType, StructPayload>;
 
 template<typename PayloadType>
-static bool validate_element(const RegistryLockPack& locks, const QualifiedType& type, const PayloadType& payload)
+static bool validate_element(const RegistryLockPack& locks, const Type& type, const PayloadType& payload)
 {
     if constexpr (std::is_same_v<PayloadType, PointerPayload>)
         return validate_pointer(locks, type, payload);
@@ -96,16 +96,12 @@ static bool validate_element(const RegistryLockPack& locks, const QualifiedType&
         static_assert(kFalse<PayloadType>);
 }
 
-static bool validate_pointer(const RegistryLockPack& locks, const QualifiedType& type, const PointerPayload& payload)
+static bool validate_pointer(const RegistryLockPack& locks, const Type& type, const PointerPayload& payload)
 {
-    auto underlying = type.underlying(0);
-    if (!underlying)
-        return false;
-
-    return modules::gModuleRegistry.module_type(locks.module_lock, payload.value) == *underlying;
+    return modules::gModuleRegistry.module_type(locks.module_lock, payload.value) == type.underlying(0);
 }
 
-static bool validate_enum(const RegistryLockPack& locks, const QualifiedType& type, const EnumPayload& payload)
+static bool validate_enum(const RegistryLockPack& locks, const Type& type, const EnumPayload& payload)
 {
     if (!gEnumRegistry.exists(locks.enum_lock, type.simplex().user))
         return false;
@@ -114,7 +110,7 @@ static bool validate_enum(const RegistryLockPack& locks, const QualifiedType& ty
 }
 
 template<typename ElementPayloadType, typename PayloadContainer>
-bool std_itercheck(const RegistryLockPack& locks, const auto& payload, const QualifiedType& expected_element_type)
+bool std_itercheck(const RegistryLockPack& locks, const auto& payload, const Type& expected_element_type)
 {
     if (const auto* pld = payload.value.as<PayloadContainer>())
     {
@@ -166,24 +162,16 @@ bool std_itercheck(const RegistryLockPack& locks, const auto& payload, const Qua
 #define VALIDATE_ITERABLE(Container) \
         switch (expected_element_type.simplex().kind) { EXPAND_MACRO_1(ITERCHECK, Container) }
 
-static bool validate_list(const RegistryLockPack& locks, const QualifiedType& type, const ListPayload& payload)
+static bool validate_list(const RegistryLockPack& locks, const Type& type, const ListPayload& payload)
 {
-    auto underlying = type.underlying(0);
-    if (!underlying)
-        return false;
-
-    const auto& expected_element_type = *underlying;
+    auto expected_element_type = type.underlying(0);
     VALIDATE_ITERABLE(std::vector);
     return false;
 }
 
-static bool validate_set(const RegistryLockPack& locks, const QualifiedType& type, const SetPayload& payload)
+static bool validate_set(const RegistryLockPack& locks, const Type& type, const SetPayload& payload)
 {
-    auto underlying = type.underlying(0);
-    if (!underlying)
-        return false;
-
-    const auto& expected_element_type = *underlying;
+    auto expected_element_type = type.underlying(0);
     VALIDATE_ITERABLE(std::unordered_set);
     return false;
 }
@@ -195,8 +183,8 @@ template<typename KeyPayloadType, typename ValuePayloadType, typename PayloadCon
 bool map_itercheck(
     const RegistryLockPack& locks,
     const PayloadContainer& payload,
-    const QualifiedType& expected_key_type,
-    const QualifiedType& expected_value_type)
+    const Type& expected_key_type,
+    const Type& expected_value_type)
 {
     if (const auto* pld = payload.value.as<std::unordered_map<KeyPayloadType, ValuePayloadType>>())
     {
@@ -234,15 +222,10 @@ bool map_itercheck(
 
 #define VALIDATE_MAP_OUTER switch (expected_key_type.simplex().kind) { EXPAND_MACRO_0(VALIDATE_MAP_INNER) }
 
-static bool validate_map(const RegistryLockPack& locks, const QualifiedType& type, const MapPayload& payload)
+static bool validate_map(const RegistryLockPack& locks, const Type& type, const MapPayload& payload)
 {
-    auto underlying_key = type.underlying(0);
-    auto underlying_value = type.underlying(1);
-    if (!underlying_key || !underlying_value)
-        return false;
-
-    const auto& expected_key_type = *underlying_key;
-    const auto& expected_value_type = *underlying_value;
+    auto expected_key_type = type.underlying(0);
+    auto expected_value_type = type.underlying(1);
     VALIDATE_MAP_OUTER;
     return false;
 }
@@ -254,7 +237,7 @@ static bool validate_map(const RegistryLockPack& locks, const QualifiedType& typ
 #undef EXPAND_MACRO_0
 #undef EXPAND_MACRO_1
 
-static bool validate_struct(const RegistryLockPack& locks, const QualifiedType& type, const StructPayload& payload)
+static bool validate_struct(const RegistryLockPack& locks, const Type& type, const StructPayload& payload)
 {
     if (!gStructRegistry.exists(locks.struct_lock, type.simplex().user))
         return false;
@@ -276,7 +259,7 @@ static bool validate_struct(const RegistryLockPack& locks, const QualifiedType& 
     return true;
 }
 
-bool Storage::is_valid_payload(const QualifiedType& type, const reflector::box& payload)
+bool Storage::is_valid_payload(const Type& type, const reflector::box& payload)
 {
     RegistryLockPack locks;
 
@@ -339,7 +322,7 @@ bool Storage::is_valid_payload(const QualifiedType& type, const reflector::box& 
     return false;
 }
 
-const reflector::box* Storage::get(const QualifiedType& type) const
+const reflector::box* Storage::get(const Type& type) const
 {
     if (state_ != StorageState::Initialized)
         return nullptr;
@@ -350,7 +333,7 @@ const reflector::box* Storage::get(const QualifiedType& type) const
     return &payload_;
 }
 
-reflector::box* Storage::get(const QualifiedType& type)
+reflector::box* Storage::get(const Type& type)
 {
     if (state_ != StorageState::Initialized)
         return nullptr;

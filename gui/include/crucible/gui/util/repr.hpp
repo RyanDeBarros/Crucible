@@ -1,13 +1,13 @@
 #pragma once
 
-#include <crucible/core/typing/qualified_type.hpp>
+#include <crucible/core/typing/type.hpp>
 
 #include <QString>
 
 namespace crucible::gui
 {
 
-extern QString repr(const core::typing::QualifiedType& type);
+extern QString repr(const core::typing::Type& type);
 extern bool reservedTypeName(const QString& name);
 extern bool validCharactersInTypeName(const QString& name);
 

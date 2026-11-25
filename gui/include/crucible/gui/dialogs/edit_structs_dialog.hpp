@@ -1,6 +1,6 @@
 #pragma once
 
-#include <crucible/core/typing/qualified_type.hpp>
+#include <crucible/core/typing/type.hpp>
 
 #include <crucible/gui/util/element_table_model.hpp>
 #include <crucible/gui/util/modal_dialog.hpp>
@@ -57,7 +57,7 @@ private:
     struct FieldTemplate
     {
         QString name;
-        std::optional<core::typing::QualifiedType> type;
+        std::optional<core::typing::Type> type;
         std::optional<QString> repr;
     };
 
@@ -78,11 +78,11 @@ public:
 
 signals:
     void backRequested();
-    void editFieldTypeRequested(size_t field_idx, core::typing::QualifiedType type);
+    void editFieldTypeRequested(size_t field_idx, core::typing::Type type);
 
 public:
     void loadStruct(core::typing::UserInstance user);
-    void setFieldType(size_t field_idx, core::typing::QualifiedType type);
+    void setFieldType(size_t field_idx, core::typing::Type type);
     bool unsavedChanges() const;
     bool alertUnsavedChanges();
 
@@ -107,17 +107,17 @@ class EditFieldTypeView
 
 private:
     size_t field_idx_;
-    std::optional<core::typing::QualifiedType> working_type_;
+    std::optional<core::typing::Type> working_type_;
 
 public:
     explicit EditFieldTypeView(QWidget* parent = nullptr);
 
 signals:
-    void acceptRequested(size_t field_idx, core::typing::QualifiedType type);
+    void acceptRequested(size_t field_idx, core::typing::Type type);
     void cancelRequested();
 
 public:
-    void loadType(size_t field_idx, core::typing::QualifiedType type);
+    void loadType(size_t field_idx, core::typing::Type type);
 
 private:
     QVBoxLayout* initMainLayout();

@@ -7,7 +7,7 @@
 #include <crucible/gui/util/outlines.hpp>
 #include <crucible/gui/util/repr.hpp>
 
-#include <crucible/core/typing/nominal_registries.hpp>
+#include <crucible/core/typing/user_registries.hpp>
 
 #include <QCloseEvent>
 #include <QFormLayout>
@@ -196,7 +196,7 @@ void StructEditView::loadStruct(core::typing::UserInstance user)
     syncDirtyState();
 }
 
-void StructEditView::setFieldType(size_t field_idx, core::typing::QualifiedType type)
+void StructEditView::setFieldType(size_t field_idx, core::typing::Type type)
 {
     model_->at(field_idx).type = type;
     model_->at(field_idx).repr = repr(type);
@@ -513,7 +513,7 @@ void StructEditView::applyChanges()
             }
         }
 
-        std::vector<std::pair<std::string, core::typing::QualifiedType>> fields;
+        std::vector<std::pair<std::string, core::typing::Type>> fields;
         for (const auto& field : model_->getElements())
         {
             if (field.type)
@@ -552,7 +552,7 @@ EditFieldTypeView::EditFieldTypeView(QWidget* parent)
     layout->addLayout(initOptions());
 }
 
-void EditFieldTypeView::loadType(size_t field_idx, core::typing::QualifiedType type)
+void EditFieldTypeView::loadType(size_t field_idx, core::typing::Type type)
 {
     field_idx_ = field_idx;
     working_type_ = std::move(type);
@@ -598,7 +598,7 @@ EditStructsDialog::EditStructsDialog(QWidget* parent)
         edit_view_,
         &StructEditView::editFieldTypeRequested,
         this,
-        [this](size_t field_idx, core::typing::QualifiedType type) {
+        [this](size_t field_idx, core::typing::Type type) {
             field_type_view_->loadType(field_idx, std::move(type));
             stack_->setCurrentWidget(field_type_view_);
         });
@@ -610,7 +610,7 @@ EditStructsDialog::EditStructsDialog(QWidget* parent)
         field_type_view_,
         &EditFieldTypeView::acceptRequested,
         this,
-        [this](size_t field_idx, core::typing::QualifiedType type) {
+        [this](size_t field_idx, core::typing::Type type) {
             edit_view_->setFieldType(field_idx, std::move(type));
             stack_->setCurrentWidget(edit_view_);
         });

@@ -1,7 +1,7 @@
 target_sources(crucible_core
     PRIVATE
         kind.hpp
-        nominal_registries.hpp
-        qualified_type.hpp
+        user_registries.hpp
+        type.hpp
         storage.hpp
 )

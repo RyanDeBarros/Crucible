@@ -2,7 +2,7 @@
 
 #include <crucible/core/modules/module_id.hpp>
 
-#include <crucible/core/typing/qualified_type.hpp>
+#include <crucible/core/typing/type.hpp>
 
 #include <external/reflector.hpp>
 
@@ -117,24 +117,24 @@ enum class StorageState
 
 class Storage
 {
-    QualifiedType type_;
+    Type type_;
     reflector::box payload_;
     StorageState state_;
 
-    Storage(QualifiedType type, reflector::box payload, StorageState state);
+    Storage(Type type, reflector::box payload, StorageState state);
 
 public:
-    const QualifiedType& type() const;
+    const Type& type() const;
     StorageState state() const;
 
-    static Storage make_uninitialized(QualifiedType type);
-    static Storage make_initialized(QualifiedType type, reflector::box payload);
-    static Storage make_null(QualifiedType type);
+    static Storage make_uninitialized(Type type);
+    static Storage make_initialized(Type type, reflector::box payload);
+    static Storage make_null(Type type);
 
-    static bool is_valid_payload(const QualifiedType& type, const reflector::box& payload);
+    static bool is_valid_payload(const Type& type, const reflector::box& payload);
 
-    const reflector::box* get(const QualifiedType& type) const;
-    reflector::box* get(const QualifiedType& type);
+    const reflector::box* get(const Type& type) const;
+    reflector::box* get(const Type& type);
     bool set(Storage other);
 };
 

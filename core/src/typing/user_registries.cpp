@@ -1,6 +1,6 @@
-#include <crucible/core/typing/nominal_registries.hpp>
+#include <crucible/core/typing/user_registries.hpp>
 
-#include <crucible/core/typing/qualified_type.hpp>
+#include <crucible/core/typing/type.hpp>
 
 #include <unordered_set>
 
@@ -73,7 +73,7 @@ std::string StructRegistry::struct_field_name(const Lock& lock, UserInstance use
     return fields[index].first;
 }
 
-QualifiedType StructRegistry::struct_field_type(const Lock& lock, UserInstance user, uint64_t index) const
+Type StructRegistry::struct_field_type(const Lock& lock, UserInstance user, uint64_t index) const
 {
     const auto& fields = get(lock, user).fields;
     if (index >= fields.size())
@@ -82,7 +82,7 @@ QualifiedType StructRegistry::struct_field_type(const Lock& lock, UserInstance u
     return fields[index].second;
 }
 
-QualifiedType StructRegistry::struct_field_type(const Lock& lock, UserInstance user, const std::string_view name) const
+Type StructRegistry::struct_field_type(const Lock& lock, UserInstance user, const std::string_view name) const
 {
     const auto& fields = get(lock, user).fields;
     for (const auto& [fname, ftype] : fields)

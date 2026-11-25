@@ -7,7 +7,7 @@
 namespace crucible::core::typing
 {
 
-class QualifiedType;
+class Type;
 
 template<typename Template>
 class NominalRegistry
@@ -59,7 +59,7 @@ extern EnumRegistry gEnumRegistry;
 struct StructTemplate
 {
     std::string title;
-    std::vector<std::pair<std::string, QualifiedType>> fields;
+    std::vector<std::pair<std::string, Type>> fields;
 
     bool valid() const;
     void assert_valid() const;
@@ -84,8 +84,8 @@ public:
     std::string struct_title(const Lock& lock, UserInstance user) const;
     size_t struct_field_count(const Lock& lock, UserInstance user) const;
     std::string struct_field_name(const Lock& lock, UserInstance user, uint64_t index) const;
-    QualifiedType struct_field_type(const Lock& lock, UserInstance user, uint64_t index) const;
-    QualifiedType struct_field_type(const Lock& lock, UserInstance user, const std::string_view name) const;
+    Type struct_field_type(const Lock& lock, UserInstance user, uint64_t index) const;
+    Type struct_field_type(const Lock& lock, UserInstance user, const std::string_view name) const;
 };
 
 extern StructRegistry gStructRegistry;

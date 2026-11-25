@@ -7,7 +7,7 @@
 #include <crucible/gui/util/outlines.hpp>
 #include <crucible/gui/util/repr.hpp>
 
-#include <crucible/core/typing/nominal_registries.hpp>
+#include <crucible/core/typing/user_registries.hpp>
 
 #include <QCloseEvent>
 #include <QFormLayout>
