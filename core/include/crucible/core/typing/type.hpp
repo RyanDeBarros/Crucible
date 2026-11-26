@@ -12,9 +12,11 @@ namespace crucible::core::typing
 struct Simplex
 {
     Kind kind;
-    UserInstance user;
+    UserInstance user = 0;
 
     bool operator==(const Simplex&) const = default;
+
+    size_t argcount() const;
 };
 
 namespace detail

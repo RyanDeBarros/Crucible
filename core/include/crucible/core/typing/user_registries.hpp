@@ -90,4 +90,12 @@ public:
 
 extern StructRegistry gStructRegistry;
 
+struct UserRegistryLock
+{
+    EnumRegistry::Lock enum_lock;
+    StructRegistry::Lock struct_lock;
+
+    UserRegistryLock();
+};
+
 } // namespace crucible::core::typing

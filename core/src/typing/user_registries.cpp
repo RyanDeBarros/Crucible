@@ -94,4 +94,10 @@ Type StructRegistry::struct_field_type(const Lock& lock, UserInstance user, cons
     throw std::logic_error("Struct field does not exist");
 }
 
+UserRegistryLock::UserRegistryLock()
+    : enum_lock(gEnumRegistry.lock())
+    , struct_lock(gStructRegistry.lock())
+{
+}
+
 } // namespace crucible::core::typing

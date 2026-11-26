@@ -1,56 +1,93 @@
 #include <crucible/gui/util/repr.hpp>
 
-#include <crucible/core/typing/user_registries.hpp>
+#include <QTextStream>
 
 namespace crucible::gui
 {
 
-QString repr(const core::typing::Type& type)
+QString repr(const core::typing::UserRegistryLock& lock, const core::typing::Type& type)
 {
-    switch (type.simplex().kind)
+    const auto simplex = type.simplex();
+    const size_t argcount = simplex.argcount();
+
+    if (argcount == 0)
+        return repr(lock, simplex);
+    else
     {
-    case crucible::core::typing::Kind::Bool:
+        QTextStream name;
+        name << repr(lock, simplex) << QStringLiteral("[");
+        for (size_t i = 0; i < argcount; ++i)
+        {
+            name << repr(lock, type.underlying(i));
+            if (i + 1 < argcount)
+                name << QStringLiteral(", ");
+        }
+        name << repr(lock, simplex) << QStringLiteral("]");
+        return name.readAll();
+    }
+}
+
+static QString builtin_repr(const core::typing::Kind kind)
+{
+    switch (kind)
+    {
+    case core::typing::Kind::Bool:
         return QStringLiteral("bool");
-    case crucible::core::typing::Kind::Int:
+
+    case core::typing::Kind::Int:
         return QStringLiteral("int");
-    case crucible::core::typing::Kind::Float:
+
+    case core::typing::Kind::Float:
         return QStringLiteral("float");
-    case crucible::core::typing::Kind::String:
+
+    case core::typing::Kind::String:
         return QStringLiteral("string");
-    case crucible::core::typing::Kind::Pointer:
-        return repr(type.underlying(0)) + QStringLiteral("*");
-    case crucible::core::typing::Kind::Enum:
-        return QString::fromStdString(core::typing::gEnumRegistry.enum_title(
-            core::typing::gEnumRegistry.lock(),
-            type.simplex().user));
-    case crucible::core::typing::Kind::List:
-        return QStringLiteral("list[") + repr(type.underlying(0)) + QStringLiteral("]");
-    case crucible::core::typing::Kind::Set:
-        return QStringLiteral("set[") + repr(type.underlying(0)) + QStringLiteral("]");
-    case crucible::core::typing::Kind::Map:
-        return QStringLiteral("map[") + repr(type.underlying(0)) + QStringLiteral(", ")
-            + repr(type.underlying(1)) + QStringLiteral("]");
-    case crucible::core::typing::Kind::Struct:
-        return QString::fromStdString(core::typing::gStructRegistry.struct_title(
-            core::typing::gStructRegistry.lock(),
-            type.simplex().user));
-    case crucible::core::typing::Kind::Joker:
+
+    case core::typing::Kind::Pointer:
+        return QStringLiteral("pointer");
+
+    case core::typing::Kind::List:
+        return QStringLiteral("list");
+
+    case core::typing::Kind::Set:
+        return QStringLiteral("set");
+
+    case core::typing::Kind::Map:
+        return QStringLiteral("map");
+
+    case core::typing::Kind::Joker:
         return QStringLiteral("joker");
+
     default:
-        throw std::runtime_error("Unsupported type");
+        throw std::runtime_error("Unsupported or user type");
+    }
+}
+
+extern QString repr(const core::typing::UserRegistryLock& lock, const core::typing::Simplex simplex)
+{
+    switch (simplex.kind)
+    {
+    case core::typing::Kind::Enum:
+        return QString::fromStdString(core::typing::gEnumRegistry.enum_title(lock.enum_lock, simplex.user));
+
+    case core::typing::Kind::Struct:
+        return QString::fromStdString(core::typing::gStructRegistry.struct_title(lock.struct_lock, simplex.user));
+
+    default:
+        return builtin_repr(simplex.kind);
     }
 }
 
 bool reservedTypeName(const QString& name)
 {
-    return name == QStringLiteral("bool")
-        || name == QStringLiteral("int")
-        || name == QStringLiteral("float")
-        || name == QStringLiteral("string")
-        || name == QStringLiteral("list")
-        || name == QStringLiteral("set")
-        || name == QStringLiteral("map")
-        || name == QStringLiteral("joker");
+    return name == builtin_repr(core::typing::Kind::Bool)
+        || name == builtin_repr(core::typing::Kind::Int)
+        || name == builtin_repr(core::typing::Kind::Float)
+        || name == builtin_repr(core::typing::Kind::String)
+        || name == builtin_repr(core::typing::Kind::List)
+        || name == builtin_repr(core::typing::Kind::Set)
+        || name == builtin_repr(core::typing::Kind::Map)
+        || name == builtin_repr(core::typing::Kind::Joker);
 }
 
 bool validCharactersInTypeName(const QString& name)
@@ -67,7 +104,5 @@ bool validCharactersInTypeName(const QString& name)
 
     return true;
 }
-
-const QString kUnselectedTypeName = "-- select --";
 
 } // crucible::gui

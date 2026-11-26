@@ -8,6 +8,23 @@
 namespace crucible::core::typing
 {
 
+size_t Simplex::argcount() const
+{
+    switch (kind)
+    {
+    case Kind::Pointer:
+    case Kind::List:
+    case Kind::Set:
+        return 1;
+
+    case Kind::Map:
+        return 2;
+
+    default:
+        return 0;
+    }
+}
+
 struct TypeNode
 {
     Simplex simplex;

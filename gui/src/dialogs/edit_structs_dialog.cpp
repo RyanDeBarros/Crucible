@@ -169,9 +169,9 @@ void StructEditView::loadStruct(core::typing::UserInstance user)
             QSignalBlocker(model_),
         };
 
-        auto lock = core::typing::gStructRegistry.lock();
+        core::typing::UserRegistryLock lock;
 
-        const auto& struct_data = core::typing::gStructRegistry.get(lock, user_);
+        const auto& struct_data = core::typing::gStructRegistry.get(lock.struct_lock, user_);
 
         id_label_->setText(repr(user_));
         title_edit_->setText(QString::fromStdString(struct_data.title));
@@ -182,7 +182,7 @@ void StructEditView::loadStruct(core::typing::UserInstance user)
             fields.push_back({
                 .name = QString::fromStdString(field.first),
                 .type = field.second,
-                .repr = repr(field.second)
+                .repr = repr(lock, field.second)
             });
         }
         model_->setElements(std::move(fields));
@@ -199,7 +199,7 @@ void StructEditView::loadStruct(core::typing::UserInstance user)
 void StructEditView::setFieldType(size_t field_idx, core::typing::Type type)
 {
     model_->at(field_idx).type = type;
-    model_->at(field_idx).repr = repr(type);
+    model_->at(field_idx).repr = repr({}, type);
 }
 
 bool StructEditView::unsavedChanges() const
@@ -220,7 +220,7 @@ bool StructEditView::unsavedChanges() const
         if (fields[i].name != struct_data.fields[i].first)
             return true;
 
-        if (fields[i].type != struct_data.fields[i].second)
+        if (!fields[i].type || *fields[i].type != struct_data.fields[i].second)
             return true;
     }
 
@@ -284,13 +284,13 @@ QTableView* StructEditView::initTable()
     TableModel::ColumnList columns{
         std::make_unique<DragHandleColumn<FieldTemplate>>(),
         std::make_unique<LineEditColumn<FieldTemplate>>(
-            [](size_t row, const FieldTemplate& element, int role) -> QVariant {
+            [](size_t, const FieldTemplate& element, int role) -> QVariant {
                 if (role == Qt::EditRole)
                     return element.name;
                 else
                     return {};
             },
-            [](size_t row, FieldTemplate& element, const QVariant& value, int role) -> bool {
+            [](size_t, FieldTemplate& element, const QVariant& value, int role) -> bool {
 
                 if (role == Qt::EditRole)
                 {
@@ -300,21 +300,13 @@ QTableView* StructEditView::initTable()
                 else
                     return false;
             }),
-        std::make_unique<LineEditColumn<FieldTemplate>>( // TODO searchable combo box
-            [](size_t row, const FieldTemplate& element, int role) -> QVariant {
-                if (role == Qt::EditRole)
-                    return element.repr ? *element.repr : kUnselectedTypeName;
-                else
-                    return {};
+        std::make_unique<TypeSelectorColumn<FieldTemplate>>(
+            [](size_t, const FieldTemplate& element) -> OptType {
+                return element.type;
             },
-            [](size_t row, FieldTemplate& element, const QVariant& value, int role) -> bool {
-                if (role == Qt::EditRole)
-                {
-                    // TODO set type
-                    return true;
-                }
-                else
-                    return false;
+            [](size_t, FieldTemplate& element, OptType type) -> bool {
+                element.type = std::move(type);
+                return true;
             }),
         std::make_unique<DeleteButtonColumn<FieldTemplate>>()
     };
@@ -541,47 +533,6 @@ void StructEditView::cancelChanges()
     loadStruct(user_);
 }
 
-EditFieldTypeView::EditFieldTypeView(QWidget* parent)
-    : QWidget(parent)
-{
-    auto* layout = new QHBoxLayout(this);
-
-    layout->addLayout(initMainLayout(), 1);
-    addSeparator(*this, *layout);
-    layout->addLayout(initOptions());
-}
-
-void EditFieldTypeView::loadType(size_t field_idx, core::typing::Type type)
-{
-    field_idx_ = field_idx;
-    working_type_ = std::move(type);
-}
-
-QVBoxLayout* EditFieldTypeView::initMainLayout()
-{
-    return new QVBoxLayout();
-}
-
-QVBoxLayout* EditFieldTypeView::initOptions()
-{
-    auto* layout = new QVBoxLayout();
-
-    auto* apply_button = new QPushButton(loadIcon(Icon::Apply), tr("Accept"), this);
-    apply_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    connect(apply_button, &QPushButton::clicked, this, [this]() {
-        Q_EMIT acceptRequested(field_idx_, working_type_.value());
-    });
-    layout->addWidget(apply_button);
-
-    auto* cancel_button = new QPushButton(loadIcon(Icon::Cancel), tr("Cancel"), this);
-    cancel_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    connect(cancel_button, &QPushButton::clicked, this, &EditFieldTypeView::cancelRequested);
-    layout->addWidget(cancel_button);
-
-    layout->addStretch();
-    return layout;
-}
-
 EditStructsDialog::EditStructsDialog(QWidget* parent)
     : ModalDialog(tr("Edit Structs"), QSize(720, 405), parent)
 {
@@ -589,28 +540,7 @@ EditStructsDialog::EditStructsDialog(QWidget* parent)
 
     connect(list_view_, &StructListView::editRequested, this, &EditStructsDialog::showEditView);
     connect(list_view_, &StructListView::deleteRequested, this, &EditStructsDialog::deleteStruct);
-
     connect(edit_view_, &StructEditView::backRequested, this, &EditStructsDialog::showListView);
-    connect(
-        edit_view_,
-        &StructEditView::editFieldTypeRequested,
-        this,
-        [this](size_t field_idx, core::typing::Type type) {
-            field_type_view_->loadType(field_idx, std::move(type));
-            stack_->setCurrentWidget(field_type_view_);
-        });
-
-    connect(field_type_view_, &EditFieldTypeView::cancelRequested, this, [this]() {
-        stack_->setCurrentWidget(edit_view_);
-    });
-    connect(
-        field_type_view_,
-        &EditFieldTypeView::acceptRequested,
-        this,
-        [this](size_t field_idx, core::typing::Type type) {
-            edit_view_->setFieldType(field_idx, std::move(type));
-            stack_->setCurrentWidget(edit_view_);
-        });
 }
 
 void EditStructsDialog::closeEvent(QCloseEvent* event)
@@ -632,9 +562,6 @@ void EditStructsDialog::initStack()
 
     edit_view_ = new StructEditView(stack_);
     stack_->addWidget(edit_view_);
-
-    field_type_view_ = new EditFieldTypeView(stack_);
-    stack_->addWidget(field_type_view_);
 
     layout->addWidget(stack_);
 

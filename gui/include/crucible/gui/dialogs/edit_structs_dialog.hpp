@@ -4,6 +4,7 @@
 
 #include <crucible/gui/util/element_table_model.hpp>
 #include <crucible/gui/util/modal_dialog.hpp>
+#include <crucible/gui/util/type_selector.hpp> // TODO split type_selector.hpp into different files
 
 class QLineEdit;
 class QPushButton;
@@ -57,7 +58,7 @@ private:
     struct FieldTemplate
     {
         QString name;
-        std::optional<core::typing::Type> type;
+        OptType type;
         std::optional<QString> repr;
     };
 
@@ -78,7 +79,6 @@ public:
 
 signals:
     void backRequested();
-    void editFieldTypeRequested(size_t field_idx, core::typing::Type type);
 
 public:
     void loadStruct(core::typing::UserInstance user);
@@ -100,30 +100,6 @@ private:
     void cancelChanges();
 };
 
-class EditFieldTypeView
-    : public QWidget
-{
-    Q_OBJECT;
-
-private:
-    size_t field_idx_;
-    std::optional<core::typing::Type> working_type_;
-
-public:
-    explicit EditFieldTypeView(QWidget* parent = nullptr);
-
-signals:
-    void acceptRequested(size_t field_idx, core::typing::Type type);
-    void cancelRequested();
-
-public:
-    void loadType(size_t field_idx, core::typing::Type type);
-
-private:
-    QVBoxLayout* initMainLayout();
-    QVBoxLayout* initOptions();
-};
-
 class EditStructsDialog
     : public ModalDialog
 {
@@ -134,7 +110,6 @@ private:
 
     StructListView* list_view_ = nullptr;
     StructEditView* edit_view_ = nullptr;
-    EditFieldTypeView* field_type_view_ = nullptr;
 
 public:
     explicit EditStructsDialog(QWidget* parent = nullptr);
