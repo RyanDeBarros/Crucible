@@ -14,7 +14,6 @@ namespace crucible::gui
 
 constexpr int kPadding = 4;
 constexpr int kSpacing = 3;
-constexpr int kRadius = 4;
 
 static const char* kUnselected = "--select--";
 static const QColor kUnselectedColor = QColor(0xAA, 0xAA, 0xAA);
@@ -385,8 +384,8 @@ TypeSelector::NodeLayout TypeSelector::calculateLayout(
     for (const auto& argument : type.arguments)
     {
         QSize size = calculateSize(argument, font);
-        QRect childRect(x, rect.center().y() - size.height() / 2, size.width(), size.height());
-        result.children.push_back(calculateLayout(argument, childRect, font));
+        QRect child_rect(x, rect.y() + (rect.size().height() - size.height()) / 2, size.width(), size.height());
+        result.children.push_back(calculateLayout(argument, child_rect, font));
         x += size.width() + kSpacing;
     }
 
@@ -406,16 +405,16 @@ void TypeSelector::paintNode(
     painter->setPen(QPen(color.darker(130), 1));
     painter->setBrush(color.lighter(175));
 
-    painter->drawRoundedRect(layout.rect, kRadius, kRadius);
+    painter->drawRoundedRect(layout.rect, 4, 4);
 
-    const QRect textRect(
+    const QRect text_rect(
         layout.rect.left() + kPadding,
         layout.rect.top(),
         QFontMetrics(font).horizontalAdvance(name) + 2,
         layout.rect.height());
 
     painter->setPen(color.darker(180));
-    painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, name);
+    painter->drawText(text_rect, Qt::AlignVCenter | Qt::AlignLeft, name);
 
     for (size_t i = 0; i < type.arguments.size(); ++i)
         paintNode(painter, type.arguments[i], layout.children[i], font, palette);
