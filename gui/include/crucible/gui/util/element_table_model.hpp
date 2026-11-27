@@ -42,13 +42,38 @@ public:
     virtual void signalDelete(size_t row) = 0;
 };
 
+struct ColumnConfig
+{
+    QHeaderView::ResizeMode horizontal_resize_mode;
+    QHeaderView::ResizeMode vertical_resize_mode;
+
+    static const ColumnConfig kStretchX;
+    static const ColumnConfig kFitX;
+    static const ColumnConfig kStretchXFitY;
+};
+
+inline const ColumnConfig ColumnConfig::kStretchX = {
+    .horizontal_resize_mode = QHeaderView::Stretch,
+    .vertical_resize_mode = QHeaderView::Interactive
+};
+
+inline const ColumnConfig ColumnConfig::kFitX = {
+    .horizontal_resize_mode = QHeaderView::ResizeToContents,
+    .vertical_resize_mode = QHeaderView::Interactive
+};
+
+inline const ColumnConfig ColumnConfig::kStretchXFitY = {
+    .horizontal_resize_mode = QHeaderView::Stretch,
+    .vertical_resize_mode = QHeaderView::ResizeToContents
+};
+
 template<typename Element>
 struct DelegateColumn
 {
-    QHeaderView::ResizeMode resize_mode;
+    ColumnConfig config;
 
-    explicit DelegateColumn(QHeaderView::ResizeMode resize_mode = QHeaderView::ResizeToContents)
-        : resize_mode(resize_mode)
+    explicit DelegateColumn(ColumnConfig config = ColumnConfig::kFitX)
+        : config(std::move(config))
     {
     }
 
@@ -130,14 +155,20 @@ public:
         table_.setEditTriggers(QAbstractItemView::NoEditTriggers);
         table_.setAlternatingRowColors(true);
         table_.setShowGrid(config_.show_grid);
-        table_.verticalHeader()->hide();
 
-        auto* header = table_.horizontalHeader();
-        header->hide();
+        auto* horizontal_header = table_.horizontalHeader();
+        horizontal_header->hide();
+        
+        auto* vertical_header = table_.verticalHeader();
+        vertical_header->hide();
+        
         for (size_t i = 0; i < ColumnCount; ++i)
         {
             if (const auto& column = columns_[i])
-                header->setSectionResizeMode(i, column->resize_mode);
+            {
+                horizontal_header->setSectionResizeMode(i, column->config.horizontal_resize_mode);
+                vertical_header->setSectionResizeMode(column->config.vertical_resize_mode);
+            }
         }
 
         if (config_.reorderable)

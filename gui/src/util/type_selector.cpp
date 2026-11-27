@@ -13,9 +13,9 @@
 namespace crucible::gui
 {
 
-constexpr int kPadding = 9;
-constexpr int kSpacing = 7;
-constexpr int kRadius = 5;
+constexpr int kPadding = 4;
+constexpr int kSpacing = 3;
+constexpr int kRadius = 4;
 
 static const char* kUnselected = "--select--";
 static const QColor kUnselectedColor = QColor(0xAA, 0xAA, 0xAA);
@@ -174,9 +174,7 @@ public:
 TypeSelector::TypeSelector(QWidget* parent)
     : QWidget(parent)
 {
-    setMinimumHeight(36);
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-
     setFocusPolicy(Qt::StrongFocus);
 }
 
@@ -212,7 +210,15 @@ void TypeSelector::paintType(
     bool selected)
 {
     auto node = fromType(type);
-    NodeLayout layout = calculateLayout(node, rect, font);
+    
+    const QSize size = calculateSize(node, font);
+    const QRect expression_rect(
+        rect.left(),
+        rect.top() + (rect.height() - size.height()) / 2,
+        size.width(),
+        size.height());
+
+    NodeLayout layout = calculateLayout(node, expression_rect, font);
 
     painter->save();
 
@@ -249,7 +255,9 @@ void TypeSelector::resizeEvent(QResizeEvent* event)
 
 void TypeSelector::rebuildLayout()
 {
-    layout_ = calculateLayout(root_, rect(), font());
+    const QSize size = calculateSize(root_, font());
+    const QRect expression_rect(0, (height() - size.height()) / 2, size.width(), size.height());
+    layout_ = calculateLayout(root_, expression_rect, font());
 }
 
 void TypeSelector::openPopup(std::vector<size_t> path, const QRect& rect)
@@ -451,18 +459,10 @@ TypeSelector::NodeLayout TypeSelector::calculateLayout(
 
     int x = rect.left() + kPadding + metrics.horizontalAdvance(name) + kSpacing;
 
-    const int availableHeight = rect.height() - kPadding * 2;
-
     for (const auto& argument : node->arguments)
     {
         QSize size = calculateSize(argument, font);
-
-        QRect childRect(
-            x,
-            rect.center().y() - size.height() / 2,
-            size.width(),
-            std::max(size.height(), availableHeight));
-
+        QRect childRect(x, rect.center().y() - size.height() / 2, size.width(), size.height());
         result.children.push_back(calculateLayout(argument, childRect, font));
         x += size.width() + kSpacing;
     }
@@ -516,6 +516,7 @@ QWidget* TypeSelectorDelegate::createEditor(
     connect(editor, &TypeSelector::editingFinished, this, [this, editor]() {
         auto* delegate = const_cast<TypeSelectorDelegate*>(this);
         Q_EMIT delegate->commitData(editor);
+        Q_EMIT delegate->closeEditor(editor);
     });
 
     return editor;
@@ -538,33 +539,6 @@ void TypeSelectorDelegate::setModelData(
 {
     if (auto* selector = qobject_cast<TypeSelector*>(editor))
         model->setData(index, QVariant::fromValue(selector->type()), Qt::EditRole);
-}
-
-void TypeSelectorDelegate::paint(
-    QPainter* painter,
-    const QStyleOptionViewItem& option,
-    const QModelIndex& index) const
-{
-    const QVariant variant = index.data(Qt::DisplayRole);
-
-    if (!variant.canConvert<OptType>())
-    {
-        QStyledItemDelegate::paint(painter, option, index);
-        return;
-    }
-
-    QStyleOptionViewItem opt(option);
-
-    initStyleOption(&opt, index);
-
-    const bool selected = opt.state & QStyle::State_Selected;
-    const QRect contentRect = opt.rect.adjusted(3, 2, -3, -2);
-
-    if (selected)
-        painter->fillRect(opt.rect, opt.palette.color(QPalette::Highlight));
-
-    opt.state &= ~QStyle::State_Selected;
-    TypeSelector::paintType(painter, contentRect, variant.value<OptType>(), opt.font, opt.palette, false);
 }
 
 QSize TypeSelectorDelegate::sizeHint(

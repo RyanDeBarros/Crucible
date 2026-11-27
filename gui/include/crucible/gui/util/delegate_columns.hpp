@@ -15,36 +15,33 @@ struct DataColumn
     using GetterFn = std::function<QVariant(size_t row, const Element& element, int role)>;
     using SetterFn = std::function<bool(size_t row, Element& element, const QVariant& value, int role)>;
 
-    GetterFn data_fn = [](size_t row, const Element& element, int role) -> QVariant { return {}; };
-    SetterFn set_data_fn = [](size_t row, Element& element, const QVariant& value, int role) -> bool { return false; };
+    GetterFn data_fn = [](size_t row, const Element& element, int role) -> QVariant {
+        return {};
+    };
+    
+    SetterFn set_data_fn = [](size_t row, Element& element, const QVariant& value, int role) -> bool {
+        return false;
+    };
 
-    explicit DataColumn(
-        QHeaderView::ResizeMode resize_mode = QHeaderView::Stretch)
-        : Super(resize_mode)
+    explicit DataColumn(ColumnConfig config = ColumnConfig::kStretchX)
+        : Super(std::move(config))
     {
     }
 
-    explicit DataColumn(
-        GetterFn data_fn,
-        QHeaderView::ResizeMode resize_mode = QHeaderView::Stretch)
-        : Super(resize_mode)
+    explicit DataColumn(GetterFn data_fn, ColumnConfig config = ColumnConfig::kStretchX)
+        : Super(std::move(config))
         , data_fn(std::move(data_fn))
     {
     }
 
-    explicit DataColumn(
-        SetterFn set_data_fn,
-        QHeaderView::ResizeMode resize_mode = QHeaderView::Stretch)
-        : Super(resize_mode)
+    explicit DataColumn(SetterFn set_data_fn, ColumnConfig config = ColumnConfig::kStretchX)
+        : Super(std::move(config))
         , set_data_fn(std::move(set_data_fn))
     {
     }
 
-    DataColumn(
-        GetterFn data_fn,
-        SetterFn set_data_fn,
-        QHeaderView::ResizeMode resize_mode = QHeaderView::Stretch)
-        : Super(resize_mode)
+    DataColumn(GetterFn data_fn, SetterFn set_data_fn, ColumnConfig config = ColumnConfig::kStretchX)
+        : Super(std::move(config))
         , data_fn(std::move(data_fn))
         , set_data_fn(std::move(set_data_fn))
     {
@@ -71,16 +68,13 @@ struct LabelColumn
 
     GetterFn data_fn = [](size_t row, const Element& element, int role) -> QVariant { return {}; };
 
-    explicit LabelColumn(
-        QHeaderView::ResizeMode resize_mode = QHeaderView::ResizeToContents)
-        : Super(resize_mode)
+    explicit LabelColumn(ColumnConfig config = ColumnConfig::kFitX)
+        : Super(std::move(config))
     {
     }
 
-    explicit LabelColumn(
-        GetterFn data_fn,
-        QHeaderView::ResizeMode resize_mode = QHeaderView::ResizeToContents)
-        : Super(resize_mode)
+    explicit LabelColumn(GetterFn data_fn, ColumnConfig config = ColumnConfig::kFitX)
+        : Super(std::move(config))
         , data_fn(std::move(data_fn))
     {
     }
@@ -183,8 +177,8 @@ struct LineEditColumn
 
     explicit LineEditColumn(
         LineEditDelegate::Config ini_config = {},
-        QHeaderView::ResizeMode resize_mode = QHeaderView::Stretch)
-        : Super(resize_mode)
+        ColumnConfig config = ColumnConfig::kStretchX)
+        : Super(std::move(config))
         , ini_config(std::move(ini_config))
     {
     }
@@ -192,8 +186,8 @@ struct LineEditColumn
     explicit LineEditColumn(
         GetterFn data_fn,
         LineEditDelegate::Config ini_config = {},
-        QHeaderView::ResizeMode resize_mode = QHeaderView::Stretch)
-        : Super(resize_mode)
+        ColumnConfig config = ColumnConfig::kStretchX)
+        : Super(std::move(config))
         , data_fn(std::move(data_fn))
         , ini_config(std::move(ini_config))
     {
@@ -202,8 +196,8 @@ struct LineEditColumn
     explicit LineEditColumn(
         SetterFn set_data_fn,
         LineEditDelegate::Config ini_config = {},
-        QHeaderView::ResizeMode resize_mode = QHeaderView::Stretch)
-        : Super(resize_mode)
+        ColumnConfig config = ColumnConfig::kStretchX)
+        : Super(std::move(config))
         , set_data_fn(std::move(set_data_fn))
         , ini_config(std::move(ini_config))
     {
@@ -213,8 +207,8 @@ struct LineEditColumn
         GetterFn data_fn,
         SetterFn set_data_fn,
         LineEditDelegate::Config ini_config = {},
-        QHeaderView::ResizeMode resize_mode = QHeaderView::Stretch)
-        : Super(resize_mode)
+        ColumnConfig config = ColumnConfig::kStretchX)
+        : Super(std::move(config))
         , data_fn(std::move(data_fn))
         , set_data_fn(std::move(set_data_fn))
         , ini_config(std::move(ini_config))

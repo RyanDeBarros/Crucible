@@ -134,11 +134,6 @@ public:
         QAbstractItemModel* model,
         const QModelIndex& index) const override;
 
-    void paint(
-        QPainter* painter,
-        const QStyleOptionViewItem& option,
-        const QModelIndex& index) const override;
-
     QSize sizeHint(
         const QStyleOptionViewItem& option,
         const QModelIndex& index) const override;
@@ -156,11 +151,8 @@ struct TypeSelectorColumn
     GetterFn get_type;
     SetterFn set_type;
 
-    TypeSelectorColumn(
-        GetterFn get_type,
-        SetterFn set_type,
-        QHeaderView::ResizeMode resize_mode = QHeaderView::Stretch)
-        : Super(resize_mode)
+    TypeSelectorColumn(GetterFn get_type, SetterFn set_type, ColumnConfig config = ColumnConfig::kStretchXFitY)
+        : Super(std::move(config))
         , get_type(std::move(get_type))
         , set_type(std::move(set_type))
     {
