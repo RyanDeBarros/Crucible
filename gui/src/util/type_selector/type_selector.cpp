@@ -12,6 +12,7 @@
 namespace crucible::gui
 {
 
+constexpr int kMargin = 3;
 constexpr int kPadding = 4;
 constexpr int kSpacing = 3;
 
@@ -141,9 +142,11 @@ public:
 
 TypeSelector::TypeSelector(QWidget* parent)
     : QWidget(parent)
+    , popup_(new TypePopup(*this))
 {
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     setFocusPolicy(Qt::StrongFocus);
+    setMouseTracking(true);
 }
 
 QSize TypeSelector::sizeHint() const
@@ -170,41 +173,13 @@ QSize TypeSelector::typeSizeHint(const OptType& type, const QFont& font)
     return calculateSize(type, font);
 }
 
-void TypeSelector::paintType(
-    QPainter* painter,
-    const QRect& rect,
-    const OptType& type,
-    const QFont& font,
-    const QPalette& palette,
-    bool selected)
-{
-    const QSize size = calculateSize(type, font);
-    const QRect expression_rect(
-        rect.left(),
-        rect.top() + (rect.height() - size.height()) / 2,
-        size.width(),
-        size.height());
-
-    NodeLayout layout = calculateLayout(type, expression_rect, font);
-
-    painter->save();
-
-    if (selected)
-        painter->fillRect(rect, palette.color(QPalette::Highlight));
-
-    painter->setFont(font);
-    paintNode(painter, type, layout, font, palette);
-
-    painter->restore();
-}
-
 void TypeSelector::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
     rebuildLayout();
-    paintNode(&painter, root_, layout_, font(), palette());
+    paintNode(&painter, root_, {}, layout_, font(), palette());
 }
 
 void TypeSelector::mousePressEvent(QMouseEvent* event)
@@ -213,6 +188,26 @@ void TypeSelector::mousePressEvent(QMouseEvent* event)
         openPopup(*path, layoutAtPath(layout_, *path).rect);
 
     QWidget::mousePressEvent(event);
+}
+
+void TypeSelector::mouseMoveEvent(QMouseEvent* event)
+{
+    auto path = hitTest(layout_, event->pos());
+
+    if (path != hovered_path_)
+    {
+        hovered_path_ = path;
+        update();
+    }
+}
+
+void TypeSelector::leaveEvent(QEvent* event)
+{
+    if (hovered_path_)
+    {
+        hovered_path_.reset();
+        update();
+    }
 }
 
 void TypeSelector::resizeEvent(QResizeEvent* event)
@@ -230,9 +225,6 @@ void TypeSelector::rebuildLayout()
 
 void TypeSelector::openPopup(std::vector<size_t> path, const QRect& rect)
 {
-    if (!popup_)
-        popup_ = new TypePopup(*this);
-
     popup_->path = std::move(path);
     popup_->tree->clear();
 
@@ -311,7 +303,6 @@ OptType* TypeSelector::findNode(std::span<const size_t> path)
     return node;
 }
 
-// TODO use for mouse hover indicator
 std::optional<std::vector<size_t>> TypeSelector::hitTest(const NodeLayout& layout, const QPoint& pos) const
 {
     if (!layout.rect.contains(pos))
@@ -341,8 +332,52 @@ const TypeSelector::NodeLayout& TypeSelector::layoutAtPath(
     return *current;
 }
 
+void TypeSelector::paintNode(
+    QPainter* painter,
+    const OptType& type,
+    const std::vector<size_t>& path,
+    const NodeLayout& layout,
+    const QFont& font,
+    const QPalette& palette) const
+{
+    const QString name = type.simplex ? repr({}, *type.simplex) : tr(kUnselected);
+    const QColor color = type.simplex ? colorForKind(type.simplex->kind) : kUnselectedColor;
+
+    const QRect box_rect = layout.rect.adjusted(kMargin, kMargin, -kMargin, -kMargin);
+
+    painter->setPen(QPen(color.darker(130), 1));
+    painter->setBrush(color.lighter(175));
+    painter->drawRoundedRect(box_rect, 4, 4);
+
+    if ((hovered_path_ && *hovered_path_ == path) ||
+        (!popup_->isHidden() && popup_->path == path))
+    {
+        painter->setPen(QPen(palette.color(QPalette::Highlight), 1.5));
+        painter->setBrush(Qt::NoBrush);
+        painter->drawRoundedRect(box_rect.adjusted(1, 1, -1, -1), 3, 3);
+    }
+
+    const QRect text_rect(
+        box_rect.left() + kPadding,
+        box_rect.top(),
+        box_rect.width() - 2 * kPadding,
+        box_rect.height());
+
+    painter->setPen(color.darker(180));
+    painter->drawText(text_rect, Qt::AlignVCenter | Qt::AlignLeft, name);
+
+    for (size_t i = 0; i < type.arguments.size(); ++i)
+    {
+        std::vector<size_t> subpath = path;
+        subpath.push_back(i);
+        paintNode(painter, type.arguments[i], subpath, layout.children[i], font, palette);
+    }
+}
+
 QSize TypeSelector::calculateSize(const OptType& type, const QFont& font)
 {
+    static const QSize kExtraSize((kPadding + kMargin) * 2, (kPadding + kMargin) * 2);
+
     QFontMetrics metrics(font);
 
     const QString name = type.simplex ? repr({}, *type.simplex) : tr(kUnselected);
@@ -350,7 +385,7 @@ QSize TypeSelector::calculateSize(const OptType& type, const QFont& font)
     const QSize label(metrics.horizontalAdvance(name), metrics.height());
 
     if (type.arguments.empty())
-        return label + QSize(kPadding * 2, kPadding * 2);
+        return label + kExtraSize;
 
     int width = label.width() + kSpacing;
     int height = label.height();
@@ -362,7 +397,7 @@ QSize TypeSelector::calculateSize(const OptType& type, const QFont& font)
         height = std::max(height, child.height());
     }
 
-    return QSize(width + kPadding * 2, height + kPadding * 2);
+    return QSize(width, height) + kExtraSize;
 }
 
 TypeSelector::NodeLayout TypeSelector::calculateLayout(
@@ -379,7 +414,7 @@ TypeSelector::NodeLayout TypeSelector::calculateLayout(
     const QFontMetrics metrics(font);
     const QString name = repr({}, *type.simplex);
 
-    int x = rect.left() + kPadding + metrics.horizontalAdvance(name) + kSpacing;
+    int x = rect.left() + kPadding + kMargin + metrics.horizontalAdvance(name) + kSpacing;
 
     for (const auto& argument : type.arguments)
     {
@@ -390,34 +425,6 @@ TypeSelector::NodeLayout TypeSelector::calculateLayout(
     }
 
     return result;
-}
-
-void TypeSelector::paintNode(
-    QPainter* painter,
-    const OptType& type,
-    const NodeLayout& layout,
-    const QFont& font,
-    const QPalette& palette)
-{
-    const QString name = type.simplex ? repr({}, *type.simplex) : tr(kUnselected);
-    const QColor color = type.simplex ? colorForKind(type.simplex->kind) : kUnselectedColor;
-
-    painter->setPen(QPen(color.darker(130), 1));
-    painter->setBrush(color.lighter(175));
-
-    painter->drawRoundedRect(layout.rect, 4, 4);
-
-    const QRect text_rect(
-        layout.rect.left() + kPadding,
-        layout.rect.top(),
-        QFontMetrics(font).horizontalAdvance(name) + 2,
-        layout.rect.height());
-
-    painter->setPen(color.darker(180));
-    painter->drawText(text_rect, Qt::AlignVCenter | Qt::AlignLeft, name);
-
-    for (size_t i = 0; i < type.arguments.size(); ++i)
-        paintNode(painter, type.arguments[i], layout.children[i], font, palette);
 }
 
 } // namespace crucible::gui

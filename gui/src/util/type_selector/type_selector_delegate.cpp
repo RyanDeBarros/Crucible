@@ -35,6 +35,16 @@ QWidget* TypeSelectorDelegate::createEditor(
     return editor;
 }
 
+void TypeSelectorDelegate::paint(
+    QPainter* painter,
+    const QStyleOptionViewItem& option,
+    const QModelIndex& index) const
+{
+    QStyleOptionViewItem opt(option);
+    opt.state &= ~QStyle::State_Selected;
+    QStyledItemDelegate::paint(painter, opt, index);
+}
+
 void TypeSelectorDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
     if (auto* selector = qobject_cast<TypeSelector*>(editor))

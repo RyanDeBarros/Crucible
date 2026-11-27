@@ -22,6 +22,11 @@ public:
         const QStyleOptionViewItem& option,
         const QModelIndex& index) const override;
 
+    void paint(
+        QPainter* painter,
+        const QStyleOptionViewItem& option,
+        const QModelIndex& index) const override;
+
     void setEditorData(QWidget* editor, const QModelIndex& index) const override;
 
     void setModelData(

@@ -43,6 +43,7 @@ private:
 
     TypePopup* popup_ = nullptr;
     NodeLayout layout_;
+    std::optional<std::vector<size_t>> hovered_path_;
 
 public:
     explicit TypeSelector(QWidget* parent = nullptr);
@@ -58,17 +59,12 @@ public:
     void setType(OptType type);
 
     static QSize typeSizeHint(const OptType& type, const QFont& font);
-    static void paintType(
-        QPainter* painter,
-        const QRect& rect,
-        const OptType& type,
-        const QFont& font,
-        const QPalette& palette,
-        bool selected = false);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void leaveEvent(QEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
 
 private:
@@ -79,15 +75,16 @@ private:
 
     std::optional<std::vector<size_t>> hitTest(const NodeLayout& layout, const QPoint& pos) const;
     const NodeLayout& layoutAtPath(const NodeLayout& root, const std::vector<size_t>& path) const;
+    void paintNode(
+        QPainter* painter,
+        const OptType& node,
+        const std::vector<size_t>& path, // TODO using Path = std::vector<size_t>
+        const NodeLayout& layout,
+        const QFont& font,
+        const QPalette& palette) const;
 
     static QSize calculateSize(const OptType& node, const QFont& font);
     static NodeLayout calculateLayout(const OptType& node, const QRect& rect, const QFont& font);
-    static void paintNode(
-        QPainter* painter,
-        const OptType& node,
-        const NodeLayout& layout,
-        const QFont& font,
-        const QPalette& palette);
 };
 
 } // crucible::gui
