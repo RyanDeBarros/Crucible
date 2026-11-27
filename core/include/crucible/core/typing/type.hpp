@@ -59,6 +59,8 @@ public:
     static Type make_map(const Type& key_type, const Type& value_type);
     static Type make_struct(UserInstance user);
     static Type make_joker();
+
+    static Type make_generic(Simplex simplex, const Type* args, size_t argcount);
 };
 
 } // crucible::core::typing

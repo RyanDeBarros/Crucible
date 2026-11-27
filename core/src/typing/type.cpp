@@ -314,4 +314,67 @@ Type Type::make_joker()
     return type_arena().alloc({ .kind = Kind::Joker });
 }
 
+Type Type::make_generic(Simplex simplex, const Type* args, size_t argcount)
+{
+    if (argcount == 0)
+    {
+        switch (simplex.kind)
+        {
+        case Kind::Bool:
+            return make_bool();
+
+        case Kind::Int:
+            return make_int();
+
+        case Kind::Float:
+            return make_float();
+
+        case Kind::String:
+            return make_string();
+
+        case Kind::Enum:
+            return make_enum(simplex.user);
+
+        case Kind::Struct:
+            return make_struct(simplex.user);
+
+        case Kind::Joker:
+            return make_joker();
+
+        default:
+            throw std::runtime_error("Unsupported kind for given argcount");
+        }
+    }
+    else if (argcount == 1)
+    {
+        switch (simplex.kind)
+        {
+        case Kind::Pointer:
+            return make_pointer(args[0]);
+
+        case Kind::List:
+            return make_list(args[0]);
+
+        case Kind::Set:
+            return make_set(args[0]);
+
+        default:
+            throw std::runtime_error("Unsupported kind for given argcount");
+        }
+    }
+    else if (argcount == 2)
+    {
+        switch (simplex.kind)
+        {
+        case Kind::Map:
+            return make_map(args[0], args[1]);
+
+        default:
+            throw std::runtime_error("Unsupported kind for given argcount");
+        }
+    }
+    else
+        throw std::runtime_error("Unsupported argcount");
+}
+
 } // crucible::core::typing

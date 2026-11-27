@@ -30,45 +30,7 @@ std::optional<core::typing::Type> OptType::toType() const
             return std::nullopt;
     }
 
-    // TODO instead of make_*(), just do make(Kind) with overloads for different numbers of arguments - then throw error if arg count doesn't match.
-    switch (simplex->kind)
-    {
-    case core::typing::Kind::Bool:
-        return core::typing::Type::make_bool();
-
-    case core::typing::Kind::Int:
-        return core::typing::Type::make_int();
-
-    case core::typing::Kind::Float:
-        return core::typing::Type::make_float();
-
-    case core::typing::Kind::String:
-        return core::typing::Type::make_string();
-
-    case core::typing::Kind::Pointer:
-        return core::typing::Type::make_pointer(args[0]);
-
-    case core::typing::Kind::Enum:
-        return core::typing::Type::make_enum(simplex->user);
-
-    case core::typing::Kind::List:
-        return core::typing::Type::make_list(args[0]);
-
-    case core::typing::Kind::Set:
-        return core::typing::Type::make_set(args[0]);
-
-    case core::typing::Kind::Map:
-        return core::typing::Type::make_map(args[0], args[1]);
-
-    case core::typing::Kind::Struct:
-        return core::typing::Type::make_struct(simplex->user);
-
-    case core::typing::Kind::Joker:
-        return core::typing::Type::make_joker();
-
-    default:
-        return {};
-    }
+    return core::typing::Type::make_generic(*simplex, args.data(), args.size());
 }
 
 } // crucible::gui
