@@ -1,5 +1,7 @@
 #include <crucible/gui/dialogs/edit_structs_dialog.hpp>
 
+#include <crucible/gui/util/type_selector/type_selector_delegate.hpp>
+
 #include <crucible/gui/util/alerts.hpp>
 #include <crucible/gui/util/delegate_columns.hpp>
 #include <crucible/gui/util/item_delegates.hpp>

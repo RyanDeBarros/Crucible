@@ -10,5 +10,6 @@ target_sources(crucible_gui
         repr.cpp
         scrollbar_preserver.cpp
         stylesheet.cpp
-        type_selector.cpp
 )
+
+add_subdirectory(type_selector)

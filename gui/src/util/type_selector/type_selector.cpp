@@ -1,8 +1,7 @@
-#include <crucible/gui/util/type_selector.hpp>
+#include <crucible/gui/util/type_selector/type_selector.hpp>
 
 #include <crucible/gui/util/repr.hpp>
 
-#include <QFrame>
 #include <QLineEdit>
 #include <QMouseEvent>
 #include <QPainter>
@@ -48,74 +47,6 @@ static QColor colorForKind(TypeSelector::Kind kind)
     }
 
     return kUnselectedColor;
-}
-
-OptType::OptType(core::typing::Simplex simplex)
-    : simplex(simplex)
-{
-}
-
-OptType::OptType(const core::typing::Type& type)
-    : simplex({ type.simplex() })
-{
-    for (size_t i = 0; i < simplex->argcount(); ++i)
-        arguments.emplace_back(type.underlying(i));
-}
-
-std::optional<core::typing::Type> OptType::toType() const
-{
-    if (!simplex)
-        return std::nullopt;
-
-    std::vector<core::typing::Type> args;
-
-    for (const auto& arg : arguments)
-    {
-        if (auto type = arg.toType())
-            args.push_back(std::move(*type));
-        else
-            return std::nullopt;
-    }
-
-    // TODO instead of make_*(), just do make(Kind) with overloads for different numbers of arguments - then throw error if arg count doesn't match.
-    switch (simplex->kind)
-    {
-    case core::typing::Kind::Bool:
-        return core::typing::Type::make_bool();
-
-    case core::typing::Kind::Int:
-        return core::typing::Type::make_int();
-
-    case core::typing::Kind::Float:
-        return core::typing::Type::make_float();
-
-    case core::typing::Kind::String:
-        return core::typing::Type::make_string();
-
-    case core::typing::Kind::Pointer:
-        return core::typing::Type::make_pointer(args[0]);
-
-    case core::typing::Kind::Enum:
-        return core::typing::Type::make_enum(simplex->user);
-
-    case core::typing::Kind::List:
-        return core::typing::Type::make_list(args[0]);
-
-    case core::typing::Kind::Set:
-        return core::typing::Type::make_set(args[0]);
-
-    case core::typing::Kind::Map:
-        return core::typing::Type::make_map(args[0], args[1]);
-
-    case core::typing::Kind::Struct:
-        return core::typing::Type::make_struct(simplex->user);
-
-    case core::typing::Kind::Joker:
-        return core::typing::Type::make_joker();
-
-    default:
-        return {};
-    }
 }
 
 TypeSelector::Entry::Entry(const core::typing::UserRegistryLock& lock, Simplex simplex)
@@ -487,66 +418,6 @@ void TypeSelector::paintNode(
 
     for (size_t i = 0; i < type.arguments.size(); ++i)
         paintNode(painter, type.arguments[i], layout.children[i], font, palette);
-}
-
-TypeSelectorDelegate::TypeSelectorDelegate(QObject* parent)
-    : QStyledItemDelegate(parent)
-{
-}
-
-QWidget* TypeSelectorDelegate::createEditor(
-    QWidget* parent,
-    const QStyleOptionViewItem&,
-    const QModelIndex& index) const
-{
-    auto* editor = new TypeSelector(parent);
-    auto* view = qobject_cast<QTableView*>(parent->parentWidget());
-
-    connect(editor, &TypeSelector::editingFinished, this, [this, editor, view, row = index.row()]() {
-        auto* delegate = const_cast<TypeSelectorDelegate*>(this);
-        Q_EMIT delegate->commitData(editor);
-        Q_EMIT delegate->closeEditor(editor);
-
-        if (view)
-            view->resizeRowToContents(row);
-    });
-
-    connect(editor, &TypeSelector::layoutSizeChanged, editor, [editor, view, row = index.row()] {
-        if (view)
-            view->setRowHeight(row, editor->sizeHint().height() + 4);
-    });
-
-    return editor;
-}
-
-void TypeSelectorDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
-{
-    if (auto* selector = qobject_cast<TypeSelector*>(editor))
-    {
-        auto variant = index.data(Qt::EditRole);
-        if (auto* type = get_if<OptType>(&variant))
-            selector->setType(*type);
-    }
-}
-
-void TypeSelectorDelegate::setModelData(
-    QWidget* editor,
-    QAbstractItemModel* model,
-    const QModelIndex& index) const
-{
-    if (auto* selector = qobject_cast<TypeSelector*>(editor))
-        model->setData(index, QVariant::fromValue(selector->type()), Qt::EditRole);
-}
-
-QSize TypeSelectorDelegate::sizeHint(
-    const QStyleOptionViewItem& option,
-    const QModelIndex& index) const
-{
-    auto variant = index.data(Qt::DisplayRole);
-    if (variant.canConvert<OptType>())
-        return TypeSelector::typeSizeHint(variant.value<OptType>(), option.font) + QSize(6, 4);
-
-    return QStyledItemDelegate::sizeHint(option, index);
 }
 
 } // namespace crucible::gui

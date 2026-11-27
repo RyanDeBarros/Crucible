@@ -13,5 +13,6 @@ target_sources(crucible_gui
         scrollbar_preserver.hpp
         signal_property.hpp
         stylesheet.hpp
-        type_selector.hpp
 )
+
+add_subdirectory(type_selector)

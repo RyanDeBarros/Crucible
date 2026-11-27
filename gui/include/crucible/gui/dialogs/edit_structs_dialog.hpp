@@ -1,10 +1,12 @@
 #pragma once
 
-#include <crucible/core/typing/type.hpp>
-
 #include <crucible/gui/util/element_table_model.hpp>
+
 #include <crucible/gui/util/modal_dialog.hpp>
-#include <crucible/gui/util/type_selector.hpp> // TODO split type_selector.hpp into different files
+
+#include <crucible/gui/util/type_selector/opt_type.hpp>
+
+#include <crucible/core/typing/user_registries.hpp>
 
 class QLineEdit;
 class QPushButton;
