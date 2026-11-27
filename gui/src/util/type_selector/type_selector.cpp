@@ -255,13 +255,13 @@ void TypeSelector::openPopup(std::vector<size_t> path, const QRect& rect)
     });
 
     std::vector<Entry> user_enums;
-    // TODO reserve size
+    user_enums.reserve(core::typing::gEnumRegistry.size(lock.enum_lock));
     for (auto it : core::typing::gEnumRegistry.range(lock.enum_lock))
         user_enums.push_back(Entry(lock, { .kind = Kind::Enum, .user = it.handle }));
     popup_->addCategory("Enum", user_enums);
 
     std::vector<Entry> user_structs;
-    // TODO reserve size
+    user_structs.reserve(core::typing::gStructRegistry.size(lock.struct_lock));
     for (auto it : core::typing::gStructRegistry.range(lock.struct_lock))
         user_structs.push_back(Entry(lock, { .kind = Kind::Struct, .user = it.handle }));
     popup_->addCategory("Struct", user_structs);

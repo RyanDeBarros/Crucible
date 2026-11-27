@@ -9,24 +9,6 @@ namespace crucible::core::typing
 
 class Type;
 
-template<typename Template>
-class NominalRegistry
-    : private Registry<Template, UserInstance>
-{
-    using Super = Registry<Template, UserInstance>;
-
-public:
-    using Lock = Super::Lock;
-
-    using Super::lock;
-    using Super::add;
-    using Super::remove;
-    using Super::exists;
-    using Super::get;
-    using Super::range;
-    using Super::peek_next_handle;
-};
-
 struct EnumTemplate
 {
     std::string title;
@@ -34,20 +16,12 @@ struct EnumTemplate
 };
 
 class EnumRegistry final
-    : private NominalRegistry<EnumTemplate>
+    : public Registry<EnumTemplate, UserInstance>
 {
-    using Super = NominalRegistry<EnumTemplate>;
+    using Super = Registry<EnumTemplate, UserInstance>;
 
 public:
     using Lock = Super::Lock;
-
-    using Super::lock;
-    using Super::add;
-    using Super::remove;
-    using Super::exists;
-    using Super::get;
-    using Super::range;
-    using Super::peek_next_handle;
 
     std::string enum_title(const Lock& lock, UserInstance user) const;
     std::string enum_name(const Lock& lock, UserInstance user, uint64_t index) const;
@@ -66,26 +40,23 @@ struct StructTemplate
 };
 
 class StructRegistry final
-    : private NominalRegistry<StructTemplate>
+    : public Registry<StructTemplate, UserInstance>
 {
-    using Super = NominalRegistry<StructTemplate>;
+    using Super = Registry<StructTemplate, UserInstance>;
 
 public:
     using Lock = Super::Lock;
 
     UserInstance add(const Lock& lock, StructTemplate tmpl);
-    using Super::lock;
-    using Super::remove;
-    using Super::exists;
-    using Super::get;
-    using Super::range;
-    using Super::peek_next_handle;
 
     std::string struct_title(const Lock& lock, UserInstance user) const;
     size_t struct_field_count(const Lock& lock, UserInstance user) const;
     std::string struct_field_name(const Lock& lock, UserInstance user, uint64_t index) const;
     Type struct_field_type(const Lock& lock, UserInstance user, uint64_t index) const;
     Type struct_field_type(const Lock& lock, UserInstance user, const std::string_view name) const;
+
+private:
+    using Super::add;
 };
 
 extern StructRegistry gStructRegistry;

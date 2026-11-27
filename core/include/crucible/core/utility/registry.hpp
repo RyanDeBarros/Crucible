@@ -77,6 +77,9 @@ public:
 
             if (registry_ != registry)
                 throw std::runtime_error("Lock does not point to registry");
+
+            if (!lock_.owns_lock())
+                throw std::runtime_error("Lock does not own the mutex");
         }
     };
 
@@ -184,6 +187,7 @@ protected:
 private:
     std::vector<std::unique_ptr<Page>> pages_;
     Handle free_head_ = 0;
+    size_t count_ = 0;
     mutable Lock* active_lock_ = nullptr;
 
 public:
@@ -240,6 +244,18 @@ public:
         return Range(lock);
     }
 
+    size_t size(const Lock& lock) const
+    {
+        lock.assert_valid(this);
+        return size_unsafe();
+    }
+
+    void clear(const Lock& lock)
+    {
+        lock.assert_valid(this);
+        clear_unsafe();
+    }
+
     Handle peek_next_handle(const Lock& lock) const
     {
         lock.assert_valid(this);
@@ -274,6 +290,7 @@ protected:
         slot.el.emplace(std::move(el));
         slot.next_free = 0;
 
+        ++count_;
         return handle;
     }
 
@@ -285,6 +302,7 @@ protected:
             slot->next_free = free_head_;
             free_head_ = handle;
 
+            --count_;
             return true;
         }
         else
@@ -304,6 +322,33 @@ protected:
     Element& get_unsafe(Handle handle)
     {
         return *get_slot_unsafe(handle).el;
+    }
+
+    size_t size_unsafe() const
+    {
+        return count_;
+    }
+
+    void clear_unsafe()
+    {
+        free_head_ = 0;
+        count_ = 0;
+
+        for (size_t page_index = pages_.size(); page_index-- > 0;)
+        {
+            Page& page = *pages_[page_index];
+
+            for (size_t slot_index = page.filled; slot_index-- > 0;)
+            {
+                Slot& slot = page.my_slots[slot_index];
+
+                slot.el.reset();
+                slot.next_free = free_head_;
+
+                free_head_ = static_cast<Handle>(
+                    page_index * Page::kSize + slot_index + 1);
+            }
+        }
     }
 
     Handle peek_next_handle_unsafe()
