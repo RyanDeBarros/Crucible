@@ -53,23 +53,47 @@ class TypeArena
     std::stack<detail::TypeNodeId> free_ids_;
     std::unordered_map<detail::TypeNodeId, size_t> users_;
 
+    mutable std::mutex mutex_;
+
 public:
     detail::TypeNodeId alloc(Simplex simplex)
     {
-        return alloc({ .simplex = simplex });
+        std::lock_guard lock(mutex_);
+        return alloc_unsafe({ .simplex = simplex });
     }
 
     detail::TypeNodeId alloc(Simplex simplex, detail::TypeNodeId underlying_0)
     {
-        return alloc({ .simplex = simplex, .underlying = { underlying_0 } });
+        std::lock_guard lock(mutex_);
+        return alloc_unsafe({ .simplex = simplex, .underlying = { underlying_0 } });
     }
 
     detail::TypeNodeId alloc(Simplex simplex, detail::TypeNodeId underlying_0, detail::TypeNodeId underlying_1)
     {
-        return alloc({ .simplex = simplex, .underlying = { underlying_0, underlying_1 } });
+        std::lock_guard lock(mutex_);
+        return alloc_unsafe({ .simplex = simplex, .underlying = { underlying_0, underlying_1 } });
     }
 
-    detail::TypeNodeId alloc(TypeNode node)
+    void increment(detail::TypeNodeId id)
+    {
+        std::lock_guard lock(mutex_);
+        increment_unsafe(id);
+    }
+
+    void decrement(detail::TypeNodeId id)
+    {
+        std::lock_guard lock(mutex_);
+        decrement_unsafe(id);
+    }
+
+    TypeNode get(detail::TypeNodeId id)
+    {
+        std::lock_guard lock(mutex_);
+        return get_unsafe(id);
+    }
+
+private:
+    detail::TypeNodeId alloc_unsafe(const TypeNode& node)
     {
         if (auto it = lut_.find(node); it != lut_.end())
         {
@@ -90,19 +114,19 @@ public:
         }
 
         map_[id] = node;
-        lut_.emplace(std::move(node), id);
+        lut_.emplace(node, id);
         users_[id] = 1;
 
         for (detail::TypeNodeId underlying : node.underlying)
         {
             if (underlying)
-                increment(underlying);
+                increment_unsafe(underlying);
         }
 
         return id;
     }
 
-    void increment(detail::TypeNodeId id)
+    void increment_unsafe(detail::TypeNodeId id)
     {
         auto it = users_.find(id);
         if (it == users_.end())
@@ -111,7 +135,7 @@ public:
         ++it->second;
     }
 
-    void decrement(detail::TypeNodeId id)
+    void decrement_unsafe(detail::TypeNodeId id)
     {
         auto it = map_.find(id);
         if (it == map_.end())
@@ -130,11 +154,11 @@ public:
         for (detail::TypeNodeId underlying : node.underlying)
         {
             if (underlying)
-                decrement(underlying);
+                decrement_unsafe(underlying);
         }
     }
 
-    TypeNode get(detail::TypeNodeId id)
+    TypeNode get_unsafe(detail::TypeNodeId id)
     {
         auto it = map_.find(id);
         if (it != map_.end())
@@ -144,7 +168,11 @@ public:
     }
 };
 
-static TypeArena gTypeArena;
+static TypeArena& type_arena()
+{
+    static TypeArena* arena = new TypeArena();
+    return *arena; // leak so that TypeArena is always available for Type::~Type() in static objects
+}
 
 Type::Type(detail::TypeNodeId id)
     : id_(id)
@@ -155,7 +183,7 @@ Type::Type(const Type& o)
     : id_(o.id_)
 {
     if (id_)
-        gTypeArena.increment(id_);
+        type_arena().increment(id_);
 }
 
 Type::Type(Type&& o) noexcept
@@ -167,7 +195,7 @@ Type::Type(Type&& o) noexcept
 Type::~Type()
 {
     if (id_)
-        gTypeArena.decrement(id_);
+        type_arena().decrement(id_);
 }
 
 Type& Type::operator=(const Type& o)
@@ -175,11 +203,11 @@ Type& Type::operator=(const Type& o)
     if (this != &o && id_ != o.id_)
     {
         if (id_)
-            gTypeArena.decrement(id_);
+            type_arena().decrement(id_);
 
         id_ = o.id_;
         if (id_)
-            gTypeArena.increment(id_);
+            type_arena().increment(id_);
     }
 
     return *this;
@@ -190,7 +218,7 @@ Type& Type::operator=(Type&& o) noexcept
     if (this != &o)
     {
         if (id_)
-            gTypeArena.decrement(id_);
+            type_arena().decrement(id_);
 
         id_ = o.id_;
         o.id_ = 0;
@@ -211,18 +239,18 @@ bool Type::valid() const
 
 Simplex Type::simplex() const
 {
-    return gTypeArena.get(id_).simplex;
+    return type_arena().get(id_).simplex;
 }
 
 Type Type::underlying(size_t idx) const
 {
-    TypeNode node = gTypeArena.get(id_);
+    TypeNode node = type_arena().get(id_);
 
     if (idx >= node.underlying.size() || !node.underlying[idx])
         throw std::out_of_range("Underlying type does not exist");
 
     detail::TypeNodeId u = node.underlying[idx];
-    gTypeArena.increment(u);
+    type_arena().increment(u);
     return Type(u);
 }
 
@@ -233,57 +261,57 @@ size_t Type::hash() const
 
 Type Type::make_bool()
 {
-    return gTypeArena.alloc({ .kind = Kind::Bool });
+    return type_arena().alloc({ .kind = Kind::Bool });
 }
 
 Type Type::make_int()
 {
-    return gTypeArena.alloc({ .kind = Kind::Int });
+    return type_arena().alloc({ .kind = Kind::Int });
 }
 
 Type Type::make_float()
 {
-    return gTypeArena.alloc({ .kind = Kind::Float });
+    return type_arena().alloc({ .kind = Kind::Float });
 }
 
 Type Type::make_string()
 {
-    return gTypeArena.alloc({ .kind = Kind::String });
+    return type_arena().alloc({ .kind = Kind::String });
 }
 
 Type Type::make_pointer(const Type& underlying_type)
 {
-    return gTypeArena.alloc({ .kind = Kind::Pointer }, underlying_type.id_);
+    return type_arena().alloc({ .kind = Kind::Pointer }, underlying_type.id_);
 }
 
 Type Type::make_enum(UserInstance user)
 {
-    return gTypeArena.alloc({ .kind = Kind::Enum, .user = user });
+    return type_arena().alloc({ .kind = Kind::Enum, .user = user });
 }
 
 Type Type::make_list(const Type& elem_type)
 {
-    return gTypeArena.alloc({ .kind = Kind::List }, elem_type.id_);
+    return type_arena().alloc({ .kind = Kind::List }, elem_type.id_);
 }
 
 Type Type::make_set(const Type& elem_type)
 {
-    return gTypeArena.alloc({ .kind = Kind::Set }, elem_type.id_);
+    return type_arena().alloc({ .kind = Kind::Set }, elem_type.id_);
 }
 
 Type Type::make_map(const Type& key_type, const Type& value_type)
 {
-    return gTypeArena.alloc({ .kind = Kind::Map }, key_type.id_, value_type.id_);
+    return type_arena().alloc({ .kind = Kind::Map }, key_type.id_, value_type.id_);
 }
 
 Type Type::make_struct(UserInstance user)
 {
-    return gTypeArena.alloc({ .kind = Kind::Struct, .user = user });
+    return type_arena().alloc({ .kind = Kind::Struct, .user = user });
 }
 
 Type Type::make_joker()
 {
-    return gTypeArena.alloc({ .kind = Kind::Joker });
+    return type_arena().alloc({ .kind = Kind::Joker });
 }
 
 } // crucible::core::typing
