@@ -2,7 +2,6 @@
 
 #include <crucible/gui/util/repr.hpp>
 
-#include <QApplication>
 #include <QFrame>
 #include <QLineEdit>
 #include <QMouseEvent>
@@ -51,34 +50,72 @@ static QColor colorForKind(TypeSelector::Kind kind)
     return kUnselectedColor;
 }
 
-OptType::OptType(core::typing::Type type)
-    : type(std::move(type))
+OptType::OptType(core::typing::Simplex simplex)
+    : simplex(simplex)
 {
 }
 
-OptType::operator bool() const
+OptType::OptType(const core::typing::Type& type)
+    : simplex({ type.simplex() })
 {
-    return type.has_value();
+    for (size_t i = 0; i < simplex->argcount(); ++i)
+        arguments.emplace_back(type.underlying(i));
 }
 
-const core::typing::Type& OptType::operator*() const
+std::optional<core::typing::Type> OptType::toType() const
 {
-    return *type;
-}
+    if (!simplex)
+        return std::nullopt;
 
-core::typing::Type& OptType::operator*()
-{
-    return *type;
-}
+    std::vector<core::typing::Type> args;
 
-const core::typing::Type* OptType::operator->() const
-{
-    return &*type;
-}
+    for (const auto& arg : arguments)
+    {
+        if (auto type = arg.toType())
+            args.push_back(std::move(*type));
+        else
+            return std::nullopt;
+    }
 
-core::typing::Type* OptType::operator->()
-{
-    return &*type;
+    // TODO instead of make_*(), just do make(Kind) with overloads for different numbers of arguments - then throw error if arg count doesn't match.
+    switch (simplex->kind)
+    {
+    case core::typing::Kind::Bool:
+        return core::typing::Type::make_bool();
+
+    case core::typing::Kind::Int:
+        return core::typing::Type::make_int();
+
+    case core::typing::Kind::Float:
+        return core::typing::Type::make_float();
+
+    case core::typing::Kind::String:
+        return core::typing::Type::make_string();
+
+    case core::typing::Kind::Pointer:
+        return core::typing::Type::make_pointer(args[0]);
+
+    case core::typing::Kind::Enum:
+        return core::typing::Type::make_enum(simplex->user);
+
+    case core::typing::Kind::List:
+        return core::typing::Type::make_list(args[0]);
+
+    case core::typing::Kind::Set:
+        return core::typing::Type::make_set(args[0]);
+
+    case core::typing::Kind::Map:
+        return core::typing::Type::make_map(args[0], args[1]);
+
+    case core::typing::Kind::Struct:
+        return core::typing::Type::make_struct(simplex->user);
+
+    case core::typing::Kind::Joker:
+        return core::typing::Type::make_joker();
+
+    default:
+        return {};
+    }
 }
 
 TypeSelector::Entry::Entry(const core::typing::UserRegistryLock& lock, Simplex simplex)
@@ -103,10 +140,9 @@ public:
     QLineEdit* search = nullptr;
     QTreeWidget* tree = nullptr;
 
-    explicit TypePopup(TypeSelector& selector, std::vector<size_t> path)
+    explicit TypePopup(TypeSelector& selector)
         : QFrame(&selector, Qt::Popup)
         , selector(selector)
-        , path(std::move(path))
     {
         setFrameShape(QFrame::StyledPanel);
         setMinimumWidth(240);
@@ -133,7 +169,7 @@ public:
                 for (int j = 0; j < category->childCount(); ++j)
                 {
                     auto* item = category->child(j);
-                    const bool visible = item->text(0).contains(text, Qt::CaseInsensitive);
+                    const bool visible = item->text(0).contains(text, Qt::CaseInsensitive); // TODO fuzzy-searching
 
                     item->setHidden(!visible);
                     anyVisible |= visible;
@@ -143,6 +179,7 @@ public:
             }
         });
 
+        // TODO clearer tree styling
         connect(tree, &QTreeWidget::itemDoubleClicked, this, [this](QTreeWidgetItem* item, int) {
             if (!item || item->childCount() > 0)
                 return;
@@ -185,20 +222,21 @@ QSize TypeSelector::sizeHint() const
 
 OptType TypeSelector::type() const
 {
-    return root_ ? toType(*root_) : OptType{};
+    return root_;
 }
 
-void TypeSelector::setType(const OptType& type)
+void TypeSelector::setType(OptType type)
 {
-    root_ = fromType(type);
+    root_ = std::move(type);
     rebuildLayout();
     updateGeometry();
-    Q_EMIT update();
+    update();
+    Q_EMIT layoutSizeChanged();
 }
 
 QSize TypeSelector::typeSizeHint(const OptType& type, const QFont& font)
 {
-    return calculateSize(fromType(type), font);
+    return calculateSize(type, font);
 }
 
 void TypeSelector::paintType(
@@ -209,16 +247,14 @@ void TypeSelector::paintType(
     const QPalette& palette,
     bool selected)
 {
-    auto node = fromType(type);
-    
-    const QSize size = calculateSize(node, font);
+    const QSize size = calculateSize(type, font);
     const QRect expression_rect(
         rect.left(),
         rect.top() + (rect.height() - size.height()) / 2,
         size.width(),
         size.height());
 
-    NodeLayout layout = calculateLayout(node, expression_rect, font);
+    NodeLayout layout = calculateLayout(type, expression_rect, font);
 
     painter->save();
 
@@ -226,7 +262,7 @@ void TypeSelector::paintType(
         painter->fillRect(rect, palette.color(QPalette::Highlight));
 
     painter->setFont(font);
-    paintNode(painter, node, layout, font, palette);
+    paintNode(painter, type, layout, font, palette);
 
     painter->restore();
 }
@@ -242,8 +278,9 @@ void TypeSelector::paintEvent(QPaintEvent*)
 
 void TypeSelector::mousePressEvent(QMouseEvent* event)
 {
-    // TODO get the right child path
-    openPopup({}, rect());
+    if (const auto path = hitTest(layout_, event->pos()))
+        openPopup(*path, layoutAtPath(layout_, *path).rect);
+
     QWidget::mousePressEvent(event);
 }
 
@@ -263,8 +300,9 @@ void TypeSelector::rebuildLayout()
 void TypeSelector::openPopup(std::vector<size_t> path, const QRect& rect)
 {
     if (!popup_)
-        popup_ = new TypePopup(*this, std::move(path));
+        popup_ = new TypePopup(*this);
 
+    popup_->path = std::move(path);
     popup_->tree->clear();
 
     core::typing::UserRegistryLock lock;
@@ -306,14 +344,14 @@ void TypeSelector::openPopup(std::vector<size_t> path, const QRect& rect)
 
 void TypeSelector::selectSimplex(const std::vector<size_t>& path, Simplex simplex)
 {
-    Node replacement{ .simplex = simplex };
+    OptType replacement(simplex);
     replacement.arguments.resize(simplex.argcount());
 
     if (path.empty())
         root_ = std::move(replacement);
     else
     {
-        if (Node* parent = findNode(std::span<const size_t>(path.begin(), path.end() - 1)))
+        if (OptType* parent = findNode(std::span<const size_t>(path.begin(), path.end() - 1)))
             parent->arguments[path.back()] = std::move(replacement);
         else
             return;
@@ -323,117 +361,70 @@ void TypeSelector::selectSimplex(const std::vector<size_t>& path, Simplex simple
     updateGeometry();
     update();
 
-    if (auto t = type())
-    {
-        Q_EMIT typeChanged(*t);
-        Q_EMIT editingFinished();
-    }
+    Q_EMIT editingFinished();
+    Q_EMIT layoutSizeChanged();
 }
 
-TypeSelector::Node* TypeSelector::findNode(std::span<const size_t> path)
+OptType* TypeSelector::findNode(std::span<const size_t> path)
 {
-    if (!root_)
-        return nullptr;
-
-    Node* node = &*root_;
+    OptType* node = &root_;
 
     for (size_t index : path)
     {
-        if (index >= node->arguments.size() || !node->arguments[index])
+        if (index >= node->arguments.size())
             return nullptr;
 
-        node = &*node->arguments[index];
+        node = &node->arguments[index];
     }
 
     return node;
 }
 
-OptType TypeSelector::toType(const Node& node)
+// TODO use for mouse hover indicator
+std::optional<std::vector<size_t>> TypeSelector::hitTest(const NodeLayout& layout, const QPoint& pos) const
 {
-    std::vector<Type> args;
-
-    for (const auto& argument : node.arguments)
-    {
-        if (!argument)
-            return {};
-
-        if (auto type = toType(*argument))
-            args.push_back(std::move(*type));
-        else
-            return {};
-    }
-
-    // TODO instead of make_*(), just do make(Kind) with overloads for different numbers of arguments - then throw error if arg count doesn't match.
-    switch (node.simplex.kind)
-    {
-    case Kind::Bool:
-        return Type::make_bool();
-
-    case Kind::Int:
-        return Type::make_int();
-
-    case Kind::Float:
-        return Type::make_float();
-
-    case Kind::String:
-        return Type::make_string();
-
-    case Kind::Pointer:
-        return Type::make_pointer(args[0]);
-
-    case Kind::Enum:
-        return Type::make_enum(node.simplex.user);
-
-    case Kind::List:
-        return Type::make_list(args[0]);
-
-    case Kind::Set:
-        return Type::make_set(args[0]);
-
-    case Kind::Map:
-        return Type::make_map(args[0], args[1]);
-
-    case Kind::Struct:
-        return Type::make_struct(node.simplex.user);
-
-    case Kind::Joker:
-        return Type::make_joker();
-
-    default:
-        return {};
-    }
-}
-
-std::optional<TypeSelector::Node> TypeSelector::fromType(const OptType& type)
-{
-    if (type)
-    {
-        Node result{ .simplex = type->simplex() };
-
-        for (size_t i = 0; i < result.simplex.argcount(); ++i)
-            result.arguments.emplace_back(fromType(type->underlying(i)));
-
-        return result;
-    }
-    else
+    if (!layout.rect.contains(pos))
         return std::nullopt;
+
+    for (size_t i = 0; i < layout.children.size(); ++i)
+    {
+        if (auto path = hitTest(layout.children[i], pos))
+        {
+            path->insert(path->begin(), i);
+            return path;
+        }
+    }
+
+    return std::vector<size_t>{};
 }
 
-QSize TypeSelector::calculateSize(const std::optional<Node>& node, const QFont& font)
+const TypeSelector::NodeLayout& TypeSelector::layoutAtPath(
+    const NodeLayout& root,
+    const std::vector<size_t>& path) const
+{
+    const NodeLayout* current = &root;
+
+    for (size_t index : path)
+        current = &current->children[index];
+
+    return *current;
+}
+
+QSize TypeSelector::calculateSize(const OptType& type, const QFont& font)
 {
     QFontMetrics metrics(font);
 
-    const QString name = node ? repr({}, node->simplex) : tr(kUnselected);
+    const QString name = type.simplex ? repr({}, *type.simplex) : tr(kUnselected);
 
     const QSize label(metrics.horizontalAdvance(name), metrics.height());
 
-    if (!node || node->arguments.empty())
+    if (type.arguments.empty())
         return label + QSize(kPadding * 2, kPadding * 2);
 
     int width = label.width() + kSpacing;
     int height = label.height();
 
-    for (const auto& argument : node->arguments)
+    for (const auto& argument : type.arguments)
     {
         const QSize child = calculateSize(argument, font);
         width += child.width() + kSpacing;
@@ -444,22 +435,22 @@ QSize TypeSelector::calculateSize(const std::optional<Node>& node, const QFont& 
 }
 
 TypeSelector::NodeLayout TypeSelector::calculateLayout(
-    const std::optional<Node>& node,
+    const OptType& type,
     const QRect& rect,
     const QFont& font)
 {
     NodeLayout result;
     result.rect = rect;
 
-    if (!node || node->arguments.empty())
+    if (!type.simplex || type.arguments.empty())
         return result;
 
     const QFontMetrics metrics(font);
-    const QString name = repr({}, node->simplex);
+    const QString name = repr({}, *type.simplex);
 
     int x = rect.left() + kPadding + metrics.horizontalAdvance(name) + kSpacing;
 
-    for (const auto& argument : node->arguments)
+    for (const auto& argument : type.arguments)
     {
         QSize size = calculateSize(argument, font);
         QRect childRect(x, rect.center().y() - size.height() / 2, size.width(), size.height());
@@ -472,13 +463,13 @@ TypeSelector::NodeLayout TypeSelector::calculateLayout(
 
 void TypeSelector::paintNode(
     QPainter* painter,
-    const std::optional<Node>& node,
+    const OptType& type,
     const NodeLayout& layout,
     const QFont& font,
     const QPalette& palette)
 {
-    const QString name = node ? repr({}, node->simplex) : tr(kUnselected);
-    const QColor color = node ? colorForKind(node->simplex.kind) : kUnselectedColor;
+    const QString name = type.simplex ? repr({}, *type.simplex) : tr(kUnselected);
+    const QColor color = type.simplex ? colorForKind(type.simplex->kind) : kUnselectedColor;
 
     painter->setPen(QPen(color.darker(130), 1));
     painter->setBrush(color.lighter(175));
@@ -494,11 +485,8 @@ void TypeSelector::paintNode(
     painter->setPen(color.darker(180));
     painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, name);
 
-    if (node)
-    {
-        for (size_t i = 0; i < node->arguments.size(); ++i)
-            paintNode(painter, node->arguments[i], layout.children[i], font, palette);
-    }
+    for (size_t i = 0; i < type.arguments.size(); ++i)
+        paintNode(painter, type.arguments[i], layout.children[i], font, palette);
 }
 
 TypeSelectorDelegate::TypeSelectorDelegate(QObject* parent)
@@ -509,14 +497,23 @@ TypeSelectorDelegate::TypeSelectorDelegate(QObject* parent)
 QWidget* TypeSelectorDelegate::createEditor(
     QWidget* parent,
     const QStyleOptionViewItem&,
-    const QModelIndex&) const
+    const QModelIndex& index) const
 {
     auto* editor = new TypeSelector(parent);
+    auto* view = qobject_cast<QTableView*>(parent->parentWidget());
 
-    connect(editor, &TypeSelector::editingFinished, this, [this, editor]() {
+    connect(editor, &TypeSelector::editingFinished, this, [this, editor, view, row = index.row()]() {
         auto* delegate = const_cast<TypeSelectorDelegate*>(this);
         Q_EMIT delegate->commitData(editor);
         Q_EMIT delegate->closeEditor(editor);
+
+        if (view)
+            view->resizeRowToContents(row);
+    });
+
+    connect(editor, &TypeSelector::layoutSizeChanged, editor, [editor, view, row = index.row()] {
+        if (view)
+            view->setRowHeight(row, editor->sizeHint().height() + 4);
     });
 
     return editor;

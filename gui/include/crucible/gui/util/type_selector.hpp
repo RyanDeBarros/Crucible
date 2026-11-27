@@ -13,16 +13,14 @@ namespace crucible::gui
 
 struct OptType
 {
-    std::optional<core::typing::Type> type = std::nullopt;
+    std::optional<core::typing::Simplex> simplex = std::nullopt;
+    std::vector<OptType> arguments;
 
     OptType() = default;
-    OptType(core::typing::Type type);
+    OptType(core::typing::Simplex simplex);
+    OptType(const core::typing::Type& type);
 
-    operator bool() const;
-    const core::typing::Type& operator*() const;
-    core::typing::Type& operator*();
-    const core::typing::Type* operator->() const;
-    core::typing::Type* operator->();
+    std::optional<core::typing::Type> toType() const;
 };
 
 class TypeSelector
@@ -46,13 +44,6 @@ public:
     };
 
 private:
-    struct Node
-    {
-        Simplex simplex;
-        QString name;
-        std::vector<std::optional<Node>> arguments;
-    };
-
     struct NodeLayout
     {
         QRect rect;
@@ -62,7 +53,7 @@ private:
     class TypePopup;
 
 private:
-    std::optional<Node> root_;
+    OptType root_;
 
     TypePopup* popup_ = nullptr;
     NodeLayout layout_;
@@ -72,14 +63,14 @@ public:
 
 signals:
     // TODO connect to this in table
-    void typeChanged(const Type& type);
     void editingFinished();
+    void layoutSizeChanged();
 
 public:
     QSize sizeHint() const override;
 
     OptType type() const;
-    void setType(const OptType& type);
+    void setType(OptType type);
 
     static QSize typeSizeHint(const OptType& type, const QFont& font);
     static void paintType(
@@ -99,16 +90,16 @@ private:
     void rebuildLayout();
     void openPopup(std::vector<size_t> path, const QRect& rect);
     void selectSimplex(const std::vector<size_t>& path, Simplex simplex);
-    Node* findNode(std::span<const size_t> path);
+    OptType* findNode(std::span<const size_t> path);
 
-    static OptType toType(const Node& node);
-    static std::optional<Node> fromType(const OptType& type);
+    std::optional<std::vector<size_t>> hitTest(const NodeLayout& layout, const QPoint& pos) const;
+    const NodeLayout& layoutAtPath(const NodeLayout& root, const std::vector<size_t>& path) const;
 
-    static QSize calculateSize(const std::optional<Node>& node, const QFont& font);
-    static NodeLayout calculateLayout(const std::optional<Node>& node, const QRect& rect, const QFont& font);
+    static QSize calculateSize(const OptType& node, const QFont& font);
+    static NodeLayout calculateLayout(const OptType& node, const QRect& rect, const QFont& font);
     static void paintNode(
         QPainter* painter,
-        const std::optional<Node>& node,
+        const OptType& node,
         const NodeLayout& layout,
         const QFont& font,
         const QPalette& palette);

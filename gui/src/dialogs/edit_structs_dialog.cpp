@@ -220,7 +220,12 @@ bool StructEditView::unsavedChanges() const
         if (fields[i].name != struct_data.fields[i].first)
             return true;
 
-        if (!fields[i].type || *fields[i].type != struct_data.fields[i].second)
+        if (auto type = fields[i].type.toType())
+        {
+            if (*type != struct_data.fields[i].second)
+                return true;
+        }
+        else
             return true;
     }
 
@@ -411,17 +416,6 @@ void StructEditView::syncFieldStatuses()
 
         it = last;
     }
-
-    for (size_t i = 0; i < model_->elementCount(); ++i)
-    {
-        const auto& field = model_->at(i);
-
-        if (!field.type)
-        {
-            // TODO
-            //syncErrorOutline(fieldTypeEdit(i), true, tr("Incomplete type"));
-        }
-    }
 }
 
 QLineEdit& StructEditView::fieldNameEdit(size_t row)
@@ -449,7 +443,7 @@ bool StructEditView::applyChanges()
 
             struct_data.fields.clear();
             for (const auto& field : model_->getElements())
-                struct_data.fields.push_back(std::make_pair(field.name.toStdString(), field.type.type.value()));
+                struct_data.fields.push_back(std::make_pair(field.name.toStdString(), field.type.toType().value()));
         }
     }
 
@@ -500,7 +494,7 @@ QString StructEditView::fieldError() const
 
     for (const auto& field : model_->getElements())
     {
-        if (!field.type)
+        if (!field.type.toType())
             return tr("Field '%1' has incomplete type").arg(field.name);
     }
 
