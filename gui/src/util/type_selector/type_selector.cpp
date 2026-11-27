@@ -1,5 +1,6 @@
 #include <crucible/gui/util/type_selector/type_selector.hpp>
 
+#include <crucible/gui/util/fuzzy.hpp>
 #include <crucible/gui/util/repr.hpp>
 
 #include <QLineEdit>
@@ -100,7 +101,7 @@ public:
                 for (int j = 0; j < category->childCount(); ++j)
                 {
                     auto* item = category->child(j);
-                    const bool visible = item->text(0).contains(text, Qt::CaseInsensitive); // TODO fuzzy-searching
+                    const bool visible = fuzzyContains(item->text(0), text);
 
                     item->setHidden(!visible);
                     anyVisible |= visible;

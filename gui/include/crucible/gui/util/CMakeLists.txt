@@ -4,6 +4,7 @@ target_sources(crucible_gui
         delegate_columns.hpp
         dialog_underlay.hpp
         element_table_model.hpp
+        fuzzy.hpp
         icons.hpp
         item_delegates.hpp
         layout_helpers.hpp
