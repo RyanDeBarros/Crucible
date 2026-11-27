@@ -19,6 +19,7 @@ public:
     using Simplex = core::typing::Simplex;
     using Kind = core::typing::Kind;
     using UserInstance = core::typing::UserInstance;
+    using Path = std::vector<size_t>;
 
     struct Entry
     {
@@ -43,7 +44,7 @@ private:
 
     TypePopup* popup_ = nullptr;
     NodeLayout layout_;
-    std::optional<std::vector<size_t>> hovered_path_;
+    std::optional<Path> hovered_path_;
 
 public:
     explicit TypeSelector(QWidget* parent = nullptr);
@@ -69,16 +70,16 @@ protected:
 
 private:
     void rebuildLayout();
-    void openPopup(std::vector<size_t> path, const QRect& rect);
-    void selectSimplex(const std::vector<size_t>& path, Simplex simplex);
+    void openPopup(Path path, const QRect& rect);
+    void selectSimplex(const Path& path, Simplex simplex);
     OptType* findNode(std::span<const size_t> path);
 
-    std::optional<std::vector<size_t>> hitTest(const NodeLayout& layout, const QPoint& pos) const;
-    const NodeLayout& layoutAtPath(const NodeLayout& root, const std::vector<size_t>& path) const;
+    std::optional<Path> hitTest(const NodeLayout& layout, const QPoint& pos) const;
+    const NodeLayout& layoutAtPath(const NodeLayout& root, const Path& path) const;
     void paintNode(
         QPainter* painter,
         const OptType& node,
-        const std::vector<size_t>& path, // TODO using Path = std::vector<size_t>
+        const Path& path,
         const NodeLayout& layout,
         const QFont& font,
         const QPalette& palette) const;

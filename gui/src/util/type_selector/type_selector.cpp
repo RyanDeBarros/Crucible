@@ -68,7 +68,7 @@ public:
     };
 
     TypeSelector& selector;
-    std::vector<size_t> path;
+    Path path;
     QLineEdit* search = nullptr;
     QTreeWidget* tree = nullptr;
 
@@ -223,7 +223,7 @@ void TypeSelector::rebuildLayout()
     layout_ = calculateLayout(root_, expression_rect, font());
 }
 
-void TypeSelector::openPopup(std::vector<size_t> path, const QRect& rect)
+void TypeSelector::openPopup(Path path, const QRect& rect)
 {
     popup_->path = std::move(path);
     popup_->tree->clear();
@@ -265,7 +265,7 @@ void TypeSelector::openPopup(std::vector<size_t> path, const QRect& rect)
     popup_->search->setFocus();
 }
 
-void TypeSelector::selectSimplex(const std::vector<size_t>& path, Simplex simplex)
+void TypeSelector::selectSimplex(const Path& path, Simplex simplex)
 {
     OptType replacement(simplex);
     replacement.arguments.resize(simplex.argcount());
@@ -303,7 +303,7 @@ OptType* TypeSelector::findNode(std::span<const size_t> path)
     return node;
 }
 
-std::optional<std::vector<size_t>> TypeSelector::hitTest(const NodeLayout& layout, const QPoint& pos) const
+std::optional<TypeSelector::Path> TypeSelector::hitTest(const NodeLayout& layout, const QPoint& pos) const
 {
     if (!layout.rect.contains(pos))
         return std::nullopt;
@@ -317,12 +317,12 @@ std::optional<std::vector<size_t>> TypeSelector::hitTest(const NodeLayout& layou
         }
     }
 
-    return std::vector<size_t>{};
+    return Path{};
 }
 
 const TypeSelector::NodeLayout& TypeSelector::layoutAtPath(
     const NodeLayout& root,
-    const std::vector<size_t>& path) const
+    const Path& path) const
 {
     const NodeLayout* current = &root;
 
@@ -335,7 +335,7 @@ const TypeSelector::NodeLayout& TypeSelector::layoutAtPath(
 void TypeSelector::paintNode(
     QPainter* painter,
     const OptType& type,
-    const std::vector<size_t>& path,
+    const Path& path,
     const NodeLayout& layout,
     const QFont& font,
     const QPalette& palette) const
@@ -368,7 +368,7 @@ void TypeSelector::paintNode(
 
     for (size_t i = 0; i < type.arguments.size(); ++i)
     {
-        std::vector<size_t> subpath = path;
+        Path subpath = path;
         subpath.push_back(i);
         paintNode(painter, type.arguments[i], subpath, layout.children[i], font, palette);
     }
