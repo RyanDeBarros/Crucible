@@ -25,7 +25,7 @@ public:
 
     private:
         const Registry* registry_;
-        std::unique_lock<std::mutex> lock_;
+        std::unique_lock<std::mutex> lock_; // TODO allow read-only locks simultaneously on same thread or different threads
 
     public:
         Lock(const Registry& registry)

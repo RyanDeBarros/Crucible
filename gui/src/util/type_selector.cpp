@@ -22,7 +22,7 @@ static const QColor kUnselectedColor = QColor(0xAA, 0xAA, 0xAA);
 
 static QColor colorForKind(TypeSelector::Kind kind)
 {
-    // TODO color scheme
+    // TODO color scheme + different colors for each built-in type
 
     switch (kind)
     {
@@ -182,10 +182,7 @@ TypeSelector::TypeSelector(QWidget* parent)
 
 QSize TypeSelector::sizeHint() const
 {
-    if (!root_)
-        return QSize(100, 36);
-
-    return calculateSize(*root_, font());
+    return calculateSize(root_, font());
 }
 
 OptType TypeSelector::type() const
@@ -233,15 +230,8 @@ void TypeSelector::paintEvent(QPaintEvent*)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    if (!root_)
-    {
-        painter.setPen(palette().color(QPalette::PlaceholderText));
-        painter.drawText(rect(), Qt::AlignCenter, tr("Select type"));
-        return;
-    }
-
     rebuildLayout();
-    paintNode(&painter, *root_, layout_, font(), palette());
+    paintNode(&painter, root_, layout_, font(), palette());
 }
 
 void TypeSelector::mousePressEvent(QMouseEvent* event)
@@ -259,10 +249,7 @@ void TypeSelector::resizeEvent(QResizeEvent* event)
 
 void TypeSelector::rebuildLayout()
 {
-    if (!root_)
-        return;
-
-    layout_ = calculateLayout(*root_, rect(), font());
+    layout_ = calculateLayout(root_, rect(), font());
 }
 
 void TypeSelector::openPopup(std::vector<size_t> path, const QRect& rect)
@@ -440,10 +427,7 @@ QSize TypeSelector::calculateSize(const std::optional<Node>& node, const QFont& 
 
     for (const auto& argument : node->arguments)
     {
-        const QSize child = argument
-            ? calculateSize(*argument, font)
-            : QSize(metrics.horizontalAdvance(tr(kUnselected)) + kPadding * 2, metrics.height() + kPadding * 2);
-
+        const QSize child = calculateSize(argument, font);
         width += child.width() + kSpacing;
         height = std::max(height, child.height());
     }
@@ -471,12 +455,7 @@ TypeSelector::NodeLayout TypeSelector::calculateLayout(
 
     for (const auto& argument : node->arguments)
     {
-        QSize size;
-
-        if (argument)
-            size = calculateSize(*argument, font);
-        else
-            size = QSize(metrics.horizontalAdvance(tr(kUnselected)) + kPadding * 2, metrics.height() + kPadding * 2);
+        QSize size = calculateSize(argument, font);
 
         QRect childRect(
             x,
@@ -484,11 +463,7 @@ TypeSelector::NodeLayout TypeSelector::calculateLayout(
             size.width(),
             std::max(size.height(), availableHeight));
 
-        if (argument)
-            result.children.push_back(calculateLayout(*argument, childRect, font));
-        else
-            result.children.push_back(NodeLayout{ childRect, {} });
-
+        result.children.push_back(calculateLayout(argument, childRect, font));
         x += size.width() + kSpacing;
     }
 
@@ -519,23 +494,10 @@ void TypeSelector::paintNode(
     painter->setPen(color.darker(180));
     painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, name);
 
-    if (!node)
-        return;
-
-    for (size_t i = 0; i < node->arguments.size(); ++i)
+    if (node)
     {
-        const auto& argument = node->arguments[i];
-        const auto& childLayout = layout.children[i];
-
-        if (argument)
-            paintNode(painter, *argument, childLayout, font, palette);
-        else
-        {
-            painter->setPen(QPen(palette.color(QPalette::PlaceholderText), 1, Qt::DashLine));
-            painter->setBrush(palette.color(QPalette::AlternateBase));
-            painter->drawRoundedRect(childLayout.rect, kRadius, kRadius);
-            painter->drawText(childLayout.rect, Qt::AlignCenter, tr(kUnselected));
-        }
+        for (size_t i = 0; i < node->arguments.size(); ++i)
+            paintNode(painter, node->arguments[i], layout.children[i], font, palette);
     }
 }
 
@@ -552,10 +514,8 @@ QWidget* TypeSelectorDelegate::createEditor(
     auto* editor = new TypeSelector(parent);
 
     connect(editor, &TypeSelector::editingFinished, this, [this, editor]() {
-        // TODO remove?
         auto* delegate = const_cast<TypeSelectorDelegate*>(this);
         Q_EMIT delegate->commitData(editor);
-        Q_EMIT delegate->closeEditor(editor);
     });
 
     return editor;
@@ -577,10 +537,7 @@ void TypeSelectorDelegate::setModelData(
     const QModelIndex& index) const
 {
     if (auto* selector = qobject_cast<TypeSelector*>(editor))
-    {
-        if (const auto type = selector->type())
-            model->setData(index, QVariant::fromValue(*type), Qt::EditRole);
-    }
+        model->setData(index, QVariant::fromValue(selector->type()), Qt::EditRole);
 }
 
 void TypeSelectorDelegate::paint(
@@ -589,9 +546,8 @@ void TypeSelectorDelegate::paint(
     const QModelIndex& index) const
 {
     const QVariant variant = index.data(Qt::DisplayRole);
-    auto* type = get_if<OptType>(&variant);
 
-    if (!type)
+    if (!variant.canConvert<OptType>())
     {
         QStyledItemDelegate::paint(painter, option, index);
         return;
@@ -608,7 +564,7 @@ void TypeSelectorDelegate::paint(
         painter->fillRect(opt.rect, opt.palette.color(QPalette::Highlight));
 
     opt.state &= ~QStyle::State_Selected;
-    TypeSelector::paintType(painter, contentRect, *type, opt.font, opt.palette, false);
+    TypeSelector::paintType(painter, contentRect, variant.value<OptType>(), opt.font, opt.palette, false);
 }
 
 QSize TypeSelectorDelegate::sizeHint(
@@ -616,8 +572,8 @@ QSize TypeSelectorDelegate::sizeHint(
     const QModelIndex& index) const
 {
     auto variant = index.data(Qt::DisplayRole);
-    if (auto* type = get_if<OptType>(&variant))
-        return TypeSelector::typeSizeHint(*type, option.font) + QSize(6, 4);
+    if (variant.canConvert<OptType>())
+        return TypeSelector::typeSizeHint(variant.value<OptType>(), option.font) + QSize(6, 4);
 
     return QStyledItemDelegate::sizeHint(option, index);
 }

@@ -96,8 +96,11 @@ private:
     void syncFieldStatuses();
     QLineEdit& fieldNameEdit(size_t row);
 
-    void applyChanges();
+    bool applyChanges();
     void cancelChanges();
+
+    QString titleError(const core::typing::StructRegistry::Lock& lock) const;
+    QString fieldError() const;
 };
 
 class EditStructsDialog

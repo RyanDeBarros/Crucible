@@ -7,8 +7,6 @@
 #include <crucible/gui/util/outlines.hpp>
 #include <crucible/gui/util/repr.hpp>
 
-#include <crucible/core/typing/user_registries.hpp>
-
 #include <QCloseEvent>
 #include <QFormLayout>
 #include <QLabel>
@@ -230,10 +228,7 @@ bool EnumEditView::alertUnsavedChanges()
         QMessageBox::Cancel);
 
     if (reply == QMessageBox::Save)
-    {
-        applyChanges();
-        return true;
-    }
+        return applyChanges();
     else if (reply == QMessageBox::Discard)
     {
         cancelChanges();
@@ -371,26 +366,8 @@ void EnumEditView::syncDirtyState()
 
 void EnumEditView::syncTitleStatus()
 {
-    bool duplicate = false;
-
-    auto lock = core::typing::gEnumRegistry.lock();
-
-    for (const auto& entry : core::typing::gEnumRegistry.range(lock))
-    {
-        if (entry.handle != user_ && entry.element.title == title_edit_->text().toStdString())
-        {
-            duplicate = true;
-            break;
-        }
-    }
-
-    syncErrorOutline(*title_edit_, duplicate, tr("An enum already exists with this name"));
-
-    if (reservedTypeName(title_edit_->text()))
-        syncErrorOutline(*title_edit_, true, tr("Cannot use reserved name"));
-
-    if (!validCharactersInTypeName(title_edit_->text()))
-        syncErrorOutline(*title_edit_, true, tr("Cannot use invalid characters ('[', ']', '*') in name"));
+    QString error = titleError(core::typing::gEnumRegistry.lock());
+    syncErrorOutline(*title_edit_, !error.isEmpty(), error);
 }
 
 void EnumEditView::syncValueStatuses()
@@ -428,73 +405,75 @@ QLineEdit& EnumEditView::valueEdit(size_t row)
     return *static_cast<QLineEdit*>(values_table_->indexWidget(model_->index(row, kValueColumn)));
 }
 
-void EnumEditView::applyChanges()
+bool EnumEditView::applyChanges()
 {
+    QString error;
+
     {
         auto lock = core::typing::gEnumRegistry.lock();
 
-        std::unordered_set<std::string> existing_titles;
-        for (const auto& entry : core::typing::gEnumRegistry.range(lock))
+        if (error.isEmpty())
+            error = titleError(lock);
+        
+        if (error.isEmpty())
+            error = valueError();
+
+        if (error.isEmpty())
         {
-            if (entry.handle != user_)
-                existing_titles.insert(entry.element.title);
+            auto& enum_data = core::typing::gEnumRegistry.get(lock, user_);
+            enum_data.title = title_edit_->text().toStdString();
+
+            enum_data.names.clear();
+            for (const auto& name : model_->getElements())
+                enum_data.names.push_back(name.toStdString());
         }
+    }
 
-        std::string title = title_edit_->text().toStdString();
-        if (existing_titles.contains(title))
-        {
-            alerts::cannotApplyChanges(
-                *this,
-                tr("An enum with the name '%1' already exists")
-                    .arg(title));
-            return;
-        }
-
-        if (reservedTypeName(title_edit_->text()))
-        {
-            alerts::cannotApplyChanges(
-                *this,
-                tr("Cannot use reserved enum name '%1'")
-                    .arg(title_edit_->text()));
-            return;
-        }
-
-        if (!validCharactersInTypeName(title_edit_->text()))
-        {
-            alerts::cannotApplyChanges(
-                *this,
-                tr("Cannot use invalid characters ('[', ']', '*') in enum name '%1'")
-                    .arg(title_edit_->text()));
-            return;
-        }
-
-        std::unordered_set<QString> values;
-        for (size_t i = 0; i < model_->elementCount(); ++i)
-        {
-            if (!values.insert(model_->at(i)).second)
-            {
-                alerts::cannotApplyChanges(
-                    *this,
-                    tr("There are duplicate enum values"));
-                return;
-            }
-        }
-
-        auto& enum_data = core::typing::gEnumRegistry.get(lock, user_);
-        enum_data.title = std::move(title);
-
-        enum_data.names.clear();
-        for (const auto& name : model_->getElements())
-            enum_data.names.push_back(name.toStdString());
+    if (!error.isEmpty())
+    {
+        alerts::cannotApplyChanges(*this, error);
+        return false;
     }
 
     syncDirtyState();
     title_edit_->setFocus();
+    return true;
 }
 
 void EnumEditView::cancelChanges()
 {
     loadEnum(user_);
+}
+
+QString EnumEditView::titleError(const core::typing::EnumRegistry::Lock& lock) const
+{
+    QString title = title_edit_->text();
+    std::string std_title = title.toStdString();
+    for (const auto& entry : core::typing::gEnumRegistry.range(lock))
+    {
+        if (entry.handle != user_ && entry.element.title == std_title)
+            return tr("An enum with the name '%1' already exists").arg(title);
+    }
+
+    if (reservedTypeName(title))
+        return tr("Cannot use reserved enum name '%1'").arg(title);
+    
+    if (!validCharactersInTypeName(title))
+        return tr("Cannot use invalid characters ('[', ']', '*') in enum name '%1'").arg(title);
+
+    return {};
+}
+
+QString EnumEditView::valueError() const
+{
+    std::unordered_set<QString> values;
+    for (size_t i = 0; i < model_->elementCount(); ++i)
+    {
+        if (!values.insert(model_->at(i)).second)
+            return tr("There are duplicate enum values");
+    }
+
+    return {};
 }
 
 EditEnumsDialog::EditEnumsDialog(QWidget* parent)

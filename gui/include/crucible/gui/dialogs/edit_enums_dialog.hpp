@@ -5,6 +5,8 @@
 #include <crucible/gui/util/element_table_model.hpp>
 #include <crucible/gui/util/modal_dialog.hpp>
 
+#include <crucible/core/typing/user_registries.hpp>
+
 class QLineEdit;
 class QPushButton;
 class QStackedWidget;
@@ -87,8 +89,11 @@ private:
     void syncValueStatuses();
     QLineEdit& valueEdit(size_t row);
 
-    void applyChanges();
+    bool applyChanges();
     void cancelChanges();
+
+    QString titleError(const core::typing::EnumRegistry::Lock& lock) const;
+    QString valueError() const;
 };
 
 class EditEnumsDialog

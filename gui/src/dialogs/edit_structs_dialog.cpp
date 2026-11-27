@@ -240,10 +240,7 @@ bool StructEditView::alertUnsavedChanges()
         QMessageBox::Cancel);
 
     if (reply == QMessageBox::Save)
-    {
-        applyChanges();
-        return true;
-    }
+        return applyChanges();
     else if (reply == QMessageBox::Discard)
     {
         cancelChanges();
@@ -382,26 +379,8 @@ void StructEditView::syncDirtyState()
 
 void StructEditView::syncTitleStatus()
 {
-    bool duplicate = false;
-
-    auto lock = core::typing::gStructRegistry.lock();
-
-    for (const auto& entry : core::typing::gStructRegistry.range(lock))
-    {
-        if (entry.handle != user_ && entry.element.title == title_edit_->text().toStdString())
-        {
-            duplicate = true;
-            break;
-        }
-    }
-
-    syncErrorOutline(*title_edit_, duplicate, tr("A struct already exists with this name"));
-
-    if (reservedTypeName(title_edit_->text()))
-        syncErrorOutline(*title_edit_, true, tr("Cannot use reserved name"));
-
-    if (!validCharactersInTypeName(title_edit_->text()))
-        syncErrorOutline(*title_edit_, true, tr("Cannot use invalid characters ('[', ']', '*') in name"));
+    QString error = titleError(core::typing::gStructRegistry.lock());
+    syncErrorOutline(*title_edit_, !error.isEmpty(), error);
 }
 
 void StructEditView::syncFieldStatuses()
@@ -450,87 +429,82 @@ QLineEdit& StructEditView::fieldNameEdit(size_t row)
     return *static_cast<QLineEdit*>(fields_table_->indexWidget(model_->index(row, kFieldNameColumn)));
 }
 
-void StructEditView::applyChanges()
+bool StructEditView::applyChanges()
 {
+    QString error;
+
     {
         auto lock = core::typing::gStructRegistry.lock();
 
-        std::unordered_set<std::string> existing_titles;
-        for (const auto& entry : core::typing::gStructRegistry.range(lock))
+        if (error.isEmpty())
+            error = titleError(lock);
+
+        if (error.isEmpty())
+            error = fieldError();
+
+        if (error.isEmpty())
         {
-            if (entry.handle != user_)
-                existing_titles.insert(entry.element.title);
+            auto& struct_data = core::typing::gStructRegistry.get(lock, user_);
+            struct_data.title = title_edit_->text().toStdString();
+
+            struct_data.fields.clear();
+            for (const auto& field : model_->getElements())
+                struct_data.fields.push_back(std::make_pair(field.name.toStdString(), field.type.type.value()));
         }
+    }
 
-        std::string title = title_edit_->text().toStdString();
-        if (existing_titles.contains(title))
-        {
-            alerts::cannotApplyChanges(
-                *this,
-                tr("A struct with the name '%1' already exists")
-                    .arg(title_edit_->text()));
-            return;
-        }
-
-        if (reservedTypeName(title_edit_->text()))
-        {
-            alerts::cannotApplyChanges(
-                *this,
-                tr("Cannot use reserved struct name '%1'")
-                    .arg(title_edit_->text()));
-            return;
-        }
-
-        if (!validCharactersInTypeName(title_edit_->text()))
-        {
-            alerts::cannotApplyChanges(
-                *this,
-                tr("Cannot use invalid characters ('[', ']', '*') in struct name '%1'")
-                    .arg(title_edit_->text()));
-            return;
-        }
-
-        std::unordered_set<QString> field_names;
-        for (size_t i = 0; i < model_->elementCount(); ++i)
-        {
-            const auto& field = model_->at(i);
-
-            if (!field_names.insert(field.name).second)
-            {
-                alerts::cannotApplyChanges(
-                    *this,
-                    tr("There are duplicate field names"));
-                return;
-            }
-        }
-
-        std::vector<std::pair<std::string, core::typing::Type>> fields;
-        for (const auto& field : model_->getElements())
-        {
-            if (field.type)
-                fields.push_back(std::make_pair(field.name.toStdString(), *field.type));
-            else
-            {
-                alerts::cannotApplyChanges(
-                    *this,
-                    tr("Field '%1' has incomplete type")
-                        .arg(field.name));
-                return;
-            }
-        }
-
-        auto& struct_data = core::typing::gStructRegistry.get(lock, user_);
-        struct_data.title = std::move(title);
-        struct_data.fields = std::move(fields);
+    if (!error.isEmpty())
+    {
+        alerts::cannotApplyChanges(*this, error);
+        return false;
     }
 
     syncDirtyState();
     title_edit_->setFocus();
+    return true;
 }
 
 void StructEditView::cancelChanges()
 {
     loadStruct(user_);
+}
+
+QString StructEditView::titleError(const core::typing::StructRegistry::Lock& lock) const
+{
+    QString title = title_edit_->text();
+    std::string std_title = title.toStdString();
+
+    for (const auto& entry : core::typing::gStructRegistry.range(lock))
+    {
+        if (entry.handle != user_ && entry.element.title == std_title)
+            return tr("A struct with the name '%1' already exists").arg(title_edit_->text());
+    }
+
+    if (reservedTypeName(title_edit_->text()))
+        return tr("Cannot use reserved struct name '%1'").arg(title_edit_->text());
+
+    if (!validCharactersInTypeName(title_edit_->text()))
+        return tr("Cannot use invalid characters ('[', ']', '*') in struct name '%1'").arg(title_edit_->text());
+
+    return {};
+}
+
+QString StructEditView::fieldError() const
+{
+    std::unordered_set<QString> field_names;
+    for (size_t i = 0; i < model_->elementCount(); ++i)
+    {
+        if (!field_names.insert(model_->at(i).name).second)
+            return tr("There are duplicate field names");
+    }
+
+    for (const auto& field : model_->getElements())
+    {
+        if (!field.type)
+            return tr("Field '%1' has incomplete type").arg(field.name);
+    }
+
+    return {};
 }
 
 EditStructsDialog::EditStructsDialog(QWidget* parent)

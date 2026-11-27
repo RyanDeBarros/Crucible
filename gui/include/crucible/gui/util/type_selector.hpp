@@ -49,6 +49,7 @@ private:
     struct Node
     {
         Simplex simplex;
+        QString name;
         std::vector<std::optional<Node>> arguments;
     };
 
@@ -70,6 +71,7 @@ public:
     explicit TypeSelector(QWidget* parent = nullptr);
 
 signals:
+    // TODO connect to this in table
     void typeChanged(const Type& type);
     void editingFinished();
 
@@ -182,8 +184,8 @@ struct TypeSelectorColumn
         if (role != Qt::EditRole)
             return false;
 
-        if (auto* type = get_if<OptType>(&value))
-            return set_type(row, element, *type);
+        if (value.canConvert<OptType>())
+            return set_type(row, element, value.value<OptType>());
         else
             return false;
     }
