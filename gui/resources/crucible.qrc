@@ -17,6 +17,8 @@
         <file alias="edit">icons/edit.svg</file>
         <file alias="edit_enum">icons/edit_enum.svg</file>
         <file alias="edit_struct">icons/edit_struct.svg</file>
+        <file alias="expand_down">icons/expand_down.svg</file>
+        <file alias="expand_right">icons/expand_right.svg</file>
         <file alias="filter">icons/filter.svg</file>
         <file alias="new_module">icons/new_module.svg</file>
         <file alias="plus">icons/plus.svg</file>

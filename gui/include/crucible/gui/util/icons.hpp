@@ -20,6 +20,8 @@ enum class Icon
     Edit,
     EditEnum,
     EditStruct,
+    ExpandDown,
+    ExpandRight,
     Filter,
     NewModule,
     Plus,

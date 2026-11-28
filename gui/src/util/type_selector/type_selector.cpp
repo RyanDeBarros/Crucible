@@ -2,11 +2,11 @@
 
 #include <crucible/gui/util/fuzzy.hpp>
 #include <crucible/gui/util/repr.hpp>
+#include <crucible/gui/util/standard_tree.hpp>
 
 #include <QLineEdit>
 #include <QMouseEvent>
 #include <QPainter>
-#include <QTreeWidget>
 #include <QVBoxLayout>
 
 namespace crucible::gui
@@ -64,13 +64,14 @@ public:
     enum Role
     {
         KindRole = Qt::UserRole,
-        UserInstanceRole = KindRole + 1,
+        UserInstanceRole,
+        SpacerRole,
     };
 
     TypeSelector& selector;
     Path path;
     QLineEdit* search = nullptr;
-    QTreeWidget* tree = nullptr;
+    StandardTree* tree = nullptr;
 
     explicit TypePopup(TypeSelector& selector)
         : QFrame(&selector, Qt::Popup)
@@ -85,48 +86,36 @@ public:
         search = new QLineEdit(this);
         search->setPlaceholderText(tr("Search types..."));
 
-        tree = new QTreeWidget(this);
-        tree->setHeaderHidden(true);
-        tree->setRootIsDecorated(false);
+        tree = new StandardTree({ .spacer_role = SpacerRole }, this);
 
         layout->addWidget(search);
         layout->addWidget(tree);
 
-        connect(search, &QLineEdit::textChanged, this, [this](const QString& text) {
-            for (int i = 0; i < tree->topLevelItemCount(); ++i)
-            {
-                auto* category = tree->topLevelItem(i);
-                bool anyVisible = false;
+        connect(search, &QLineEdit::textChanged, this, &TypePopup::setFilter);
 
-                for (int j = 0; j < category->childCount(); ++j)
-                {
-                    auto* item = category->child(j);
-                    const bool visible = fuzzyContains(item->text(0), text);
-
-                    item->setHidden(!visible);
-                    anyVisible |= visible;
-                }
-
-                category->setHidden(!anyVisible);
-            }
-        });
-
-        // TODO clearer tree styling
         connect(tree, &QTreeWidget::itemDoubleClicked, this, [this](QTreeWidgetItem* item, int) {
             if (!item || item->childCount() > 0)
                 return;
 
             const Kind kind = static_cast<Kind>(item->data(0, TypePopup::KindRole).toInt());
-            const UserInstance user = static_cast<UserInstance>(item->data(0, TypePopup::UserInstanceRole).toInt());
 
-            this->selector.selectSimplex(this->path, { .kind = kind, .user = user });
-            hide();
+            if (kind != Kind::None)
+            {
+                const UserInstance user = static_cast<UserInstance>(
+                    item->data(0, TypePopup::UserInstanceRole).toInt());
+                this->selector.selectSimplex(this->path, { .kind = kind, .user = user });
+                hide();
+            }
         });
+
+        setFilter({});
     }
 
     void addCategory(const QString& title, std::vector<Entry> entries)
     {
-        auto* category = new QTreeWidgetItem(tree, { title });
+        auto* category = tree->newCategory(title);
+        category->setExpanded(true);
+        category->setHidden(entries.empty());
 
         for (const Entry& entry : entries)
         {
@@ -136,8 +125,34 @@ public:
             item->setData(0, UserInstanceRole, static_cast<int>(entry.simplex.user));
         }
 
-        category->setExpanded(true);
+        tree->newSpacer(category);
     };
+
+    void setFilter(const QString& text) const
+    {
+        for (int i = 0; i < tree->topLevelItemCount(); ++i)
+        {
+            auto* category = tree->topLevelItem(i);
+            bool any_visible = false;
+
+            for (int j = 0; j < category->childCount(); ++j)
+            {
+                auto* item = category->child(j);
+
+                if (item->data(0, SpacerRole).toBool())
+                {
+                    item->setHidden(false);
+                    continue;
+                }
+
+                const bool visible = fuzzyContains(item->text(0), text);
+                item->setHidden(!visible);
+                any_visible |= visible;
+            }
+
+            category->setHidden(!any_visible);
+        }
+    }
 };
 
 TypeSelector::TypeSelector(QWidget* parent)

@@ -123,10 +123,6 @@ void MainWindow::createPanels()
     resizeDocks({ op_graph_dock, op_output_dock }, { 750, 250 }, Qt::Vertical);
 
     LOG.debug(kApp) << "...panels created";
-
-
-    // TODO remove debug
-    module_inspector_dock->raise();
 }
 
 void MainWindow::createMenuBar()

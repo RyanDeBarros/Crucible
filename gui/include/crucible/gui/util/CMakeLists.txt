@@ -13,6 +13,7 @@ target_sources(crucible_gui
         repr.hpp
         scrollbar_preserver.hpp
         signal_property.hpp
+        standard_tree.hpp
         stylesheet.hpp
 )
 

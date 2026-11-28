@@ -48,6 +48,12 @@ std::ostream& operator<<(std::ostream& os, Icon icon)
     case Icon::EditStruct:
         return os << "Edit Struct";
 
+    case Icon::ExpandDown:
+        return os << "Expand Down";
+
+    case Icon::ExpandRight:
+        return os << "Expand Right";
+
     case Icon::Filter:
         return os << "Filter";
 
@@ -101,6 +107,12 @@ static QIcon loadIconImpl(Icon icon)
 
     case Icon::EditStruct:
         return QIcon(QStringLiteral(":/icons/edit_struct"));
+
+    case Icon::ExpandDown:
+        return QIcon(QStringLiteral(":/icons/expand_down"));
+
+    case Icon::ExpandRight:
+        return QIcon(QStringLiteral(":/icons/expand_right"));
 
     case Icon::Filter:
         return QIcon(QStringLiteral(":/icons/filter"));

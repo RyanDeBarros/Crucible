@@ -10,6 +10,7 @@ target_sources(crucible_gui
         outlines.cpp
         repr.cpp
         scrollbar_preserver.cpp
+        standard_tree.cpp
         stylesheet.cpp
 )
 

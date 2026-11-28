@@ -7,6 +7,8 @@ namespace crucible::core::typing
 
 enum class Kind
 {
+    None,
+
     Bool,
     Int,
     Float,
